@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Web3Provider } from "@/components/providers/Web3Provider";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "memevault",
@@ -13,7 +16,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Web3Provider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <div className="flex-1 flex flex-col">{children}</div>
+            <Footer />
+          </div>
+        </Web3Provider>
+      </body>
     </html>
   );
 }

@@ -19,80 +19,133 @@ enum AssetType {
 enum AssetStatus {
   ACTIVE
   TAKEN_DOWN
+  PENDING_REVIEW
+}
+
+enum UserRole {
+  VISITOR_CREATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+enum ReportReason {
+  COPYRIGHT
+  ILLEGAL
+  SPAM
+  OTHER
 }
 
 enum ReportStatus {
   OPEN
-  DISMISSED
+  REVIEWED
   ACTIONED
+  DISMISSED
 }
 
-// Creators connect a wallet; no separate auth account exists for visitors.
+enum TakedownAction {
+  TAKEDOWN
+  RESTORE
+  DELETE
+  BAN_UPLOADER
+}
+
+// Wallet address is the identity — no separate account system for
+// creators/admins. `role` is a cache: the source of truth for admin is the
+// ADMIN_WALLETS env var (see CLAUDE.md), never the DB alone.
 model User {
-  id           String   @id @default(cuid())
-  walletAddress String  @unique
-  isAdmin      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  walletAddress String     @id
+  role          UserRole   @default(VISITOR_CREATOR)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
 
   assets       Asset[]
-  reports      Report[]
-  takedowns    TakedownLog[] @relation("TakedownActor")
+  declarations UploadDeclaration[]
 }
 
-// Every public asset comes from a user upload plus a signed rights declaration.
+model Tag {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  assets Asset[]
+}
+
+// Every public asset is a user upload (never platform-authored — see
+// CLAUDE.md POSISI LEGAL #1) and, for now, requires a wallet + declaration.
+// `uploaderWallet` is nullable ahead of a possible future anonymous-upload
+// path, but application code must treat it as required today.
 model Asset {
   id            String      @id @default(cuid())
   title         String
+  description   String
   type          AssetType
-  filePath      String
-  thumbnailPath String?
+  fileUrl       String
+  thumbnailUrl  String?
+  fileSize      Int
+  duration      Int?
   status        AssetStatus @default(ACTIVE)
-  featured      Boolean     @default(false)
+  isOriginal    Boolean     @default(false)
   downloadCount Int         @default(0)
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  uploaderId String
-  uploader   User   @relation(fields: [uploaderId], references: [id])
+  uploaderWallet String?
+  uploader        User?   @relation(fields: [uploaderWallet], references: [walletAddress])
 
-  declaration Declaration?
+  tags        Tag[]
+  declaration UploadDeclaration?
   reports     Report[]
   takedowns   TakedownLog[]
 }
 
-// Mandatory rights declaration captured at upload time (WAJIB — see CLAUDE.md).
-model Declaration {
-  id            String   @id @default(cuid())
-  ownsRights    Boolean
-  agreedToTos   Boolean
-  agreedAt      DateTime @default(now())
+// Paper trail proving the uploader agreed to the rights declaration + ToS
+// at upload time (WAJIB — see CLAUDE.md POSISI LEGAL #2). Never mutated.
+model UploadDeclaration {
+  id              String   @id @default(cuid())
+  declarationText String
+  tosVersion      String
+  acceptedAt      DateTime @default(now())
+  ipHash          String
 
   assetId String @unique
   asset   Asset  @relation(fields: [assetId], references: [id])
+
+  uploaderWallet String
+  uploader       User   @relation(fields: [uploaderWallet], references: [walletAddress])
 }
 
-// Visitor-facing report on any asset.
+// Visitor-facing report on an asset. No wallet required to report.
 model Report {
-  id        String       @id @default(cuid())
-  reason    String
-  status    ReportStatus @default(OPEN)
-  createdAt DateTime     @default(now())
+  id              String       @id @default(cuid())
+  reporterContact String?
+  reason          ReportReason
+  detail          String
+  status          ReportStatus @default(OPEN)
+  createdAt       DateTime     @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?
 
   assetId String
   asset   Asset  @relation(fields: [assetId], references: [id])
 
-  reporterId String?
-  reporter   User?   @relation(fields: [reporterId], references: [id])
+  takedowns TakedownLog[]
 }
 
-// Paper trail for every admin takedown action (WAJIB — see CLAUDE.md).
+// Append-only paper trail for every admin action (WAJIB — see CLAUDE.md
+// POSISI LEGAL #4/#5). Application code must only ever INSERT here —
+// never update or delete a row.
 model TakedownLog {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
+  actionBy  String
+  action    TakedownAction
   reason    String
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
 
   assetId String
   asset   Asset  @relation(fields: [assetId], references: [id])
 
-  actorId String
-  actor   User   @relation("TakedownActor", fields: [actorId], references: [id])
+  relatedReportId String?
+  relatedReport   Report? @relation(fields: [relatedReportId], references: [id])
 }

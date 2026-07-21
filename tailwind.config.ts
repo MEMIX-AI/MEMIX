@@ -9,8 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        bg: "var(--bg)",
+        panel: "var(--panel)",
+        line: "var(--line)",
+        text: "var(--text)",
+        dim: "var(--dim)",
+        accent: "var(--accent)",
+        ok: "var(--ok)",
+      },
+      fontFamily: {
+        mono: ["ui-monospace", "SF Mono", "Menlo", "Consolas", "monospace"],
+      },
+      borderRadius: {
+        DEFAULT: "6px",
       },
     },
   },

@@ -54,6 +54,13 @@ enum TakedownAction {
   UNBAN_UPLOADER
 }
 
+// Only tier that exists today — every key is free while the programmatic
+// API is a foundation, not yet monetized (see CLAUDE.md: machines pay,
+// humans don't, but that's a later phase). Paid tiers are TODO.
+enum ApiKeyTier {
+  FREE_DEV
+}
+
 // Wallet address is the identity — no separate account system for
 // creators/admins. `role` is a cache: the source of truth for admin is the
 // ADMIN_WALLETS env var (see CLAUDE.md), never the DB alone.
@@ -65,6 +72,7 @@ model User {
 
   assets       Asset[]
   declarations UploadDeclaration[]
+  apiKey       ApiKey?
 }
 
 model Tag {
@@ -162,4 +170,22 @@ model TakedownLog {
 
   relatedReportId String?
   relatedReport   Report? @relation(fields: [relatedReportId], references: [id])
+}
+
+// Foundation for the programmatic-access layer (CLAUDE.md: "manusia
+// gratis, mesin bayar" — this is the free/dev groundwork, not the paid
+// layer itself). One key per wallet for now — `ownerWallet` is unique, so
+// "generate" is really "generate-or-replace". Only the hash is ever
+// stored; the raw key is shown once at creation and never retrievable
+// again, same convention as GitHub/Stripe-style tokens.
+model ApiKey {
+  id           String     @id @default(cuid())
+  keyHash      String     @unique
+  ownerWallet  String     @unique
+  tier         ApiKeyTier @default(FREE_DEV)
+  createdAt    DateTime   @default(now())
+  lastUsedAt   DateTime?
+  requestCount Int        @default(0)
+
+  owner User @relation(fields: [ownerWallet], references: [walletAddress])
 }

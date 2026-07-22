@@ -19,6 +19,16 @@ const nextConfig = {
       "@react-native-async-storage/async-storage": false,
       "pino-pretty": false,
     };
+
+    // prisma/dev.db is inside the project tree and gets written on nearly
+    // every request (session lookups, ApiKey.requestCount increments,
+    // etc.). Without this, the dev watcher treats each write as a source
+    // change and reloads route modules, wiping module-level state like
+    // lib/rate-limit.ts's in-memory buckets on every single request.
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ["**/prisma/dev.db*", "**/node_modules/**"],
+    };
     return config;
   },
 };

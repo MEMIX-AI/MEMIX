@@ -88,6 +88,13 @@ export function Navbar() {
                     >
                       › my uploads
                     </Link>
+                    <Link
+                      href="/my-uploads/api-key"
+                      className="block px-3 py-2 hover:text-accent"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      › api key
+                    </Link>
                     {isAdmin && (
                       <Link
                         href="/admin"

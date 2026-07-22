@@ -32,7 +32,9 @@ export function Navbar() {
         <Link href="/library" className="hover:text-accent">
           [library]
         </Link>
-        <span>[upload]</span>
+        <Link href="/upload" className="hover:text-accent">
+          [upload]
+        </Link>
         <span>[agent]</span>
         <span>[docs]</span>
 

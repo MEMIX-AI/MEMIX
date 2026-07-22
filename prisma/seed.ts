@@ -9,10 +9,15 @@
  * DATABASE_URL or deployed environment.
  */
 import { AssetType, PrismaClient } from "@prisma/client";
-import { createHash } from "crypto";
 import sharp from "sharp";
 import { storage } from "../lib/storage";
-import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "../lib/upload-validation";
+import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "../lib/thumbnail";
+import { hashIp } from "../lib/ip-hash";
+import {
+  CURRENT_TOS_VERSION,
+  OWNERSHIP_DECLARATION_TEXT,
+  TOS_DECLARATION_TEXT,
+} from "../lib/declaration";
 
 if (process.env.NODE_ENV === "production") {
   throw new Error(
@@ -37,10 +42,6 @@ const TITLES = [
   "the boys reaction pack",
   "loading... please clown",
 ];
-
-function hashIp(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex");
-}
 
 async function placeholderBuffer(type: AssetType, index: number): Promise<Buffer> {
   if (type === "IMAGE") {
@@ -136,9 +137,8 @@ async function main() {
       data: {
         assetId: asset.id,
         uploaderWallet: uploader.walletAddress,
-        declarationText:
-          "I own this work or hold the rights to upload it, and I agree to the Terms of Service.",
-        tosVersion: "1.0",
+        declarationText: `${OWNERSHIP_DECLARATION_TEXT}\n\n${TOS_DECLARATION_TEXT}`,
+        tosVersion: CURRENT_TOS_VERSION,
         ipHash: hashIp("127.0.0.1"),
       },
     });

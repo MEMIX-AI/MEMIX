@@ -1,19 +1,30 @@
-import sharp from "sharp";
 import type { AssetType } from "@prisma/client";
 
-const ALLOWED_MIME_TYPES: Record<AssetType, string[]> = {
+// Pure, dependency-free rules — safe to import from client components
+// too (unlike lib/thumbnail.ts, which pulls in the Node-only `sharp`
+// native module). Single source of truth for both the instant client-side
+// hint and the real server-side enforcement in /api/upload.
+
+export const ALLOWED_MIME_TYPES: Record<AssetType, string[]> = {
   IMAGE: ["image/png", "image/jpeg", "image/webp", "image/gif"],
   VIDEO: ["video/mp4", "video/webm"],
   SOUND: ["audio/mpeg", "audio/wav", "audio/ogg"],
 };
 
-const MAX_FILE_SIZE: Record<AssetType, number> = {
+export const MAX_FILE_SIZE: Record<AssetType, number> = {
   // No max was specified for images in the spec — 10MB is a conservative
   // assumed default, not a hard product requirement.
   IMAGE: 10 * 1024 * 1024,
   VIDEO: 50 * 1024 * 1024,
   SOUND: 20 * 1024 * 1024,
 };
+
+export function detectAssetType(mimeType: string): AssetType | null {
+  if (mimeType.startsWith("image/")) return "IMAGE";
+  if (mimeType.startsWith("video/")) return "VIDEO";
+  if (mimeType.startsWith("audio/")) return "SOUND";
+  return null;
+}
 
 export type UploadValidationResult =
   | { ok: true }
@@ -40,27 +51,4 @@ export function validateUpload(
   }
 
   return { ok: true };
-}
-
-// Static placeholder shown for video assets until real thumbnail
-// extraction ships — no ffmpeg in this phase (see CLAUDE.md STACK note).
-export const VIDEO_PLACEHOLDER_THUMBNAIL_URL = "/video-placeholder.svg";
-
-/**
- * Generates a thumbnail buffer for an uploaded file, where possible.
- * - IMAGE: real thumbnail via sharp (resized, webp).
- * - VIDEO: null — caller should use VIDEO_PLACEHOLDER_THUMBNAIL_URL instead.
- * - SOUND: null — sound assets have no thumbnail.
- */
-export async function generateThumbnail(
-  type: AssetType,
-  buffer: Buffer,
-): Promise<Buffer | null> {
-  if (type === "IMAGE") {
-    return sharp(buffer)
-      .resize(400, 400, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
-  }
-  return null;
 }

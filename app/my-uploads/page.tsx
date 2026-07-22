@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MyUploadCard } from "@/components/MyUploadCard";
@@ -28,7 +29,20 @@ export default async function MyUploadsPage() {
       )}
 
       {assets.length === 0 ? (
-        <p className="text-sm text-dim">› nothing uploaded yet.</p>
+        <p className="text-sm text-dim">
+          ›{" "}
+          {user.status === "BANNED" ? (
+            "nothing uploaded yet."
+          ) : (
+            <>
+              nothing uploaded yet.{" "}
+              <Link href="/upload" className="text-accent hover:underline">
+                upload your first one
+              </Link>
+              .
+            </>
+          )}
+        </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {assets.map((asset) => (

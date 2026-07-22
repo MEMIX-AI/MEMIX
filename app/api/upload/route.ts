@@ -97,16 +97,24 @@ export async function POST(req: NextRequest) {
 
   let thumbnailUrl: string | null = null;
   if (type === "IMAGE") {
-    const thumbBuffer = await generateThumbnail(type, buffer);
-    if (thumbBuffer) {
-      const savedThumb = await storage.save({
-        buffer: thumbBuffer,
-        originalName: "thumb.webp",
-        mimeType: "image/webp",
-        folder: "thumbnails",
-      });
-      thumbnailUrl = savedThumb.url;
+    const thumbBuffer = await generateThumbnail(type, buffer).catch(() => null);
+    if (!thumbBuffer) {
+      // The original was already written to storage above — clean it up
+      // rather than leaving an orphaned file with no Asset row pointing
+      // to it (nothing else will ever reference this key).
+      await storage.delete(saved.key);
+      return NextResponse.json(
+        { error: "that image file looks corrupted — try a different file or re-export it" },
+        { status: 400 },
+      );
     }
+    const savedThumb = await storage.save({
+      buffer: thumbBuffer,
+      originalName: "thumb.webp",
+      mimeType: "image/webp",
+      folder: "thumbnails",
+    });
+    thumbnailUrl = savedThumb.url;
   } else if (type === "VIDEO") {
     thumbnailUrl = VIDEO_PLACEHOLDER_THUMBNAIL_URL;
   }

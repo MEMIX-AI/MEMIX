@@ -48,14 +48,20 @@ export function LibrarianWidget() {
           messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "something broke");
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        throw new Error(data?.error ?? "the librarian is unreachable right now — try again in a bit");
+      }
       setMessages([
         ...nextMessages,
         { role: "assistant", content: data.reply, assets: data.assets },
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "something broke");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "the librarian is unreachable right now — try again in a bit",
+      );
     } finally {
       setSending(false);
     }

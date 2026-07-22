@@ -24,11 +24,11 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="border-b border-line px-6 py-4 flex items-center justify-between relative">
+    <header className="border-b border-line px-4 py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 relative sm:px-6">
       <Link href="/" className="text-accent font-bold">
         memevault<span className="cursor-blink">▊</span>
       </Link>
-      <nav className="text-dim text-sm flex items-center gap-4">
+      <nav className="text-dim text-sm flex flex-wrap items-center gap-x-4 gap-y-2">
         <Link href="/library" className="hover:text-accent">
           [library]
         </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAssetType, searchAssets } from "@/lib/search";
+import { publicAssetWhere } from "@/lib/asset-visibility";
 import { AssetCard } from "@/components/AssetCard";
 import { SearchCommandInput } from "@/components/SearchCommandInput";
 
@@ -21,10 +22,12 @@ export default async function LibraryPage({
   const tag = searchParams.tag || undefined;
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
 
-  const [{ assets, total, totalPages }, tags] = await Promise.all([
+  const [{ assets, total, totalPages }, tags, libraryTotal] = await Promise.all([
     searchAssets({ q, type, tag, page }),
     prisma.tag.findMany({ orderBy: { name: "asc" } }),
+    prisma.asset.count({ where: publicAssetWhere }),
   ]);
+  const hasActiveFilter = Boolean(q || type || tag);
 
   function hrefWith(overrides: Record<string, string | undefined>): string {
     const merged: Record<string, string | undefined> = {
@@ -96,9 +99,27 @@ export default async function LibraryPage({
       </p>
 
       {assets.length === 0 ? (
-        <p className="text-sm text-dim">
-          › nothing matches. try a different search or filter.
-        </p>
+        <div className="text-sm text-dim">
+          {libraryTotal === 0 ? (
+            <p>
+              › the library&apos;s empty so far.{" "}
+              <Link href="/upload" className="text-accent hover:underline">
+                be the first to upload something
+              </Link>
+              .
+            </p>
+          ) : hasActiveFilter ? (
+            <p>
+              › nothing matches. try a different search, or{" "}
+              <Link href="/library" className="text-accent hover:underline">
+                clear all filters
+              </Link>
+              .
+            </p>
+          ) : (
+            <p>› nothing here yet.</p>
+          )}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {assets.map((asset) => (

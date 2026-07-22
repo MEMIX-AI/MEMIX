@@ -5,6 +5,8 @@ export const metadata = {
 };
 
 export default function TosPage() {
+  const copyrightEmail = process.env.COPYRIGHT_EMAIL || null;
+
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10 text-sm">
       <p className="mb-1 text-accent">▍ terms of service &amp; content policy</p>
@@ -71,6 +73,23 @@ export default function TosPage() {
           <p>
             memevault is provided as-is. we make no guarantee about
             uptime, accuracy, or fitness for any particular purpose.
+          </p>
+        </section>
+
+        <section>
+          <p className="mb-2 font-bold text-text">7. copyright / legal contact</p>
+          <p>
+            the in-app report button (on every asset) is the fastest way to
+            flag something — it goes straight into the admin queue. for
+            formal legal notices,{" "}
+            {copyrightEmail ? (
+              <a href={`mailto:${copyrightEmail}`} className="underline hover:text-accent">
+                {copyrightEmail}
+              </a>
+            ) : (
+              "a contact address will be listed here once configured"
+            )}
+            .
           </p>
         </section>
       </div>

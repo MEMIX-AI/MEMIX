@@ -55,7 +55,11 @@ export default async function AssetDetailPage({
                   : "anonymous"
               }
             />
-            <SpecCell label="downloads" value={String(asset.downloadCount)} />
+            <SpecCell
+              label="downloads"
+              value={String(asset.downloadCount)}
+              span2={asset.duration == null}
+            />
           </div>
 
           {asset.tags.length > 0 && (

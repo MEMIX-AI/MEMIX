@@ -1,24 +1,26 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { SpecCell } from "@/components/SpecCell";
 
-// Defense in depth: middleware.ts already blocks non-admins from reaching
-// this route (Edge-safe env + JWT check). This re-checks server-side with
-// a real DB read, in case that first gate is ever bypassed or changed.
-export default async function AdminPage() {
-  const user = await getCurrentUser();
-  if (!user || !user.isAdmin) {
-    redirect("/");
-  }
+export default async function AdminDashboardPage() {
+  const [totalAssets, downloadAgg, openReports, bannedUsers] = await Promise.all([
+    prisma.asset.count(),
+    prisma.asset.aggregate({ _sum: { downloadCount: true } }),
+    prisma.report.count({ where: { status: "OPEN" } }),
+    prisma.user.count({ where: { status: "BANNED" } }),
+  ]);
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6">
-      <div className="border border-line rounded p-6 max-w-md w-full">
-        <p className="text-accent mb-2">▍ admin panel</p>
-        <p className="text-dim text-sm">
-          › signed in as {user.walletAddress}. takedown tools and the
-          reports queue land in a later phase.
-        </p>
+    <div>
+      <p className="mb-4 text-accent">▍ dashboard</p>
+      <div className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-4">
+        <SpecCell label="total assets" value={String(totalAssets)} />
+        <SpecCell
+          label="downloads"
+          value={String(downloadAgg._sum.downloadCount ?? 0)}
+        />
+        <SpecCell label="open reports" value={String(openReports)} />
+        <SpecCell label="banned users" value={String(bannedUsers)} />
       </div>
-    </main>
+    </div>
   );
 }

@@ -51,6 +51,7 @@ enum TakedownAction {
   RESTORE
   DELETE
   BAN_UPLOADER
+  UNBAN_UPLOADER
 }
 
 // Wallet address is the identity — no separate account system for
@@ -87,6 +88,7 @@ model Asset {
   duration      Int?
   status        AssetStatus @default(ACTIVE)
   isOriginal    Boolean     @default(false)
+  featured      Boolean     @default(false)
   downloadCount Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -126,6 +128,10 @@ model Report {
   createdAt       DateTime     @default(now())
   reviewedAt      DateTime?
   reviewedBy      String?
+  // Admin's short reason for dismissing — only set on the Dismiss path.
+  // Takedown-from-report's reason lives on the linked TakedownLog row
+  // instead (via `takedowns`), so it isn't duplicated here.
+  reviewNote      String?
 
   assetId String
   asset   Asset  @relation(fields: [assetId], references: [id])
@@ -143,8 +149,16 @@ model TakedownLog {
   reason    String
   createdAt DateTime       @default(now())
 
-  assetId String
-  asset   Asset  @relation(fields: [assetId], references: [id])
+  // Nullable: a user-level BAN_UPLOADER/UNBAN_UPLOADER action isn't
+  // inherently about one specific asset (e.g. unbanning someone, or
+  // banning a user who has zero uploads yet). Ban's cascade still writes
+  // one row per affected asset (assetId set) alongside `targetWallet`.
+  assetId String?
+  asset   Asset?  @relation(fields: [assetId], references: [id])
+
+  // The wallet a BAN_UPLOADER/UNBAN_UPLOADER action targets — distinct
+  // from `actionBy`, which is always the admin performing the action.
+  targetWallet String?
 
   relatedReportId String?
   relatedReport   Report? @relation(fields: [relatedReportId], references: [id])

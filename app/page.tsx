@@ -1,5 +1,5 @@
 import type { Asset, Tag } from "@prisma/client";
-import { getFreshAssets, getTrendingAssets } from "@/lib/assets";
+import { getFeaturedAssets, getFreshAssets, getTrendingAssets } from "@/lib/assets";
 import { AssetCard } from "@/components/AssetCard";
 import { TerminalHeroDemo } from "@/components/TerminalHeroDemo";
 
@@ -8,7 +8,8 @@ import { TerminalHeroDemo } from "@/components/TerminalHeroDemo";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [trending, fresh] = await Promise.all([
+  const [featured, trending, fresh] = await Promise.all([
+    getFeaturedAssets(8),
     getTrendingAssets(8),
     getFreshAssets(8),
   ]);
@@ -29,6 +30,13 @@ export default async function Home() {
         <span className="font-bold text-text">free for humans.</span>{" "}
         <span className="text-dim">paid for agents, coming later.</span>
       </p>
+
+      {featured.length > 0 && (
+        <section className="mb-16">
+          <p className="mb-4 text-accent">▍ featured</p>
+          <AssetGrid assets={featured} />
+        </section>
+      )}
 
       <section className="mb-16">
         <p className="mb-4 text-accent">▍ trending</p>

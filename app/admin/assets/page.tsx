@@ -1,0 +1,120 @@
+import Image from "next/image";
+import Link from "next/link";
+import type { AssetStatus } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { assetTypeLabel, shortenWallet } from "@/lib/format";
+import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
+import { FeatureToggleButton } from "@/components/admin/FeatureToggleButton";
+
+const STATUS_FILTERS: { value?: AssetStatus; label: string }[] = [
+  { value: undefined, label: "all" },
+  { value: "ACTIVE", label: "active" },
+  { value: "TAKEN_DOWN", label: "taken down" },
+  { value: "PENDING_REVIEW", label: "pending" },
+];
+
+export default async function AdminAssetsPage({
+  searchParams,
+}: {
+  searchParams: { status?: string };
+}) {
+  const status = STATUS_FILTERS.find((f) => f.value === searchParams.status)
+    ?.value;
+
+  const assets = await prisma.asset.findMany({
+    where: status ? { status } : {},
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+
+  return (
+    <div>
+      <p className="mb-4 text-accent">▍ asset management</p>
+
+      <div className="mb-4 flex flex-wrap gap-2 text-sm">
+        {STATUS_FILTERS.map((f) => (
+          <Link
+            key={f.label}
+            href={f.value ? `/admin/assets?status=${f.value}` : "/admin/assets"}
+            className={`rounded border px-3 py-1 ${
+              status === f.value
+                ? "border-accent text-accent"
+                : "border-line text-dim hover:border-accent"
+            }`}
+          >
+            {f.label}
+          </Link>
+        ))}
+      </div>
+
+      {assets.length === 0 ? (
+        <p className="text-sm text-dim">› no assets match this filter.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {assets.map((asset) => (
+            <div
+              key={asset.id}
+              className="flex flex-wrap items-center gap-4 rounded border border-line bg-panel p-3"
+            >
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded border border-line bg-bg">
+                {asset.thumbnailUrl && (
+                  <Image
+                    src={asset.thumbnailUrl}
+                    alt=""
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/asset/${asset.id}`}
+                  target="_blank"
+                  className="block truncate font-bold hover:text-accent"
+                >
+                  {asset.title}
+                </Link>
+                <p className="text-xs uppercase text-dim">
+                  {assetTypeLabel(asset.type)} ·{" "}
+                  {asset.status.toLowerCase().replace("_", " ")}
+                  {asset.uploaderWallet && (
+                    <> · {shortenWallet(asset.uploaderWallet)}</>
+                  )}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <FeatureToggleButton assetId={asset.id} featured={asset.featured} />
+                {asset.status === "ACTIVE" && (
+                  <ReasonActionButton
+                    label="takedown"
+                    modalTitle="takedown asset"
+                    url={`/api/admin/assets/${asset.id}/takedown`}
+                    variant="accent"
+                    confirmLabel="takedown"
+                  />
+                )}
+                {asset.status === "TAKEN_DOWN" && (
+                  <ReasonActionButton
+                    label="restore"
+                    modalTitle="restore asset"
+                    url={`/api/admin/assets/${asset.id}/restore`}
+                    confirmLabel="restore"
+                  />
+                )}
+                <ReasonActionButton
+                  label="delete permanently"
+                  modalTitle="delete asset permanently"
+                  url={`/api/admin/assets/${asset.id}/delete`}
+                  confirmLabel="delete forever"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

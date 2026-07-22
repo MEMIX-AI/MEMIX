@@ -16,6 +16,15 @@ export async function getTrendingAssets(limit = 8) {
   });
 }
 
+export async function getFeaturedAssets(limit = 8) {
+  return prisma.asset.findMany({
+    where: { ...publicAssetWhere, featured: true },
+    include: { tags: true },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+  });
+}
+
 export async function getFreshAssets(limit = 8) {
   return prisma.asset.findMany({
     where: publicAssetWhere,

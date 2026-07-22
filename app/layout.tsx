@@ -3,6 +3,7 @@ import "./globals.css";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { LibrarianWidget } from "@/components/librarian/LibrarianWidget";
 
 export const metadata: Metadata = {
   title: "memevault",
@@ -23,6 +24,7 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col">{children}</div>
             <Footer />
           </div>
+          <LibrarianWidget />
         </Web3Provider>
       </body>
     </html>

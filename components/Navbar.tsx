@@ -26,10 +26,12 @@ export function Navbar() {
   return (
     <header className="border-b border-line px-6 py-4 flex items-center justify-between relative">
       <Link href="/" className="text-accent font-bold">
-        memevault▊
+        memevault<span className="cursor-blink">▊</span>
       </Link>
       <nav className="text-dim text-sm flex items-center gap-4">
-        <span>[library]</span>
+        <Link href="/library" className="hover:text-accent">
+          [library]
+        </Link>
         <span>[upload]</span>
         <span>[agent]</span>
         <span>[docs]</span>

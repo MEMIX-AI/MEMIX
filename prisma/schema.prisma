@@ -104,10 +104,11 @@ model Asset {
   uploaderWallet String?
   uploader        User?   @relation(fields: [uploaderWallet], references: [walletAddress])
 
-  tags        Tag[]
-  declaration UploadDeclaration?
-  reports     Report[]
-  takedowns   TakedownLog[]
+  tags           Tag[]
+  declaration    UploadDeclaration?
+  reports        Report[]
+  takedowns      TakedownLog[]
+  downloadEvents DownloadEvent[]
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -188,6 +189,27 @@ model ApiKey {
   requestCount Int        @default(0)
 
   owner User @relation(fields: [ownerWallet], references: [walletAddress])
+}
+
+// Per-download log, powering a real rolling-window "trending" calc (see
+// lib/assets.ts#getTrendingAssets) — Asset.downloadCount alone can only
+// answer "downloaded ever," never "downloaded in the last 7 days." Kept
+// as its own table rather than added onto Asset so the cheap lifetime
+// counter stays cheap, and this one can grow/get pruned independently.
+//
+// Retention: nothing here auto-prunes yet — see docs/deploy-checklist.md
+// for the retention note (rows past the 7-day trending window have no
+// product use; suggested prune threshold is ~90 days, kept longer than
+// 7 purely as a debugging/analytics safety margin).
+model DownloadEvent {
+  id        String   @id @default(cuid())
+  assetId   String
+  createdAt DateTime @default(now())
+  ipHash    String
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
 }
 
 // DB-backed fixed-window rate limiting, shared across instances — replaces

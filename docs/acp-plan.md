@@ -50,7 +50,7 @@ back a fetchable URL — the ACP-facing version of `GET /api/v1/assets/:id`
 A compact "what's hot" summary — the ACP-facing version of
 `GET /api/v1/trending`, but shaped as a digest rather than a raw list.
 
-- **Input:** `{ type?: "IMAGE"|"VIDEO"|"SOUND", limit?: number, days?: number }` (`days` inherits the same "currently ignored, all-time approximation" caveat as the REST endpoint until a real `DownloadEvent` log exists).
+- **Input:** `{ type?: "IMAGE"|"VIDEO"|"SOUND", limit?: number, days?: number }` (`days` is accepted but currently fixed at a real rolling 7-day window regardless of the value passed — same as the REST endpoint, see `lib/assets.ts#getTrendingAssets`).
 - **Output:** `{ digest: [{ id, title, url, downloadCount }], generatedAt }` — no LLM-authored blurb in v1 of this skill; it's a formatted version of the trending list, not a written summary. (A future version could add a one-line blurb per pick, at which point it'd need the same LLM-call cost profile as `vibe_match` below.)
 - **Rough price:** same order as `meme_search` — no LLM call, just a query + light formatting. Ballpark: **$0.001–0.005 per call.**
 - **Engine call:** `lib/assets.ts#getTrendingAssets()` — identical function backing `GET /api/v1/trending` and the homepage's "▍ trending" section.

@@ -24,9 +24,12 @@ export async function GET(req: NextRequest) {
 
   const result = await searchAssets({ q, type, tag, page, pageSize });
   const origin = req.nextUrl.origin;
+  const serialized = await Promise.all(
+    result.assets.map((asset) => serializeAsset(asset, origin)),
+  );
 
   return apiData(
-    result.assets.map((asset) => serializeAsset(asset, origin)),
+    serialized,
     {
       total: result.total,
       page: result.page,

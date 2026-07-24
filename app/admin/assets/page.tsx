@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { AssetStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { assetTypeLabel, shortenWallet } from "@/lib/format";
+import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
 import { FeatureToggleButton } from "@/components/admin/FeatureToggleButton";
 
@@ -21,11 +22,12 @@ export default async function AdminAssetsPage({
   const status = STATUS_FILTERS.find((f) => f.value === searchParams.status)
     ?.value;
 
-  const assets = await prisma.asset.findMany({
+  const rawAssets = await prisma.asset.findMany({
     where: status ? { status } : {},
     orderBy: { createdAt: "desc" },
     take: 200,
   });
+  const assets = await resolveAssetUrlsMany(rawAssets);
 
   return (
     <div>

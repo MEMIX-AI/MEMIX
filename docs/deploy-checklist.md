@@ -17,6 +17,14 @@ SQLite-only features are used, so this is a provider swap, not a rewrite.
    **connection pooler** string (port 6543, `?pgbouncer=true`) for the app's
    `DATABASE_URL`, and the **direct** connection string (port 5432) for
    migrations — Prisma's migration engine needs a direct connection.
+   **This is not optional/cosmetic**: every single `/api/v1/*` and
+   `/api/librarian` request now writes to Postgres on every call (the
+   `RateLimitBucket` upsert — see `lib/rate-limit.ts`), and every file
+   download writes a `DownloadEvent` row too (see §"Data retention"
+   below). Running that request volume against the direct connection
+   instead of the pooler is exactly the scenario `pgbouncer` pooling
+   exists for — skipping it risks exhausting Postgres's connection limit
+   under real traffic, not just a theoretical best practice.
 2. In `prisma/schema.prisma`, change the datasource provider:
    ```prisma
    datasource db {
@@ -47,41 +55,102 @@ SQLite-only features are used, so this is a provider swap, not a rewrite.
    guard alone; just never point `npx prisma db seed` at a prod
    `DATABASE_URL`. See §4 below.
 
+### Data retention (two tables that grow unbounded if left alone)
+
+- **`RateLimitBucket`** already self-prunes — `lib/rate-limit.ts` opportunistically
+  deletes expired-window rows on ~1% of writes. No action needed, but if a
+  future change removes that cleanup, this table is the first place to
+  look for unexplained row-count growth.
+- **`DownloadEvent`** does **not** self-prune yet. It powers the rolling
+  7-day trending calculation (see `lib/assets.ts#getTrendingAssets`) — a
+  row older than 7 days has no product purpose, but nothing currently
+  deletes it. For a genuinely popular library this table grows one row
+  per download, forever, which will eventually matter for both storage
+  cost and the `groupBy` query's performance. Suggested policy once this
+  is worth doing: prune rows older than ~90 days (kept well past the
+  7-day window purely as a debugging/analytics safety margin, not because
+  any product feature reads data that old) — either a scheduled Vercel
+  Cron Job hitting a small `/api/admin/prune-download-events`-style route,
+  or the same lazy-cleanup-on-write pattern `RateLimitBucket` already
+  uses. Not implemented yet — this is a note to revisit, not a blocker.
+
 ## 2. File storage: local `/storage` → Supabase Storage
+
+> ### 🛑 BLOCKER — bucket must be PRIVATE, not public
+>
+> **Do not create a public Supabase Storage bucket for this project.** A
+> public bucket's URL is permanent and unauthenticated — nothing ever
+> checks it again after it's handed out. That's exactly the bug this
+> project already found and fixed once for local storage (a taken-down
+> asset's direct file URL kept working forever, because the URL itself
+> never expired and nothing re-checked it). A public Supabase bucket
+> reintroduces the identical bug on the new backend, permanently, with no
+> code-level fix possible after the fact — the bucket setting itself is
+> the vulnerability.
+>
+> **Mandatory manual verification after this migration, before announcing
+> the deploy is done:**
+> 1. Take down one asset via the admin panel (any reason).
+> 2. Try to fetch that asset's raw file URL directly (not through the
+>    app — paste the actual storage URL into a fresh browser tab or curl
+>    it with no other requests first).
+> 3. It **must be rejected** (403/404, or already-expired if it's a
+>    signed URL). If it loads the file, the bucket is misconfigured as
+>    public (or something is caching/reusing a stale signed URL) — stop
+>    and fix this before considering the deploy live, even if every other
+>    smoke test in §5 step 7 passes.
 
 All file I/O already goes through the one `StorageAdapter` interface in
 `lib/storage.ts` (`save` / `getUrl` / `delete`) — nothing else touches `fs`
-directly, so this is a one-file swap, not a repo-wide change.
+directly, so swapping backends is a small, contained change. The design
+below is already written and type-checked in `lib/storage.ts` — see
+`SupabaseStorageAdapter` there — this section is about *activating* it,
+not designing it from scratch.
 
-1. Create a Supabase Storage bucket (e.g. `memevault-assets`). Decide public
-   vs. signed-URL access — the current local adapter serves everything
-   through a public route (`/api/storage/[...key]`) with a status/ban
-   visibility check (see below), so a **public bucket** is the closest match
-   and avoids re-deriving signed-URL expiry logic.
-2. Implement `SupabaseStorageAdapter implements StorageAdapter` next to
-   `LocalStorageAdapter` in `lib/storage.ts`:
-   - `save()`: upload the buffer to the bucket via
-     `@supabase/supabase-js`'s `storage.from(bucket).upload(key, buffer, { contentType })`.
-   - `getUrl()`: return the bucket's public URL for that key
-     (`storage.from(bucket).getPublicUrl(key)`), not a local `/api/storage/`
-     path.
-   - `delete()`: `storage.from(bucket).remove([key])`.
-3. Swap the exported `storage` singleton to the new adapter (behind an env
-   check, e.g. `storage = process.env.SUPABASE_URL ? new SupabaseStorageAdapter() : new LocalStorageAdapter()`).
-4. **Carry over the visibility check, don't drop it.** `app/api/storage/[...key]/route.ts`
-   currently re-checks that a key's owning `Asset` is `ACTIVE` and its
-   uploader isn't banned before serving bytes — added specifically so a
-   takedown actually revokes access, not just hides the listing. If Supabase
-   Storage URLs are public, that check has to move somewhere it still runs
-   on every fetch: either keep serving through a proxy route that does this
-   check before redirecting to the Supabase URL, or switch to **signed URLs
-   with a short expiry** minted fresh (post-visibility-check) by
-   `getUrl()`/a new `getSignedUrl()` method instead of permanent public URLs.
-   Don't ship permanent public Supabase URLs without solving this — it's the
-   same bug this phase just fixed for local storage, reappearing on the new
-   backend.
+1. Create a Supabase Storage bucket (e.g. `memevault-assets`) and mark it
+   **private**. Do not toggle it public at any point, including
+   temporarily for testing — see the blocker above.
+2. `SupabaseStorageAdapter` in `lib/storage.ts` is already implemented
+   against this assumption:
+   - `save()` uploads to the bucket and returns `{ key, size }` — never a
+     URL. `Asset.fileUrl`/`Asset.thumbnailUrl` store this bare key, not a
+     path — see the long comment at the top of `lib/storage.ts` for why.
+   - `getUrl(key)` mints a **60-second signed URL**, fresh, every call —
+     never cached, never persisted anywhere. Every caller that needs an
+     actual fetchable URL goes through `lib/asset-urls.ts`
+     (`resolveAssetUrls`/`resolveAssetUrlsMany`), which is already wired
+     into every page and API route that renders or serves a file — you
+     shouldn't need to touch those call sites again for this migration.
+   - `delete()` removes the object from the bucket.
+3. Activate it: set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
+   `SUPABASE_STORAGE_BUCKET` (see §3), then change the `storage` export at
+   the bottom of `lib/storage.ts` from `new LocalStorageAdapter()` to
+   `new SupabaseStorageAdapter()`.
+4. **Two call sites still assume local storage and need attention at
+   activation time**, both because they use `LocalStorageAdapter`'s extra
+   `.read()` method (reading raw bytes off local disk), which has no
+   Supabase equivalent and isn't part of the `StorageAdapter` interface:
+   - `app/api/assets/[id]/download/route.ts` — currently reads the file
+     locally and streams it back with a `Content-Disposition` header so
+     the browser downloads it with a clean filename. Against Supabase,
+     redirect to `await storage.getUrl(asset.fileUrl)` instead (a 307 to
+     the signed URL) — decide first whether losing the clean-filename
+     `Content-Disposition` behavior is acceptable, or whether it's worth
+     proxy-fetching the bytes through this route instead of redirecting.
+   - `app/api/storage/[...key]/route.ts` — this whole route is
+     local-storage-specific (it's the thing that makes a "permanent" local
+     path safe, by re-checking status on every fetch). It becomes dead
+     code once Supabase is active; nothing should link to it anymore.
 5. Existing local files in `/storage` (gitignored, dev-only fixtures) don't
    need migrating — there's no real production upload history yet.
+6. **Performance note, not yet solved**: pages that render a list of
+   assets (e.g. `/library`) resolve one signed URL per asset today via
+   `Promise.all` in `lib/asset-urls.ts`. That's fine for local storage
+   (near-zero cost) but means N round trips to Supabase per page load
+   once that adapter is active. Supabase's storage API supports
+   `createSignedUrls` (plural, batched) — worth switching to once this
+   adapter is actually live and real page sizes are known, rather than
+   guessing at a batching scheme against a bucket that doesn't exist yet.
 
 ## 3. Required environment variables
 
@@ -97,7 +166,9 @@ template and Vercel's Environment Variables UI for the real values.
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | recommended | From cloud.walletconnect.com. Needed for mobile/WalletConnect wallets in ConnectKit; injected wallets (MetaMask extension) work without it. |
 | `ANTHROPIC_API_KEY` | optional | Powers The Librarian (`/api/librarian`). Without it, the endpoint returns 503 and the chat widget shows a "not configured" message — everything else on the site works fine without it. |
 | `COPYRIGHT_EMAIL` | recommended | Public contact address for formal legal/copyright notices, shown on `/tos`. Without it, the ToS page just says a contact address isn't configured yet — the in-app report system still works regardless. |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (or equivalent) | yes, once storage migrates | Whatever `SupabaseStorageAdapter` (§2) ends up needing — name these to match what you actually implement. |
+| `SUPABASE_URL` | yes, once storage migrates | Project URL, used by `SupabaseStorageAdapter` (§2, already implemented in `lib/storage.ts`). |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes, once storage migrates | **Service role, not anon/public key** — the adapter needs it to upload/delete/sign URLs server-side. Never expose this one to the client. |
+| `SUPABASE_STORAGE_BUCKET` | yes, once storage migrates | Name of the **private** bucket (§2) — e.g. `memevault-assets`. |
 
 ## 4. Pre-deploy safety checks (re-run this list before every prod deploy)
 
@@ -114,9 +185,16 @@ template and Vercel's Environment Variables UI for the real values.
 - [ ] No `.env` file is committed (`git status` should show it untracked;
       `.gitignore` already excludes it — don't remove that entry).
 - [ ] `next build` and `next lint` both pass clean.
-- [ ] The storage visibility check (§2 step 4) is actually wired up on
-      whatever serves files in production — don't deploy with a takedown
-      that doesn't actually revoke the file URL.
+- [ ] **BLOCKER**: if storage has migrated to Supabase, the bucket is
+      **private**, and the manual takedown-then-fetch verification in §2's
+      blocker box has actually been run and passed — not just assumed
+      from the code. This is the single most important check on this
+      list; a public bucket makes every other item here irrelevant to the
+      one legal requirement (CLAUDE.md POSISI LEGAL #4) that takedown
+      actually works.
+- [ ] The connection string in `DATABASE_URL` is the **pooled** one
+      (§1 step 1), not the direct connection — every API request now
+      writes to the database (rate limiting, download events).
 
 ## 5. Vercel deploy order
 
@@ -142,7 +220,10 @@ template and Vercel's Environment Variables UI for the real values.
 7. Smoke test immediately after the first deploy: sign in with an
    `ADMIN_WALLETS` wallet, confirm `/admin` loads; upload a test asset as a
    non-admin wallet and confirm it's visible in `/library`; hit
-   `/api/v1/trending` with no key and confirm the expected 401.
+   `/api/v1/trending` with no key and confirm the expected 401; **if
+   storage has migrated to Supabase, also run the takedown-then-fetch
+   verification from §2's blocker box right now, on this real deploy —
+   don't defer it.**
 8. Only after that smoke test passes, announce/link the production URL.
 
 ---

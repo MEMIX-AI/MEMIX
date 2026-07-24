@@ -6,6 +6,7 @@ import { getClientIp } from "@/lib/ip-hash";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isAssetType, searchAssets } from "@/lib/search";
 import { getAssetById, getTrendingAssets } from "@/lib/assets";
+import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { LIBRARIAN_SYSTEM_PROMPT } from "@/lib/librarian-prompt";
 
 const RATE_LIMIT = 20;
@@ -46,13 +47,13 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "getTrending",
     description:
-      "Get the most-downloaded assets in the library right now, for recommendation requests like 'what's popular'. The day-window is best-effort only — currently an all-time top-downloads approximation, not a true rolling window.",
+      "Get the most-downloaded assets in the library over the last 7 days, for recommendation requests like 'what's popular'.",
     input_schema: {
       type: "object",
       properties: {
         days: {
           type: "number",
-          description: "Rolling window in days (best-effort, currently ignored)",
+          description: "Currently fixed at a 7-day window regardless of this value — accepted for forward compatibility only.",
         },
         limit: {
           type: "number",
@@ -207,13 +208,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const assets = surfacedIds.size
+  const rawAssets = surfacedIds.size
     ? await prisma.asset.findMany({
         where: { id: { in: Array.from(surfacedIds) }, ...publicAssetWhere },
         include: { tags: true },
         take: MAX_SURFACED_ASSETS,
       })
     : [];
+  const assets = await resolveAssetUrlsMany(rawAssets);
 
   return NextResponse.json({ reply: finalText, assets });
 }

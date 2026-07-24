@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAssetById } from "@/lib/assets";
+import { resolveAssetUrls } from "@/lib/asset-urls";
 import {
   assetTypeLabel,
   formatBytes,
@@ -17,8 +18,9 @@ export default async function AssetDetailPage({
 }: {
   params: { id: string };
 }) {
-  const asset = await getAssetById(params.id);
-  if (!asset) notFound();
+  const rawAsset = await getAssetById(params.id);
+  if (!rawAsset) notFound();
+  const asset = await resolveAssetUrls(rawAsset);
 
   const license = licenseBadge(asset.isOriginal);
 

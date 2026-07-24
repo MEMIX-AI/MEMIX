@@ -16,10 +16,12 @@ export async function GET(
   { params }: { params: { key: string[] } },
 ) {
   const key = params.key.join("/");
-  const url = `/api/storage/${key}`;
 
+  // Asset.fileUrl/thumbnailUrl store the bare storage key (see the note
+  // at the top of lib/storage.ts), matching what this route was called
+  // with directly — no path prefix to reconstruct.
   const asset = await prisma.asset.findFirst({
-    where: { OR: [{ fileUrl: url }, { thumbnailUrl: url }] },
+    where: { OR: [{ fileUrl: key }, { thumbnailUrl: key }] },
     select: { status: true, uploader: { select: { status: true } } },
   });
   if (asset && (asset.status !== "ACTIVE" || asset.uploader?.status === "BANNED")) {

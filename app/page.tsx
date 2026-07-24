@@ -1,5 +1,6 @@
 import type { Asset, Tag } from "@prisma/client";
 import { getFeaturedAssets, getFreshAssets, getTrendingAssets } from "@/lib/assets";
+import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { AssetCard } from "@/components/AssetCard";
 import { TerminalHeroDemo } from "@/components/TerminalHeroDemo";
 
@@ -8,10 +9,15 @@ import { TerminalHeroDemo } from "@/components/TerminalHeroDemo";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [featured, trending, fresh] = await Promise.all([
+  const [featuredRaw, trendingRaw, freshRaw] = await Promise.all([
     getFeaturedAssets(8),
     getTrendingAssets(8),
     getFreshAssets(8),
+  ]);
+  const [featured, trending, fresh] = await Promise.all([
+    resolveAssetUrlsMany(featuredRaw),
+    resolveAssetUrlsMany(trendingRaw),
+    resolveAssetUrlsMany(freshRaw),
   ]);
 
   return (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
+import { isStorageKey } from "@/lib/asset-urls";
 
 // Self-service delete only — an uploader removing their own asset. Admin
 // takedowns of *other* people's assets are a separate future admin-panel
@@ -30,12 +31,13 @@ export async function DELETE(
   }
 
   // Soft delete: flip status (hides it from every public query) and drop
-  // the underlying file. The video placeholder is a shared /public asset,
-  // not a per-asset storage object, so it's never deleted here.
-  const fileKey = asset.fileUrl.replace(/^\/api\/storage\//, "");
-  await storage.delete(fileKey);
-  if (asset.thumbnailUrl?.startsWith("/api/storage/")) {
-    await storage.delete(asset.thumbnailUrl.replace(/^\/api\/storage\//, ""));
+  // the underlying file. asset.fileUrl/thumbnailUrl are bare storage keys
+  // (see lib/storage.ts) — the video placeholder is the one exception,
+  // a shared /public asset rather than a per-asset storage object, so
+  // it's never deleted here.
+  await storage.delete(asset.fileUrl);
+  if (asset.thumbnailUrl && isStorageKey(asset.thumbnailUrl)) {
+    await storage.delete(asset.thumbnailUrl);
   }
 
   await prisma.asset.update({

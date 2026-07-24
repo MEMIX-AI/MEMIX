@@ -110,10 +110,9 @@ curl -s "https://your-domain.example/api/v1/trending?limit=5" \
   -H "Authorization: Bearer mvk_..."
 ```
 
-> **Note:** "trending" is currently all-time top-`downloadCount`, not a
-> true rolling `days`-day window — there's no timestamped download log to
-> compute that yet. Same limitation as the trending section on the
-> homepage.
+> **Note:** "trending" is a real rolling 7-day window (top downloads in the
+> last 7 days), backed by a per-download log. `days` is accepted but fixed
+> at 7 regardless of the value passed — not yet configurable.
 
 ### `GET /api/v1/assets/:id/download-url`
 

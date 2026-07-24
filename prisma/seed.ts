@@ -110,7 +110,7 @@ async function main() {
         mimeType: "image/webp",
         folder: "thumbnails",
       });
-      thumbnailUrl = savedThumb.url;
+      thumbnailUrl = savedThumb.key;
     } else if (type === "VIDEO") {
       thumbnailUrl = VIDEO_PLACEHOLDER_THUMBNAIL_URL;
     }
@@ -123,7 +123,7 @@ async function main() {
         title: TITLES[i],
         description: `dev seed fixture asset #${i + 1} — placeholder content for local development only.`,
         type,
-        fileUrl: saved.url,
+        fileUrl: saved.key,
         thumbnailUrl,
         fileSize: saved.size,
         duration: type === "IMAGE" ? null : 30 + i,

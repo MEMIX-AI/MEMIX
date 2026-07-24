@@ -2,14 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
+import { resolveAssetUrls } from "@/lib/asset-urls";
 
 // The most important admin page — every OPEN report, newest first.
 export default async function AdminReportsPage() {
-  const reports = await prisma.report.findMany({
+  const rawReports = await prisma.report.findMany({
     where: { status: "OPEN" },
     orderBy: { createdAt: "desc" },
     include: { asset: true },
   });
+  const reports = await Promise.all(
+    rawReports.map(async (r) => ({ ...r, asset: await resolveAssetUrls(r.asset) })),
+  );
 
   return (
     <div>

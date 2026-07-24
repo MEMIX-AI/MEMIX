@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAssetType, searchAssets } from "@/lib/search";
 import { publicAssetWhere } from "@/lib/asset-visibility";
+import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { AssetCard } from "@/components/AssetCard";
 import { SearchCommandInput } from "@/components/SearchCommandInput";
 
@@ -22,11 +23,12 @@ export default async function LibraryPage({
   const tag = searchParams.tag || undefined;
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
 
-  const [{ assets, total, totalPages }, tags, libraryTotal] = await Promise.all([
+  const [{ assets: rawAssets, total, totalPages }, tags, libraryTotal] = await Promise.all([
     searchAssets({ q, type, tag, page }),
     prisma.tag.findMany({ orderBy: { name: "asc" } }),
     prisma.asset.count({ where: publicAssetWhere }),
   ]);
+  const assets = await resolveAssetUrlsMany(rawAssets);
   const hasActiveFilter = Boolean(q || type || tag);
 
   function hrefWith(overrides: Record<string, string | undefined>): string {

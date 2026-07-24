@@ -15,5 +15,5 @@ export async function GET(
   const asset = await getAssetById(params.id);
   if (!asset) return apiError("asset not found", 404);
 
-  return apiData(serializeAsset(asset, req.nextUrl.origin));
+  return apiData(await serializeAsset(asset, req.nextUrl.origin));
 }

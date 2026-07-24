@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { storage } from "./storage";
+import { isStorageKey } from "./asset-urls";
 
 /**
  * Every mutation here is admin-only and writes to the append-only
@@ -7,10 +8,6 @@ import { storage } from "./storage";
  * /api/admin/* routes) are responsible for the admin auth check —
  * these functions assume the caller is already verified.
  */
-
-function storageKeyFromUrl(url: string): string | null {
-  return url.startsWith("/api/storage/") ? url.replace(/^\/api\/storage\//, "") : null;
-}
 
 // Soft takedown — status flips, but the file stays in storage for the
 // 30-day dispute window (see CLAUDE.md-adjacent instructions). Actual
@@ -68,11 +65,11 @@ export async function deleteAssetPermanently(
 ) {
   const asset = await prisma.asset.findUniqueOrThrow({ where: { id: assetId } });
 
-  const fileKey = storageKeyFromUrl(asset.fileUrl);
-  if (fileKey) await storage.delete(fileKey);
+  if (isStorageKey(asset.fileUrl)) await storage.delete(asset.fileUrl);
 
-  const thumbKey = asset.thumbnailUrl ? storageKeyFromUrl(asset.thumbnailUrl) : null;
-  if (thumbKey) await storage.delete(thumbKey);
+  if (asset.thumbnailUrl && isStorageKey(asset.thumbnailUrl)) {
+    await storage.delete(asset.thumbnailUrl);
+  }
 
   await prisma.asset.update({
     where: { id: assetId },

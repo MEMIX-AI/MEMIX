@@ -8,10 +8,9 @@ const MAX_LIMIT = 50;
 
 // GET /api/v1/trending?limit=&days=
 //
-// `days` is accepted for forward compatibility but currently ignored —
-// same all-time-downloads approximation as getTrendingAssets() elsewhere
-// in the app (see lib/assets.ts TODO: needs a timestamped DownloadEvent
-// log to become a real rolling window).
+// `days` is accepted for forward compatibility but currently ignored — the
+// window is fixed at 7 days (see lib/assets.ts#getTrendingAssets, backed
+// by a real DownloadEvent log, not an all-time approximation anymore).
 export async function GET(req: NextRequest) {
   const auth = await authenticateApiRequest(req);
   if (!auth.ok) return apiError(auth.error, auth.status);
@@ -24,6 +23,7 @@ export async function GET(req: NextRequest) {
 
   const assets = await getTrendingAssets(limit);
   const origin = req.nextUrl.origin;
+  const serialized = await Promise.all(assets.map((asset) => serializeAsset(asset, origin)));
 
-  return apiData(assets.map((asset) => serializeAsset(asset, origin)));
+  return apiData(serialized);
 }

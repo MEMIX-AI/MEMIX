@@ -1,38 +1,47 @@
-// Simple in-memory fixed-window rate limiter — "sederhana" per spec. Resets
-// on server restart and doesn't share state across instances; fine for a
-// single small deployment. Swap for a real store (Redis, etc.) if this ever
-// runs multi-instance.
-interface Bucket {
-  count: number;
-  resetAt: number;
-}
+import { prisma } from "./prisma";
 
-const buckets = new Map<string, Bucket>();
-
+// DB-backed fixed-window rate limiter. Deploying to serverless (Vercel)
+// means a request can land on a fresh process with no shared memory, so an
+// in-memory Map (the earlier version of this file) silently stops
+// enforcing limits — every cold start looks like a brand new caller. This
+// version puts the counter in the same database everything else already
+// uses, so it's consistent regardless of how many processes are running.
+//
+// The window start is baked into the bucket key itself, so a single atomic
+// upsert-increment is enough — no separate read-compare-write step, so no
+// race window between concurrent requests for the same key.
 export interface RateLimitResult {
   ok: boolean;
   remaining: number;
   resetAt: number;
 }
 
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   limit: number,
   windowMs: number,
-): RateLimitResult {
-  const now = Date.now();
-  const existing = buckets.get(key);
+): Promise<RateLimitResult> {
+  const windowStart = Math.floor(Date.now() / windowMs) * windowMs;
+  const resetAt = windowStart + windowMs;
+  const bucketKey = `${key}:${windowStart}`;
 
-  if (!existing || existing.resetAt <= now) {
-    const resetAt = now + windowMs;
-    buckets.set(key, { count: 1, resetAt });
-    return { ok: true, remaining: limit - 1, resetAt };
+  const bucket = await prisma.rateLimitBucket.upsert({
+    where: { key: bucketKey },
+    create: { key: bucketKey, count: 1, resetAt: new Date(resetAt) },
+    update: { count: { increment: 1 } },
+  });
+
+  // Opportunistic cleanup of past windows' rows so this table doesn't grow
+  // forever — cheap to skip most of the time, doesn't need to be exact.
+  if (Math.random() < 0.01) {
+    prisma.rateLimitBucket
+      .deleteMany({ where: { resetAt: { lt: new Date() } } })
+      .catch(() => undefined);
   }
 
-  if (existing.count >= limit) {
-    return { ok: false, remaining: 0, resetAt: existing.resetAt };
-  }
-
-  existing.count += 1;
-  return { ok: true, remaining: limit - existing.count, resetAt: existing.resetAt };
+  return {
+    ok: bucket.count <= limit,
+    remaining: Math.max(0, limit - bucket.count),
+    resetAt,
+  };
 }

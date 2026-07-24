@@ -53,7 +53,7 @@ export async function authenticateApiRequest(req: NextRequest): Promise<ApiAuthR
   }
 
   const limit = TIER_DAILY_LIMIT[record.tier];
-  const rateLimit = checkRateLimit(`apikey:${record.id}`, limit, RATE_WINDOW_MS);
+  const rateLimit = await checkRateLimit(`apikey:${record.id}`, limit, RATE_WINDOW_MS);
   if (!rateLimit.ok) {
     return {
       ok: false,

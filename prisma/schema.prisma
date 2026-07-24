@@ -189,3 +189,15 @@ model ApiKey {
 
   owner User @relation(fields: [ownerWallet], references: [walletAddress])
 }
+
+// DB-backed fixed-window rate limiting, shared across instances — replaces
+// an earlier in-memory Map that silently didn't work under serverless
+// deploy (each invocation can get a fresh process, so in-memory state
+// isn't reliably shared between requests). `key` bakes the window start
+// into itself (e.g. "librarian:1.2.3.4:1784700000000"), so a plain atomic
+// upsert-increment is enough — no read-then-compare-then-write race.
+model RateLimitBucket {
+  key     String   @id
+  count   Int      @default(1)
+  resetAt DateTime
+}

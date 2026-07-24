@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = getClientIp(req);
-  const rateLimit = checkRateLimit(`librarian:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
+  const rateLimit = await checkRateLimit(`librarian:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
   if (!rateLimit.ok) {
     return NextResponse.json(
       { error: "rate limit reached — try again in a bit" },

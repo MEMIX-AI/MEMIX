@@ -62,7 +62,9 @@ export async function POST(req: NextRequest) {
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // See app/api/auth/nonce/route.ts for why this is keyed off the
+    // actual request protocol, not NODE_ENV.
+    secure: req.nextUrl.protocol === "https:",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

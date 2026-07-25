@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
+import { base } from "wagmi/chains";
 import { ConnectKitButton, useSIWE } from "connectkit";
-import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut } from "lucide-react";
+import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, ArrowLeftRight } from "lucide-react";
 import { useAccountRole } from "@/lib/hooks/useAccountRole";
 
 const NAV_LINKS = [
@@ -15,8 +16,18 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
+  const { switchChain, isPending: switchingChain } = useSwitchChain();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
+  // Only Base is a configured chain (lib/wagmi-config.ts) — if a wallet is
+  // connected but sitting on a different network (very common: most
+  // MetaMask installs default to Ethereum Mainnet), wagmi can't resolve a
+  // `chain`, and ConnectKit's own signIn() throws "No chainId found" the
+  // moment sign-in is attempted. That surfaces to a real person as "I
+  // click connect/sign-in and nothing happens" — so this has to be caught
+  // and handled with its own explicit step, not left for the SIWE call to
+  // fail on.
+  const wrongChain = isConnected && chain?.id !== base.id;
   const { isAdmin } = useAccountRole(isSignedIn ? address : undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -72,6 +83,19 @@ export function Navbar() {
                 >
                   <Wallet size={15} strokeWidth={2.25} />
                   connect
+                </button>
+              );
+            }
+
+            if (wrongChain) {
+              return (
+                <button
+                  onClick={() => switchChain({ chainId: base.id })}
+                  className="ml-1 flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-200 hover:bg-warn/15 disabled:opacity-60"
+                  disabled={switchingChain}
+                >
+                  <ArrowLeftRight size={15} strokeWidth={2.25} />
+                  {switchingChain ? "switching…" : "switch to base"}
                 </button>
               );
             }

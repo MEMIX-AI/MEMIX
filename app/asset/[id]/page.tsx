@@ -47,7 +47,7 @@ export default async function AssetDetailPage({
             download
           </a>
 
-          <div className="mb-6 grid grid-cols-2 gap-2.5 rounded-2xl border border-line bg-white p-3 shadow-soft text-sm">
+          <div className="mb-6 grid grid-cols-2 gap-2.5 rounded-2xl border border-line bg-panel p-3 shadow-soft text-sm">
             <SpecCell label="type" value={assetTypeLabel(asset.type)} />
             <SpecCell label="size" value={formatBytes(asset.fileSize)} />
             {asset.duration != null && (

@@ -10,12 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         bg: "var(--bg)",
+        "bg-2": "var(--bg-2)",
         panel: "var(--panel)",
         line: "var(--line)",
         text: "var(--text)",
         dim: "var(--dim)",
         accent: "var(--accent)",
         "accent-2": "var(--accent-2)",
+        "accent-3": "var(--accent-3)",
         ok: "var(--ok)",
         warn: "var(--warn)",
       },

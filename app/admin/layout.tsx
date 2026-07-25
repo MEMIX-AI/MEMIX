@@ -27,7 +27,7 @@ export default async function AdminLayout({
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-      <nav className="mb-8 flex flex-wrap gap-1.5 rounded-full border border-line bg-white p-1.5 shadow-soft w-fit">
+      <nav className="mb-8 flex flex-wrap gap-1.5 rounded-full border border-line bg-panel p-1.5 shadow-soft w-fit">
         {links.map((l) => (
           <Link
             key={l.href}

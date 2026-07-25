@@ -85,7 +85,7 @@ export function LibrarianWidget() {
               <Sparkles size={14} strokeWidth={2.25} />
               librarian
             </span>
-            <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-panel" />
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 text-sm">
@@ -104,7 +104,7 @@ export function LibrarianWidget() {
                   </p>
                 ) : (
                   <>
-                    <p className="w-fit max-w-[90%] rounded-2xl rounded-bl-md border border-line bg-white px-3.5 py-2 text-text shadow-soft">
+                    <p className="w-fit max-w-[90%] rounded-2xl rounded-bl-md border border-line bg-panel px-3.5 py-2 text-text shadow-soft">
                       {m.content}
                     </p>
                     {m.assets && m.assets.length > 0 && (
@@ -123,7 +123,7 @@ export function LibrarianWidget() {
             {error && <p className="text-warn">{error}</p>}
           </div>
 
-          <div className="flex items-center gap-2 border-t border-line bg-white/60 px-3.5 py-3">
+          <div className="flex items-center gap-2 border-t border-line bg-panel/60 px-3.5 py-3">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -132,7 +132,7 @@ export function LibrarianWidget() {
               }}
               placeholder="find a fail sound effect"
               disabled={sending}
-              className="flex-1 rounded-full border border-line bg-white px-4 py-2 text-sm text-text outline-none transition-colors placeholder:text-dim focus:border-accent/50"
+              className="flex-1 rounded-full border border-line bg-panel px-4 py-2 text-sm text-text outline-none transition-colors placeholder:text-dim focus:border-accent/50"
             />
             <button
               onClick={send}

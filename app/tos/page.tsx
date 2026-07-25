@@ -17,7 +17,7 @@ export default function TosPage() {
       </p>
 
       <div className="flex flex-col gap-4 text-dim">
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">1. what memevault is</p>
           <p className="leading-relaxed">
             memevault is a free library of user-uploaded memes — images,
@@ -28,7 +28,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">2. uploading content</p>
           <p className="leading-relaxed">
             when you connect a wallet and upload an asset, you confirm that
@@ -43,7 +43,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">3. no paywalled third-party content</p>
           <p className="leading-relaxed">
             content you don&apos;t hold the rights to never goes behind a
@@ -53,7 +53,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">4. reports &amp; takedowns</p>
           <p className="leading-relaxed">
             anyone can report any asset, no account required. every report
@@ -63,7 +63,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">5. banned accounts</p>
           <p className="leading-relaxed">
             a banned wallet can no longer upload, and its existing uploads
@@ -72,7 +72,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">6. no warranty</p>
           <p className="leading-relaxed">
             memevault is provided as-is. we make no guarantee about
@@ -80,7 +80,7 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">7. copyright / legal contact</p>
           <p className="leading-relaxed">
             the in-app report button (on every asset) is the fastest way to

@@ -22,7 +22,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-      <div className="mb-6 flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-dim shadow-soft w-fit">
+      <div className="mb-6 flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-medium text-dim shadow-soft w-fit">
         <span className="h-2 w-2 animate-pulse rounded-full bg-ok" />
         library is live · free for humans
       </div>

@@ -15,13 +15,13 @@ export default async function UploadPage() {
       <h1 className="mb-6 font-heading text-2xl font-bold text-text">upload</h1>
 
       {!user ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-line bg-white p-6 text-sm text-dim shadow-soft">
+        <div className="flex items-start gap-3 rounded-2xl border border-line bg-panel p-6 text-sm text-dim shadow-soft">
           <Wallet size={18} strokeWidth={2.25} className="mt-0.5 shrink-0 text-accent" />
           connect your wallet to upload. uploading is the one thing on
           memevault that needs a wallet — browsing and downloading never do.
         </div>
       ) : user.status === "BANNED" ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-line bg-white p-6 text-sm text-dim shadow-soft">
+        <div className="flex items-start gap-3 rounded-2xl border border-line bg-panel p-6 text-sm text-dim shadow-soft">
           <Ban size={18} strokeWidth={2.25} className="mt-0.5 shrink-0 text-warn" />
           this account is banned. uploads are disabled.
         </div>

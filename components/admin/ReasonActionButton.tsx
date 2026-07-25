@@ -62,7 +62,7 @@ export function ReasonActionButton({
         className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
           variant === "accent"
             ? "gradient-brand text-white shadow-soft hover:shadow-glow"
-            : "border border-line bg-white text-dim shadow-soft hover:border-accent/40 hover:text-text"
+            : "border border-line bg-panel text-dim shadow-soft hover:border-accent/40 hover:text-text"
         }`}
       >
         {label}
@@ -74,7 +74,7 @@ export function ReasonActionButton({
           onClick={() => !submitting && setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-[24px] border border-line bg-white p-6 shadow-soft-lg"
+            className="w-full max-w-sm rounded-[24px] border border-line bg-panel p-6 shadow-soft-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="mb-4 font-heading text-lg font-bold text-text">{modalTitle}</p>
@@ -112,7 +112,7 @@ export function ReasonActionButton({
               <button
                 onClick={() => setOpen(false)}
                 disabled={submitting}
-                className="rounded-full border border-line bg-white px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
+                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
               >
                 cancel
               </button>

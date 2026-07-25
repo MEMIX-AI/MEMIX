@@ -21,13 +21,13 @@ export default async function AdminReportsPage() {
       <h1 className="mb-5 font-heading text-2xl font-bold text-text">report queue</h1>
 
       {reports.length === 0 ? (
-        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+        <p className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           no open reports.
         </p>
       ) : (
         <div className="flex flex-col gap-4">
           {reports.map((report) => (
-            <div key={report.id} className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+            <div key={report.id} className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
               <div className="flex gap-4">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
                   {report.asset.thumbnailUrl ? (

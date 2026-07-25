@@ -156,7 +156,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
             setDragOver(false);
             handleFile(e.dataTransfer.files?.[0] ?? null);
           }}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border-2 border-dashed bg-white p-10 text-center transition-all duration-200 ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border-2 border-dashed bg-panel p-10 text-center transition-all duration-200 ${
             dragOver
               ? "border-accent shadow-glow"
               : "border-line hover:border-accent/50 hover:shadow-soft"
@@ -237,7 +237,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="sad-trombone-v2.mp3"
-          className="w-full rounded-2xl border border-line bg-white px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
+          className="w-full rounded-2xl border border-line bg-panel px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
       </div>
 
@@ -251,7 +251,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder="what is this, when would someone use it?"
-          className="w-full rounded-2xl border border-line bg-white px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
+          className="w-full rounded-2xl border border-line bg-panel px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
       </div>
 
@@ -260,7 +260,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           tags (max {MAX_TAGS})
         </label>
         <div className="relative">
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white px-3.5 py-2.5 shadow-soft transition-colors focus-within:border-accent/50">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-panel px-3.5 py-2.5 shadow-soft transition-colors focus-within:border-accent/50">
             {tags.map((t) => (
               <span
                 key={t}
@@ -294,7 +294,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
             )}
           </div>
           {suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 z-10 mt-1.5 overflow-hidden rounded-2xl border border-line bg-white text-sm shadow-soft-lg">
+            <div className="absolute left-0 right-0 z-10 mt-1.5 overflow-hidden rounded-2xl border border-line bg-panel text-sm shadow-soft-lg">
               {suggestions.map((s) => (
                 <button
                   type="button"
@@ -320,7 +320,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
         this is my original work
       </label>
 
-      <div className="flex flex-col gap-3.5 rounded-[24px] border border-line bg-white p-5 shadow-soft">
+      <div className="flex flex-col gap-3.5 rounded-[24px] border border-line bg-panel p-5 shadow-soft">
         <p className="font-heading font-semibold text-text">before you upload</p>
 
         <label className="flex items-start gap-2.5 text-sm">

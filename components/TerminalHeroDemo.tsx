@@ -14,7 +14,7 @@ const DEMO_RESULTS = [
 
 export function TerminalHeroDemo() {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-line bg-white shadow-soft-lg">
+    <div className="overflow-hidden rounded-[24px] border border-line bg-panel shadow-soft-lg">
       <div className="gradient-brand flex items-center gap-2 px-5 py-3 text-xs font-medium text-white/90">
         <Sparkles size={14} strokeWidth={2.25} />
         <span>the librarian — try a search</span>

@@ -41,7 +41,7 @@ export function MyUploadCard({ asset }: { asset: OwnAsset }) {
   const isDeleted = asset.status === "TAKEN_DOWN";
 
   return (
-    <div className="rounded-2xl border border-line bg-white p-4 shadow-soft transition-shadow duration-200 hover:shadow-soft-lg">
+    <div className="rounded-2xl border border-line bg-panel p-4 shadow-soft transition-shadow duration-200 hover:shadow-soft-lg">
       <div className="mb-2.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-dim">
         <span>{assetTypeLabel(asset.type)}</span>
         <span className={`rounded-full border px-2 py-0.5 ${STATUS_STYLE[asset.status]}`}>

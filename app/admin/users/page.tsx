@@ -26,7 +26,7 @@ export default async function AdminUsersPage() {
       <h1 className="mb-5 font-heading text-2xl font-bold text-text">user management</h1>
 
       {users.length === 0 ? (
-        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+        <p className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           no users yet.
         </p>
       ) : (
@@ -36,7 +36,7 @@ export default async function AdminUsersPage() {
             return (
               <div
                 key={user.walletAddress}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-white p-4 text-sm shadow-soft"
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-panel p-4 text-sm shadow-soft"
               >
                 <span className="font-heading font-semibold text-text" title={user.walletAddress}>
                   {shortenWallet(user.walletAddress)}

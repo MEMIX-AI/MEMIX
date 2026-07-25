@@ -23,7 +23,7 @@ export default async function MyUploadsPage() {
       <h1 className="mb-6 font-heading text-2xl font-bold text-text">my uploads</h1>
 
       {user.status === "BANNED" && (
-        <p className="mb-6 flex items-center gap-2.5 rounded-2xl border border-line bg-white px-4 py-3 text-sm text-dim shadow-soft">
+        <p className="mb-6 flex items-center gap-2.5 rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-dim shadow-soft">
           <Ban size={16} strokeWidth={2.25} className="shrink-0 text-warn" />
           this account is banned. uploads are disabled and existing assets
           stay hidden from the public library.
@@ -31,7 +31,7 @@ export default async function MyUploadsPage() {
       )}
 
       {assets.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+        <div className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           {user.status === "BANNED" ? (
             "nothing uploaded yet."
           ) : (

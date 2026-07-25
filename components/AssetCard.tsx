@@ -13,7 +13,7 @@ export function AssetCard({ asset }: { asset: AssetWithTags }) {
   return (
     <Link
       href={`/asset/${asset.id}`}
-      className="card-lift group flex flex-col gap-3 rounded-[20px] border border-line bg-white p-4 shadow-soft"
+      className="card-lift group flex flex-col gap-3 rounded-[20px] border border-[rgba(30,120,130,0.12)] bg-white p-4 shadow-[0_12px_30px_rgba(20,120,120,0.08)]"
     >
       <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-dim">
         <span>{assetTypeLabel(asset.type)}</span>
@@ -23,7 +23,7 @@ export function AssetCard({ asset }: { asset: AssetWithTags }) {
         </span>
       </div>
 
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-line bg-bg">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[18px] border border-line bg-bg">
         {asset.thumbnailUrl ? (
           <Image
             src={asset.thumbnailUrl}

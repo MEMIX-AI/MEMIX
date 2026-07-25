@@ -3,13 +3,13 @@
 // examples from the design brief get their exact requested color; any
 // other tag falls back to a stable hash into the same palette.
 const TAG_PALETTE = [
-  { bg: "#dcfce7", text: "#15803d", border: "#bbf7d0" }, // green
-  { bg: "#ffedd5", text: "#c2410c", border: "#fed7aa" }, // orange
-  { bg: "#dbeafe", text: "#1d4ed8", border: "#bfdbfe" }, // blue
-  { bg: "#f3e8ff", text: "#7e22ce", border: "#e9d5ff" }, // purple
-  { bg: "#fce7f3", text: "#be185d", border: "#fbcfe8" }, // pink
-  { bg: "#fef9c3", text: "#a16207", border: "#fef08a" }, // yellow
-  { bg: "#cffafe", text: "#0e7490", border: "#a5f3fc" }, // cyan
+  { bg: "#d7f5ec", text: "#0f7a5c", border: "#b7e9d9" }, // mint
+  { bg: "#d3f3f5", text: "#0e7c86", border: "#aee6ea" }, // cyan
+  { bg: "#cdeeee", text: "#0d6e73", border: "#a3dedd" }, // turquoise
+  { bg: "#dbe9fb", text: "#2456a8", border: "#bcd7f7" }, // soft blue
+  { bg: "#cdeae6", text: "#106b64", border: "#a4dbd3" }, // teal
+  { bg: "#e4f7e0", text: "#3c8a4a", border: "#c3ecba" }, // pale green
+  { bg: "#e6f4fb", text: "#1f6f95", border: "#c4e6f6" }, // sky
 ] as const;
 
 const NAMED_INDEX: Record<string, number> = {
@@ -17,6 +17,7 @@ const NAMED_INDEX: Record<string, number> = {
   gaming: 1,
   cat: 2,
   reaction: 3,
+  video: 4,
 };
 
 export function tagColor(name: string): (typeof TAG_PALETTE)[number] {

@@ -47,7 +47,7 @@ export function AudioPlayer({
   }
 
   return (
-    <div className="rounded-[24px] border border-line bg-white p-7 shadow-soft">
+    <div className="rounded-[24px] border border-line bg-panel p-7 shadow-soft">
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio
         ref={audioRef}

@@ -52,7 +52,7 @@ export function ReportModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-[24px] border border-line bg-white p-6 shadow-soft-lg"
+        className="w-full max-w-sm rounded-[24px] border border-line bg-panel p-6 shadow-soft-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "done" ? (
@@ -67,7 +67,7 @@ export function ReportModal({
             </p>
             <button
               onClick={onClose}
-              className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
             >
               close
             </button>
@@ -88,7 +88,7 @@ export function ReportModal({
                   className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     reason === r.value
                       ? "gradient-brand text-white shadow-glow"
-                      : "border border-line bg-white text-dim hover:border-accent/40"
+                      : "border border-line bg-panel text-dim hover:border-accent/40"
                   }`}
                 >
                   {r.label}
@@ -145,7 +145,7 @@ export function ReportModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-line bg-white px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
+                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
               >
                 cancel
               </button>

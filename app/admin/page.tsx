@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
       <h1 className="mb-5 font-heading text-2xl font-bold text-text">dashboard</h1>
       <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-line bg-white p-4 shadow-soft">
+          <div key={s.label} className="rounded-2xl border border-line bg-panel p-4 shadow-soft">
             <span className="gradient-brand mb-3 flex h-9 w-9 items-center justify-center rounded-xl text-white">
               <s.icon size={16} strokeWidth={2.25} />
             </span>

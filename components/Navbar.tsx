@@ -59,7 +59,7 @@ export function Navbar() {
               className={`rounded-full px-4 py-2 font-medium transition-all duration-200 ${
                 active
                   ? "gradient-brand text-white shadow-glow"
-                  : "text-dim hover:bg-white hover:text-text hover:shadow-soft"
+                  : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
               }`}
             >
               {link.label}
@@ -104,7 +104,7 @@ export function Navbar() {
               return (
                 <button
                   onClick={() => signIn()}
-                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
+                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
                   disabled={isLoading}
                 >
                   <Wallet size={15} strokeWidth={2.25} />
@@ -121,7 +121,7 @@ export function Navbar() {
               <div className="relative ml-1" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
+                  className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-brand text-white">
                     <User size={13} strokeWidth={2.5} />
@@ -136,7 +136,7 @@ export function Navbar() {
                   <ChevronDown size={14} className={`text-dim transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-line bg-white text-sm shadow-soft-lg">
+                  <div className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-line bg-panel text-sm shadow-soft-lg">
                     <Link
                       href="/my-uploads"
                       className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"

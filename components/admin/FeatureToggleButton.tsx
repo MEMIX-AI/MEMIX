@@ -35,7 +35,7 @@ export function FeatureToggleButton({
       className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 disabled:opacity-50 ${
         featured
           ? "border border-accent/30 bg-accent/10 text-accent"
-          : "border border-line bg-white text-dim shadow-soft hover:border-accent/40"
+          : "border border-line bg-panel text-dim shadow-soft hover:border-accent/40"
       }`}
     >
       <Star size={13} strokeWidth={2.25} fill={featured ? "currentColor" : "none"} />

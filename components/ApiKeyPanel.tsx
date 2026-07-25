@@ -51,7 +51,7 @@ export function ApiKeyPanel({
 
   if (revealedKey) {
     return (
-      <div className="rounded-[24px] border border-accent/30 bg-white p-6 shadow-soft-lg">
+      <div className="rounded-[24px] border border-accent/30 bg-panel p-6 shadow-soft-lg">
         <p className="mb-2 flex items-center gap-2 font-heading font-bold text-accent">
           <KeyRound size={18} strokeWidth={2.25} />
           your new key (shown once)
@@ -65,7 +65,7 @@ export function ApiKeyPanel({
         </div>
         <button
           onClick={copy}
-          className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+          className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
         >
           {copied ? <Check size={14} strokeWidth={2.5} className="text-ok" /> : <Copy size={14} strokeWidth={2.25} />}
           {copied ? "copied" : "copy"}
@@ -84,7 +84,7 @@ export function ApiKeyPanel({
   }
 
   return (
-    <div className="rounded-[24px] border border-line bg-white p-6 shadow-soft">
+    <div className="rounded-[24px] border border-line bg-panel p-6 shadow-soft">
       {hasKey ? (
         <>
           <div className="mb-5 grid grid-cols-2 gap-2.5 text-sm">
@@ -117,7 +117,7 @@ export function ApiKeyPanel({
           {!confirming ? (
             <button
               onClick={() => setConfirming(true)}
-              className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-200 hover:border-accent/40 hover:text-text"
+              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-200 hover:border-accent/40 hover:text-text"
             >
               regenerate
             </button>

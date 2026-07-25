@@ -42,7 +42,7 @@ export default async function AdminAssetsPage({
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
               status === f.value
                 ? "gradient-brand text-white shadow-glow"
-                : "border border-line bg-white text-dim shadow-soft hover:border-accent/40"
+                : "border border-line bg-panel text-dim shadow-soft hover:border-accent/40"
             }`}
           >
             {f.label}
@@ -51,7 +51,7 @@ export default async function AdminAssetsPage({
       </div>
 
       {assets.length === 0 ? (
-        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+        <p className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           no assets match this filter.
         </p>
       ) : (
@@ -59,7 +59,7 @@ export default async function AdminAssetsPage({
           {assets.map((asset) => (
             <div
               key={asset.id}
-              className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-white p-4 shadow-soft"
+              className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-soft"
             >
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
                 {asset.thumbnailUrl ? (

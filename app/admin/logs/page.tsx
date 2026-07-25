@@ -35,18 +35,18 @@ export default async function AdminLogsPage({
           name="assetQuery"
           defaultValue={searchParams.assetQuery}
           placeholder="asset id or title"
-          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
+          className="rounded-full border border-line bg-panel px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
         <input
           name="actionBy"
           defaultValue={searchParams.actionBy}
           placeholder="admin wallet"
-          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
+          className="rounded-full border border-line bg-panel px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
         <select
           name="action"
           defaultValue={searchParams.action ?? ""}
-          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
+          className="rounded-full border border-line bg-panel px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         >
           <option value="">all actions</option>
           {TAKEDOWN_ACTIONS.map((a) => (
@@ -57,7 +57,7 @@ export default async function AdminLogsPage({
         </select>
         <button
           type="submit"
-          className="rounded-full border border-line bg-white px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+          className="rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
         >
           filter
         </button>
@@ -71,13 +71,13 @@ export default async function AdminLogsPage({
       </form>
 
       {logs.length === 0 ? (
-        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+        <p className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           no matching log entries.
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
           {logs.map((log) => (
-            <div key={log.id} className="rounded-2xl border border-line bg-white p-4 text-sm shadow-soft">
+            <div key={log.id} className="rounded-2xl border border-line bg-panel p-4 text-sm shadow-soft">
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-dim">
                 <span className="text-accent">
                   {log.action.replace("_", " ").toLowerCase()}

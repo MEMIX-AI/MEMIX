@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 const REASONS = [
   { value: "COPYRIGHT", label: "copyright" },
@@ -47,32 +48,35 @@ export function ReportModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-text/30 px-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded border border-line bg-panel p-6"
+        className="w-full max-w-sm rounded-[24px] border border-line bg-white p-6 shadow-soft-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "done" ? (
           <>
-            <p className="mb-2 text-ok">✓ report received</p>
-            <p className="mb-4 text-sm text-dim">
-              › thanks — a moderator will take a look. this stays in the
+            <p className="mb-2 flex items-center gap-2 font-heading font-bold text-ok">
+              <CheckCircle2 size={20} strokeWidth={2.25} />
+              report received
+            </p>
+            <p className="mb-5 text-sm leading-relaxed text-dim">
+              thanks — a moderator will take a look. this stays in the
               queue with a timestamp until it&apos;s reviewed.
             </p>
             <button
               onClick={onClose}
-              className="rounded border border-line px-3 py-1 hover:border-accent"
+              className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
             >
               close
             </button>
           </>
         ) : (
           <form onSubmit={submit}>
-            <p className="mb-4 text-accent">▍ report this asset</p>
+            <p className="mb-5 font-heading text-lg font-bold text-text">report this asset</p>
 
-            <label className="mb-1 block text-xs uppercase text-dim">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-dim">
               reason
             </label>
             <div className="mb-4 grid grid-cols-2 gap-2">
@@ -81,10 +85,10 @@ export function ReportModal({
                   type="button"
                   key={r.value}
                   onClick={() => setReason(r.value)}
-                  className={`rounded border px-2 py-1 text-sm ${
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     reason === r.value
-                      ? "border-accent text-accent"
-                      : "border-line text-dim"
+                      ? "gradient-brand text-white shadow-glow"
+                      : "border border-line bg-white text-dim hover:border-accent/40"
                   }`}
                 >
                   {r.label}
@@ -94,7 +98,7 @@ export function ReportModal({
 
             <label
               htmlFor="report-detail"
-              className="mb-1 block text-xs uppercase text-dim"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-dim"
             >
               detail
             </label>
@@ -105,12 +109,12 @@ export function ReportModal({
               onChange={(e) => setDetail(e.target.value)}
               rows={3}
               placeholder="what's wrong with this asset?"
-              className="mb-4 w-full rounded border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+              className="mb-4 w-full rounded-2xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
             />
 
             <label
               htmlFor="report-email"
-              className="mb-1 block text-xs uppercase text-dim"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-dim"
             >
               email (optional)
             </label>
@@ -120,12 +124,13 @@ export function ReportModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="for follow-up, if you want one"
-              className="mb-4 w-full rounded border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+              className="mb-4 w-full rounded-2xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
             />
 
             {status === "error" && (
-              <p className="mb-4 text-sm text-dim">
-                ✕ something went wrong, try again.
+              <p className="mb-4 flex items-center gap-1.5 text-sm text-warn">
+                <XCircle size={14} strokeWidth={2.25} />
+                something went wrong, try again.
               </p>
             )}
 
@@ -133,14 +138,14 @@ export function ReportModal({
               <button
                 type="submit"
                 disabled={status === "submitting"}
-                className="flex-1 rounded bg-accent px-4 py-2 font-bold text-bg disabled:opacity-60"
+                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-60"
               >
                 {status === "submitting" ? "sending..." : "submit report"}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded border border-line px-4 py-2 text-dim hover:border-accent"
+                className="rounded-full border border-line bg-white px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
               >
                 cancel
               </button>

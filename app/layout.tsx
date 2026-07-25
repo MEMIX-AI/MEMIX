@@ -1,9 +1,26 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { LibrarianWidget } from "@/components/librarian/LibrarianWidget";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-code",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "memevault",
@@ -16,12 +33,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="antialiased">
+        {/* Decorative background layer — fixed behind everything, never
+            affects document flow/layout. Soft gradient wash + blurred
+            color blobs + a faint dot grid, per the redesign brief. */}
+        <div aria-hidden className="bg-decoration">
+          <div className="bg-blob bg-blob-violet" />
+          <div className="bg-blob bg-blob-blue" />
+          <div className="bg-blob bg-blob-pink" />
+          <div className="bg-dots" />
+        </div>
+
         <Web3Provider>
-          <div className="min-h-screen flex flex-col">
+          <div className="page-enter relative flex min-h-screen flex-col">
             <Navbar />
-            <div className="flex-1 flex flex-col">{children}</div>
+            <div className="flex flex-1 flex-col">{children}</div>
             <Footer />
           </div>
           <LibrarianWidget />

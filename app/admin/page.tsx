@@ -1,5 +1,5 @@
+import { FolderOpen, Download, Flag, ShieldOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { SpecCell } from "@/components/SpecCell";
 
 export default async function AdminDashboardPage() {
   const [totalAssets, downloadAgg, openReports, bannedUsers] = await Promise.all([
@@ -9,17 +9,26 @@ export default async function AdminDashboardPage() {
     prisma.user.count({ where: { status: "BANNED" } }),
   ]);
 
+  const stats = [
+    { label: "total assets", value: totalAssets, icon: FolderOpen },
+    { label: "downloads", value: downloadAgg._sum.downloadCount ?? 0, icon: Download },
+    { label: "open reports", value: openReports, icon: Flag },
+    { label: "banned users", value: bannedUsers, icon: ShieldOff },
+  ];
+
   return (
     <div>
-      <p className="mb-4 text-accent">▍ dashboard</p>
-      <div className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded border border-line bg-line sm:grid-cols-4">
-        <SpecCell label="total assets" value={String(totalAssets)} />
-        <SpecCell
-          label="downloads"
-          value={String(downloadAgg._sum.downloadCount ?? 0)}
-        />
-        <SpecCell label="open reports" value={String(openReports)} />
-        <SpecCell label="banned users" value={String(bannedUsers)} />
+      <h1 className="mb-5 font-heading text-2xl font-bold text-text">dashboard</h1>
+      <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded-2xl border border-line bg-white p-4 shadow-soft">
+            <span className="gradient-brand mb-3 flex h-9 w-9 items-center justify-center rounded-xl text-white">
+              <s.icon size={16} strokeWidth={2.25} />
+            </span>
+            <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-dim">{s.label}</p>
+            <p className="font-heading text-xl font-bold text-text">{s.value}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

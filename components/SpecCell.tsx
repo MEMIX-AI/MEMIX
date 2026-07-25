@@ -11,9 +11,9 @@ export function SpecCell({
   span2?: boolean;
 }) {
   return (
-    <div className={`bg-panel px-3 py-2 ${span2 ? "col-span-2" : ""}`}>
-      <p className="mb-1 text-[10px] uppercase text-dim">{label}</p>
-      <p className="font-bold">{value}</p>
+    <div className={`rounded-xl bg-bg px-3.5 py-2.5 ${span2 ? "col-span-2" : ""}`}>
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-dim">{label}</p>
+      <p className="font-heading font-semibold text-text">{value}</p>
     </div>
   );
 }

@@ -15,19 +15,20 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <SIWEProvider {...siweConfig}>
           <ConnectKitProvider
-            theme="midnight"
+            theme="soft"
             customTheme={{
               "--ck-font-family":
-                "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-              "--ck-border-radius": "6px",
-              "--ck-accent-color": "#ffd23f",
-              "--ck-accent-text-color": "#0b0d10",
-              "--ck-body-background": "#11141a",
-              "--ck-body-background-secondary": "#0b0d10",
-              "--ck-body-color": "#e8e6e0",
-              "--ck-body-color-muted": "#8a919e",
-              "--ck-body-divider": "#232833",
-              "--ck-focus-color": "#ffd23f",
+                "var(--font-body), ui-sans-serif, system-ui, sans-serif",
+              "--ck-border-radius": "20px",
+              "--ck-accent-color": "#6d5df6",
+              "--ck-accent-text-color": "#ffffff",
+              "--ck-body-background": "#ffffff",
+              "--ck-body-background-secondary": "#f8fafc",
+              "--ck-body-color": "#111827",
+              "--ck-body-color-muted": "#6b7280",
+              "--ck-body-divider": "#e5e7eb",
+              "--ck-focus-color": "#6d5df6",
+              "--ck-primary-button-border-radius": "9999px",
             }}
           >
             {children}

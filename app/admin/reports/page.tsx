@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ImageOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
 import { resolveAssetUrls } from "@/lib/asset-urls";
@@ -17,17 +18,19 @@ export default async function AdminReportsPage() {
 
   return (
     <div>
-      <p className="mb-4 text-accent">▍ report queue</p>
+      <h1 className="mb-5 font-heading text-2xl font-bold text-text">report queue</h1>
 
       {reports.length === 0 ? (
-        <p className="text-sm text-dim">› no open reports.</p>
+        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+          no open reports.
+        </p>
       ) : (
         <div className="flex flex-col gap-4">
           {reports.map((report) => (
-            <div key={report.id} className="rounded border border-line bg-panel p-4">
+            <div key={report.id} className="rounded-2xl border border-line bg-white p-5 shadow-soft">
               <div className="flex gap-4">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-line bg-bg">
-                  {report.asset.thumbnailUrl && (
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-bg">
+                  {report.asset.thumbnailUrl ? (
                     <Image
                       src={report.asset.thumbnailUrl}
                       alt=""
@@ -35,20 +38,24 @@ export default async function AdminReportsPage() {
                       sizes="64px"
                       className="object-cover"
                     />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-dim/50">
+                      <ImageOff size={18} strokeWidth={1.75} />
+                    </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/asset/${report.asset.id}`}
                     target="_blank"
-                    className="font-bold hover:text-accent"
+                    className="font-heading font-semibold text-text hover:text-accent"
                   >
                     {report.asset.title}
                   </Link>
-                  <p className="text-xs uppercase text-dim">
+                  <p className="text-xs font-medium uppercase tracking-wide text-dim">
                     {report.asset.type} · {report.asset.status.toLowerCase()}
                   </p>
-                  <p className="mt-2 text-sm">
+                  <p className="mt-2 text-sm text-text">
                     <span className="text-dim">reason:</span>{" "}
                     {report.reason.toLowerCase()}
                   </p>
@@ -64,7 +71,7 @@ export default async function AdminReportsPage() {
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <ReasonActionButton
                   label="takedown"
                   modalTitle="takedown asset"

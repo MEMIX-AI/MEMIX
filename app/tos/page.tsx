@@ -9,13 +9,17 @@ export default function TosPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10 text-sm">
-      <p className="mb-1 text-accent">▍ terms of service &amp; content policy</p>
-      <p className="mb-8 text-xs text-dim">version {CURRENT_TOS_VERSION}</p>
+      <h1 className="mb-1 font-heading text-2xl font-bold text-text">
+        terms of service &amp; content policy
+      </h1>
+      <p className="mb-8 text-xs font-medium uppercase tracking-wide text-dim">
+        version {CURRENT_TOS_VERSION}
+      </p>
 
-      <div className="flex flex-col gap-6 text-dim">
-        <section>
-          <p className="mb-2 font-bold text-text">1. what memevault is</p>
-          <p>
+      <div className="flex flex-col gap-4 text-dim">
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">1. what memevault is</p>
+          <p className="leading-relaxed">
             memevault is a free library of user-uploaded memes — images,
             video, sound. anyone can browse, search, and download without an
             account, a wallet, or payment. we don&apos;t upload content
@@ -24,9 +28,9 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">2. uploading content</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">2. uploading content</p>
+          <p className="leading-relaxed">
             when you connect a wallet and upload an asset, you confirm that
             you own it or otherwise have the right to share it, and that it
             doesn&apos;t infringe anyone else&apos;s copyright. that
@@ -39,9 +43,9 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">3. no paywalled third-party content</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">3. no paywalled third-party content</p>
+          <p className="leading-relaxed">
             content you don&apos;t hold the rights to never goes behind a
             paywall or paid feature on memevault, regardless of your
             account status. only original work from a verified creator can
@@ -49,9 +53,9 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">4. reports &amp; takedowns</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">4. reports &amp; takedowns</p>
+          <p className="leading-relaxed">
             anyone can report any asset, no account required. every report
             is queued for review. admins can take an asset down, restore it,
             delete it outright, or ban an uploader — every one of those
@@ -59,31 +63,31 @@ export default function TosPage() {
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">5. banned accounts</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">5. banned accounts</p>
+          <p className="leading-relaxed">
             a banned wallet can no longer upload, and its existing uploads
             are hidden from the public library. this doesn&apos;t erase the
             underlying records.
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">6. no warranty</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">6. no warranty</p>
+          <p className="leading-relaxed">
             memevault is provided as-is. we make no guarantee about
             uptime, accuracy, or fitness for any particular purpose.
           </p>
         </section>
 
-        <section>
-          <p className="mb-2 font-bold text-text">7. copyright / legal contact</p>
-          <p>
+        <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <p className="mb-2 font-heading font-semibold text-text">7. copyright / legal contact</p>
+          <p className="leading-relaxed">
             the in-app report button (on every asset) is the fastest way to
             flag something — it goes straight into the admin queue. for
             formal legal notices,{" "}
             {copyrightEmail ? (
-              <a href={`mailto:${copyrightEmail}`} className="underline hover:text-accent">
+              <a href={`mailto:${copyrightEmail}`} className="font-medium text-accent underline">
                 {copyrightEmail}
               </a>
             ) : (

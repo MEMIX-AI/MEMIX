@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 
 export function FeatureToggleButton({
   assetId,
@@ -31,13 +32,14 @@ export function FeatureToggleButton({
     <button
       onClick={toggle}
       disabled={loading}
-      className={`rounded border px-3 py-1 text-sm disabled:opacity-50 ${
+      className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 disabled:opacity-50 ${
         featured
-          ? "border-accent text-accent"
-          : "border-line text-dim hover:border-accent"
+          ? "border border-accent/30 bg-accent/10 text-accent"
+          : "border border-line bg-white text-dim shadow-soft hover:border-accent/40"
       }`}
     >
-      {featured ? "★ featured" : "☆ feature"}
+      <Star size={13} strokeWidth={2.25} fill={featured ? "currentColor" : "none"} />
+      {featured ? "featured" : "feature"}
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { buildTakedownLogWhere, TAKEDOWN_ACTIONS } from "@/lib/takedown-log-query";
 import { shortenWallet } from "@/lib/format";
@@ -27,25 +28,25 @@ export default async function AdminLogsPage({
 
   return (
     <div>
-      <p className="mb-4 text-accent">▍ takedown log</p>
+      <h1 className="mb-5 font-heading text-2xl font-bold text-text">takedown log</h1>
 
-      <form method="GET" className="mb-4 flex flex-wrap gap-2 text-sm">
+      <form method="GET" className="mb-5 flex flex-wrap items-center gap-2 text-sm">
         <input
           name="assetQuery"
           defaultValue={searchParams.assetQuery}
           placeholder="asset id or title"
-          className="rounded border border-line bg-bg px-3 py-1.5 text-text outline-none focus:border-accent"
+          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
         <input
           name="actionBy"
           defaultValue={searchParams.actionBy}
           placeholder="admin wallet"
-          className="rounded border border-line bg-bg px-3 py-1.5 text-text outline-none focus:border-accent"
+          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
         <select
           name="action"
           defaultValue={searchParams.action ?? ""}
-          className="rounded border border-line bg-bg px-3 py-1.5 text-text outline-none focus:border-accent"
+          className="rounded-full border border-line bg-white px-3.5 py-2 text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         >
           <option value="">all actions</option>
           {TAKEDOWN_ACTIONS.map((a) => (
@@ -56,25 +57,28 @@ export default async function AdminLogsPage({
         </select>
         <button
           type="submit"
-          className="rounded border border-line px-3 py-1.5 hover:border-accent"
+          className="rounded-full border border-line bg-white px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
         >
           filter
         </button>
         <Link
           href={`/api/admin/logs/export?${exportParams.toString()}`}
-          className="rounded border border-accent px-3 py-1.5 text-accent hover:bg-accent hover:text-bg"
+          className="gradient-brand flex items-center gap-1.5 rounded-full px-4 py-2 font-medium text-white shadow-soft transition-all duration-200 hover:shadow-glow"
         >
-          ↓ export csv
+          <Download size={14} strokeWidth={2.25} />
+          export csv
         </Link>
       </form>
 
       {logs.length === 0 ? (
-        <p className="text-sm text-dim">› no matching log entries.</p>
+        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+          no matching log entries.
+        </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {logs.map((log) => (
-            <div key={log.id} className="rounded border border-line bg-panel p-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2 text-xs uppercase text-dim">
+            <div key={log.id} className="rounded-2xl border border-line bg-white p-4 text-sm shadow-soft">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-dim">
                 <span className="text-accent">
                   {log.action.replace("_", " ").toLowerCase()}
                 </span>
@@ -87,7 +91,7 @@ export default async function AdminLogsPage({
                 <Link
                   href={`/asset/${log.asset.id}`}
                   target="_blank"
-                  className="mt-1 block font-bold hover:text-accent"
+                  className="mt-1.5 block font-heading font-semibold text-text hover:text-accent"
                 >
                   {log.asset.title}
                 </Link>

@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectKitButton, useSIWE } from "connectkit";
+import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut } from "lucide-react";
 import { useAccountRole } from "@/lib/hooks/useAccountRole";
 
+const NAV_LINKS = [
+  { href: "/library", label: "library" },
+  { href: "/upload", label: "upload" },
+];
+
 export function Navbar() {
+  const pathname = usePathname();
   const { address, isConnected } = useAccount();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
   const { isAdmin } = useAccountRole(isSignedIn ? address : undefined);
@@ -24,19 +32,35 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="border-b border-line px-4 py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 relative sm:px-6">
-      <Link href="/" className="text-accent font-bold">
-        memevault<span className="cursor-blink">▊</span>
+    <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-line/80 px-4 py-3.5 shadow-soft sm:px-6">
+      <Link href="/" className="flex items-center gap-1 font-heading text-lg font-bold">
+        <span className="gradient-text">memevault</span>
+        <span className="cursor-blink text-accent">▊</span>
       </Link>
-      <nav className="text-dim text-sm flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Link href="/library" className="hover:text-accent">
-          [library]
-        </Link>
-        <Link href="/upload" className="hover:text-accent">
-          [upload]
-        </Link>
-        <span>[agent]</span>
-        <span>[docs]</span>
+
+      <nav className="flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
+        {NAV_LINKS.map((link) => {
+          const active = pathname === link.href || pathname?.startsWith(link.href + "/");
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`rounded-full px-4 py-2 font-medium transition-all duration-200 ${
+                active
+                  ? "gradient-brand text-white shadow-glow"
+                  : "text-dim hover:bg-white hover:text-text hover:shadow-soft"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+        <span className="cursor-default rounded-full px-4 py-2 font-medium text-dim/60">
+          agent
+        </span>
+        <span className="cursor-default rounded-full px-4 py-2 font-medium text-dim/60">
+          docs
+        </span>
 
         <ConnectKitButton.Custom>
           {({ show }) => {
@@ -44,9 +68,10 @@ export function Navbar() {
               return (
                 <button
                   onClick={show}
-                  className="border border-line rounded px-3 py-1 text-text hover:border-accent"
+                  className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
                 >
-                  $ connect
+                  <Wallet size={15} strokeWidth={2.25} />
+                  connect
                 </button>
               );
             }
@@ -55,9 +80,11 @@ export function Navbar() {
               return (
                 <button
                   onClick={() => signIn()}
-                  className="border border-line rounded px-3 py-1 text-text hover:border-accent"
+                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
+                  disabled={isLoading}
                 >
-                  {isLoading ? "$ signing..." : "$ sign-in"}
+                  <Wallet size={15} strokeWidth={2.25} />
+                  {isLoading ? "signing…" : "sign in"}
                 </button>
               );
             }
@@ -67,51 +94,60 @@ export function Navbar() {
               : "";
 
             return (
-              <div className="relative" ref={menuRef}>
+              <div className="relative ml-1" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="border border-line rounded px-3 py-1 text-text hover:border-accent flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
                 >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-brand text-white">
+                    <User size={13} strokeWidth={2.5} />
+                  </span>
                   {truncated}
                   {isAdmin && (
-                    <span className="text-accent text-xs border border-accent rounded px-1">
+                    <span className="gradient-brand flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      <ShieldCheck size={11} strokeWidth={2.5} />
                       admin
                     </span>
                   )}
+                  <ChevronDown size={14} className={`text-dim transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 border border-line bg-panel rounded w-40 text-sm z-10">
+                  <div className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-line bg-white text-sm shadow-soft-lg">
                     <Link
                       href="/my-uploads"
-                      className="block px-3 py-2 hover:text-accent"
+                      className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
                       onClick={() => setMenuOpen(false)}
                     >
-                      › my uploads
+                      <User size={14} className="text-dim" />
+                      my uploads
                     </Link>
                     <Link
                       href="/my-uploads/api-key"
-                      className="block px-3 py-2 hover:text-accent"
+                      className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
                       onClick={() => setMenuOpen(false)}
                     >
-                      › api key
+                      <KeyRound size={14} className="text-dim" />
+                      api key
                     </Link>
                     {isAdmin && (
                       <Link
                         href="/admin"
-                        className="block px-3 py-2 hover:text-accent"
+                        className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
                         onClick={() => setMenuOpen(false)}
                       >
-                        › admin panel
+                        <ShieldCheck size={14} className="text-dim" />
+                        admin panel
                       </Link>
                     )}
                     <button
-                      className="block w-full text-left px-3 py-2 hover:text-accent"
+                      className="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-left text-dim transition-colors hover:bg-bg hover:text-text"
                       onClick={() => {
                         setMenuOpen(false);
                         signOut();
                       }}
                     >
-                      › disconnect
+                      <LogOut size={14} />
+                      disconnect
                     </button>
                   </div>
                 )}

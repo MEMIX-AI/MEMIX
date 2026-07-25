@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 
 // Every admin action that must carry a mandatory reason (Takedown /
 // Restore / Delete permanently / report Takedown / report Dismiss /
@@ -58,10 +59,10 @@ export function ReasonActionButton({
           setReason("");
           setError(null);
         }}
-        className={`rounded border px-3 py-1 text-sm ${
+        className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
           variant === "accent"
-            ? "border-accent text-accent hover:bg-accent hover:text-bg"
-            : "border-line text-dim hover:border-accent hover:text-text"
+            ? "gradient-brand text-white shadow-soft hover:shadow-glow"
+            : "border border-line bg-white text-dim shadow-soft hover:border-accent/40 hover:text-text"
         }`}
       >
         {label}
@@ -69,18 +70,18 @@ export function ReasonActionButton({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-text/30 px-4 backdrop-blur-sm"
           onClick={() => !submitting && setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded border border-line bg-panel p-6"
+            className="w-full max-w-sm rounded-[24px] border border-line bg-white p-6 shadow-soft-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="mb-4 text-accent">▍ {modalTitle}</p>
+            <p className="mb-4 font-heading text-lg font-bold text-text">{modalTitle}</p>
 
             <label
               htmlFor="reason-action-input"
-              className="mb-1 block text-xs uppercase text-dim"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wide text-dim"
             >
               reason (required)
             </label>
@@ -90,23 +91,28 @@ export function ReasonActionButton({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              className="mb-2 w-full rounded border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+              className="mb-2 w-full rounded-2xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
             />
 
-            {error && <p className="mb-2 text-sm text-dim">✕ {error}</p>}
+            {error && (
+              <p className="mb-2 flex items-center gap-1.5 text-sm text-warn">
+                <AlertCircle size={13} strokeWidth={2.25} />
+                {error}
+              </p>
+            )}
 
-            <div className="flex gap-2">
+            <div className="mt-2 flex gap-2">
               <button
                 onClick={submit}
                 disabled={submitting}
-                className="flex-1 rounded bg-accent px-4 py-2 font-bold text-bg disabled:opacity-50"
+                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
               >
                 {submitting ? "submitting..." : confirmLabel}
               </button>
               <button
                 onClick={() => setOpen(false)}
                 disabled={submitting}
-                className="rounded border border-line px-4 py-2 text-dim hover:border-accent"
+                className="rounded-full border border-line bg-white px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
               >
                 cancel
               </button>

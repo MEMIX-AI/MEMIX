@@ -1,3 +1,4 @@
+import { FolderOpen, Flag } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { shortenWallet } from "@/lib/format";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
@@ -22,35 +23,39 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      <p className="mb-4 text-accent">▍ user management</p>
+      <h1 className="mb-5 font-heading text-2xl font-bold text-text">user management</h1>
 
       {users.length === 0 ? (
-        <p className="text-sm text-dim">› no users yet.</p>
+        <p className="rounded-2xl border border-line bg-white px-6 py-10 text-center text-sm text-dim shadow-soft">
+          no users yet.
+        </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {users.map((user) => {
             const reportCount = reportCountByWallet.get(user.walletAddress) ?? 0;
             return (
               <div
                 key={user.walletAddress}
-                className="flex flex-wrap items-center gap-4 rounded border border-line bg-panel p-3 text-sm"
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-white p-4 text-sm shadow-soft"
               >
-                <span className="font-bold" title={user.walletAddress}>
+                <span className="font-heading font-semibold text-text" title={user.walletAddress}>
                   {shortenWallet(user.walletAddress)}
                 </span>
                 <span
-                  className={`rounded border px-1.5 py-0.5 text-xs uppercase ${
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${
                     user.status === "BANNED"
-                      ? "border-line text-dim"
-                      : "border-ok text-ok"
+                      ? "border-line bg-bg text-dim"
+                      : "border-ok/30 bg-ok/10 text-ok"
                   }`}
                 >
                   {user.status.toLowerCase()}
                 </span>
-                <span className="text-dim">
+                <span className="flex items-center gap-1.5 text-dim">
+                  <FolderOpen size={13} strokeWidth={2.25} />
                   {user._count.assets} asset{user._count.assets === 1 ? "" : "s"}
                 </span>
-                <span className="text-dim">
+                <span className="flex items-center gap-1.5 text-dim">
+                  <Flag size={13} strokeWidth={2.25} />
                   {reportCount} report{reportCount === 1 ? "" : "s"}
                 </span>
                 <div className="ml-auto">

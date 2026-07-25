@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { KeyRound, Check, Copy, AlertCircle } from "lucide-react";
 
 interface ApiKeyPanelProps {
   hasKey: boolean;
@@ -50,27 +51,31 @@ export function ApiKeyPanel({
 
   if (revealedKey) {
     return (
-      <div className="rounded border border-accent bg-panel p-6">
-        <p className="mb-2 text-accent">▍ your new key (shown once)</p>
-        <p className="mb-3 text-sm text-dim">
-          › copy this now — it can&apos;t be shown again. losing it means
+      <div className="rounded-[24px] border border-accent/30 bg-white p-6 shadow-soft-lg">
+        <p className="mb-2 flex items-center gap-2 font-heading font-bold text-accent">
+          <KeyRound size={18} strokeWidth={2.25} />
+          your new key (shown once)
+        </p>
+        <p className="mb-4 text-sm leading-relaxed text-dim">
+          copy this now — it can&apos;t be shown again. losing it means
           generating a new one, which invalidates this one.
         </p>
-        <div className="mb-3 break-all rounded border border-line bg-bg px-3 py-2 font-bold">
+        <div className="mb-4 break-all rounded-2xl border border-line bg-bg px-4 py-3 font-mono text-sm font-medium text-text">
           {revealedKey}
         </div>
         <button
           onClick={copy}
-          className="rounded border border-line px-3 py-1 text-sm hover:border-accent"
+          className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
         >
-          {copied ? "✓ copied" : "copy"}
+          {copied ? <Check size={14} strokeWidth={2.5} className="text-ok" /> : <Copy size={14} strokeWidth={2.25} />}
+          {copied ? "copied" : "copy"}
         </button>
         <button
           onClick={() => {
             setRevealedKey(null);
             router.refresh();
           }}
-          className="ml-2 rounded border border-line px-3 py-1 text-sm text-dim hover:border-accent"
+          className="rounded-full px-4 py-2 text-sm font-medium text-dim hover:text-text"
         >
           done
         </button>
@@ -79,59 +84,59 @@ export function ApiKeyPanel({
   }
 
   return (
-    <div className="rounded border border-line bg-panel p-6">
+    <div className="rounded-[24px] border border-line bg-white p-6 shadow-soft">
       {hasKey ? (
         <>
-          <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-line bg-line text-sm">
-            <div className="bg-panel px-3 py-2">
-              <p className="mb-1 text-[10px] uppercase text-dim">tier</p>
-              <p className="font-bold">{tier?.toLowerCase().replace("_", " ")}</p>
+          <div className="mb-5 grid grid-cols-2 gap-2.5 text-sm">
+            <div className="rounded-xl bg-bg px-3.5 py-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-dim">tier</p>
+              <p className="font-heading font-semibold text-text">{tier?.toLowerCase().replace("_", " ")}</p>
             </div>
-            <div className="bg-panel px-3 py-2">
-              <p className="mb-1 text-[10px] uppercase text-dim">requests made</p>
-              <p className="font-bold">{requestCount}</p>
+            <div className="rounded-xl bg-bg px-3.5 py-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-dim">requests made</p>
+              <p className="font-heading font-semibold text-text">{requestCount}</p>
             </div>
-            <div className="bg-panel px-3 py-2">
-              <p className="mb-1 text-[10px] uppercase text-dim">created</p>
-              <p className="font-bold">
+            <div className="rounded-xl bg-bg px-3.5 py-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-dim">created</p>
+              <p className="font-heading font-semibold text-text">
                 {createdAt ? new Date(createdAt).toLocaleDateString() : "—"}
               </p>
             </div>
-            <div className="bg-panel px-3 py-2">
-              <p className="mb-1 text-[10px] uppercase text-dim">last used</p>
-              <p className="font-bold">
+            <div className="rounded-xl bg-bg px-3.5 py-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-dim">last used</p>
+              <p className="font-heading font-semibold text-text">
                 {lastUsedAt ? new Date(lastUsedAt).toLocaleString() : "never"}
               </p>
             </div>
           </div>
 
-          <p className="mb-3 text-sm text-dim">
-            › the key itself isn&apos;t shown again — this is just usage.
+          <p className="mb-4 text-sm text-dim">
+            the key itself isn&apos;t shown again — this is just usage.
           </p>
 
           {!confirming ? (
             <button
               onClick={() => setConfirming(true)}
-              className="rounded border border-line px-3 py-1 text-sm text-dim hover:border-accent hover:text-text"
+              className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-200 hover:border-accent/40 hover:text-text"
             >
               regenerate
             </button>
           ) : (
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2.5 text-sm">
               <span className="text-dim">
                 this invalidates the current key immediately —
               </span>
               <button
                 onClick={generate}
                 disabled={generating}
-                className="rounded border border-accent px-2 py-0.5 text-accent hover:bg-accent hover:text-bg disabled:opacity-50"
+                className="gradient-brand rounded-full px-3.5 py-1.5 font-medium text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
               >
                 {generating ? "generating..." : "confirm"}
               </button>
               <button
                 onClick={() => setConfirming(false)}
                 disabled={generating}
-                className="text-dim hover:text-text"
+                className="font-medium text-dim hover:text-text"
               >
                 cancel
               </button>
@@ -140,20 +145,26 @@ export function ApiKeyPanel({
         </>
       ) : (
         <>
-          <p className="mb-3 text-sm text-dim">
-            › no key yet. generate one to hit /api/v1/* endpoints.
+          <p className="mb-4 text-sm text-dim">
+            no key yet. generate one to hit /api/v1/* endpoints.
           </p>
           <button
             onClick={generate}
             disabled={generating}
-            className="rounded bg-accent px-4 py-2 font-bold text-bg disabled:opacity-50"
+            className="gradient-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
           >
-            {generating ? "generating..." : "$ generate key"}
+            <KeyRound size={16} strokeWidth={2.25} />
+            {generating ? "generating..." : "generate key"}
           </button>
         </>
       )}
 
-      {error && <p className="mt-3 text-sm text-dim">✕ {error}</p>}
+      {error && (
+        <p className="mt-4 flex items-center gap-1.5 text-sm text-warn">
+          <AlertCircle size={14} strokeWidth={2.25} />
+          {error}
+        </p>
+      )}
     </div>
   );
 }

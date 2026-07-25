@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Download } from "lucide-react";
 import { getAssetById } from "@/lib/assets";
 import { resolveAssetUrls } from "@/lib/asset-urls";
 import {
@@ -9,6 +10,7 @@ import {
   licenseBadge,
   shortenWallet,
 } from "@/lib/format";
+import { tagColor } from "@/lib/tag-colors";
 import { AssetPreview } from "@/components/AssetPreview";
 import { ReportButton } from "@/components/ReportButton";
 import { SpecCell } from "@/components/SpecCell";
@@ -25,24 +27,27 @@ export default async function AssetDetailPage({
   const license = licenseBadge(asset.isOriginal);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
-      <div className="grid gap-8 md:grid-cols-2">
+    <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
+      <div className="grid gap-10 md:grid-cols-2">
         <AssetPreview asset={asset} />
 
         <div>
-          <p className="mb-1 text-xs uppercase text-dim">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-dim">
             {assetTypeLabel(asset.type)}
           </p>
-          <h1 className="mb-6 break-words text-xl font-bold">{asset.title}</h1>
+          <h1 className="mb-6 break-words font-heading text-2xl font-bold text-text">
+            {asset.title}
+          </h1>
 
           <a
             href={`/api/assets/${asset.id}/download`}
-            className="mb-6 inline-block rounded bg-accent px-6 py-3 font-bold text-bg hover:opacity-90"
+            className="gradient-brand mb-6 inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
           >
-            $ download
+            <Download size={17} strokeWidth={2.25} />
+            download
           </a>
 
-          <div className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded border border-line bg-line text-sm">
+          <div className="mb-6 grid grid-cols-2 gap-2.5 rounded-2xl border border-line bg-white p-3 shadow-soft text-sm">
             <SpecCell label="type" value={assetTypeLabel(asset.type)} />
             <SpecCell label="size" value={formatBytes(asset.fileSize)} />
             {asset.duration != null && (
@@ -66,19 +71,23 @@ export default async function AssetDetailPage({
 
           {asset.tags.length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {asset.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/library?tag=${encodeURIComponent(tag.name)}`}
-                  className="rounded border border-line px-2 py-1 text-xs text-dim hover:border-accent hover:text-text"
-                >
-                  #{tag.name}
-                </Link>
-              ))}
+              {asset.tags.map((tag) => {
+                const c = tagColor(tag.name);
+                return (
+                  <Link
+                    key={tag.id}
+                    href={`/library?tag=${encodeURIComponent(tag.name)}`}
+                    style={{ background: c.bg, color: c.text, borderColor: c.border }}
+                    className="rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
+                  >
+                    #{tag.name}
+                  </Link>
+                );
+              })}
             </div>
           )}
 
-          <p className="mb-6 text-sm text-dim">{asset.description}</p>
+          <p className="mb-6 text-sm leading-relaxed text-dim">{asset.description}</p>
 
           <ReportButton assetId={asset.id} />
         </div>

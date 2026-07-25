@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Ban } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ApiKeyPanel } from "@/components/ApiKeyPanel";
@@ -13,16 +14,17 @@ export default async function ApiKeyPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-      <p className="mb-4 text-accent">▍ api key</p>
+      <h1 className="mb-2 font-heading text-2xl font-bold text-text">api key</h1>
       <p className="mb-6 text-sm text-dim">
-        › programmatic access to the library — read-only, free while it&apos;s
+        programmatic access to the library — read-only, free while it&apos;s
         a foundation, not the paid layer yet. endpoints documented in
         docs/api.md.
       </p>
 
       {user.status === "BANNED" ? (
-        <p className="rounded border border-line px-3 py-2 text-sm text-dim">
-          › this account is banned. api keys are disabled.
+        <p className="flex items-center gap-2.5 rounded-2xl border border-line bg-white px-4 py-3 text-sm text-dim shadow-soft">
+          <Ban size={16} strokeWidth={2.25} className="shrink-0 text-warn" />
+          this account is banned. api keys are disabled.
         </p>
       ) : (
         <ApiKeyPanel

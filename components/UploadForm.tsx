@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { UploadCloud, Music2, X, AlertCircle } from "lucide-react";
 import {
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
@@ -155,15 +156,19 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
             setDragOver(false);
             handleFile(e.dataTransfer.files?.[0] ?? null);
           }}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded border p-8 text-center transition-colors ${
-            dragOver ? "border-accent" : "border-line hover:border-accent"
+          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border-2 border-dashed bg-white p-10 text-center transition-all duration-200 ${
+            dragOver
+              ? "border-accent shadow-glow"
+              : "border-line hover:border-accent/50 hover:shadow-soft"
           }`}
         >
           {!file ? (
             <>
-              <span className="text-2xl text-dim">▸</span>
-              <p className="text-sm text-dim">
-                $ drop a file here, or click to browse
+              <span className="gradient-brand flex h-12 w-12 items-center justify-center rounded-full text-white">
+                <UploadCloud size={22} strokeWidth={2.25} />
+              </span>
+              <p className="text-sm font-medium text-text">
+                drop a file here, or click to browse
               </p>
               <p className="text-xs text-dim">
                 images, video, sound — max{" "}
@@ -182,22 +187,24 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
                 <img
                   src={previewUrl}
                   alt="preview"
-                  className="h-20 w-20 rounded border border-line object-cover"
+                  className="h-20 w-20 rounded-2xl border border-line object-cover"
                 />
               )}
               {detectedType === "VIDEO" && previewUrl && (
                 <video
                   src={previewUrl}
                   muted
-                  className="h-20 w-20 rounded border border-line object-cover"
+                  className="h-20 w-20 rounded-2xl border border-line object-cover"
                 />
               )}
               {detectedType === "SOUND" && (
-                <span className="text-2xl text-accent">▸</span>
+                <span className="gradient-brand flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white">
+                  <Music2 size={22} strokeWidth={2.25} />
+                </span>
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate font-bold">{file.name}</p>
-                <p className="text-xs uppercase text-dim">
+                <p className="truncate font-semibold text-text">{file.name}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-dim">
                   {detectedType?.toLowerCase()} ·{" "}
                   {(file.size / 1024 / 1024).toFixed(2)}mb
                 </p>
@@ -205,18 +212,23 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
               <button
                 type="button"
                 onClick={() => handleFile(null)}
-                className="shrink-0 text-dim hover:text-accent"
+                className="shrink-0 rounded-full p-1.5 text-dim transition-colors hover:bg-bg hover:text-warn"
               >
-                ✕
+                <X size={16} strokeWidth={2.25} />
               </button>
             </div>
           )}
         </div>
-        {fileError && <p className="mt-2 text-sm text-dim">✕ {fileError}</p>}
+        {fileError && (
+          <p className="mt-2 flex items-center gap-1.5 text-sm text-warn">
+            <AlertCircle size={14} strokeWidth={2.25} />
+            {fileError}
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="upload-title" className="mb-1 block text-xs uppercase text-dim">
+        <label htmlFor="upload-title" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
           title
         </label>
         <input
@@ -225,12 +237,12 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="sad-trombone-v2.mp3"
-          className="w-full rounded border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          className="w-full rounded-2xl border border-line bg-white px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
       </div>
 
       <div>
-        <label htmlFor="upload-description" className="mb-1 block text-xs uppercase text-dim">
+        <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
           description
         </label>
         <textarea
@@ -239,28 +251,28 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder="what is this, when would someone use it?"
-          className="w-full rounded border border-line bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          className="w-full rounded-2xl border border-line bg-white px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-xs uppercase text-dim">
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
           tags (max {MAX_TAGS})
         </label>
         <div className="relative">
-          <div className="flex flex-wrap items-center gap-2 rounded border border-line bg-bg px-3 py-2 focus-within:border-accent">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white px-3.5 py-2.5 shadow-soft transition-colors focus-within:border-accent/50">
             {tags.map((t) => (
               <span
                 key={t}
-                className="flex items-center gap-1 rounded border border-line px-2 py-0.5 text-xs text-dim"
+                className="flex items-center gap-1 rounded-full border border-line bg-bg px-2.5 py-1 text-xs font-medium text-dim"
               >
                 #{t}
                 <button
                   type="button"
                   onClick={() => removeTag(t)}
-                  className="hover:text-accent"
+                  className="text-dim hover:text-warn"
                 >
-                  ✕
+                  <X size={11} strokeWidth={2.5} />
                 </button>
               </span>
             ))}
@@ -282,13 +294,13 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
             )}
           </div>
           {suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 z-10 mt-1 rounded border border-line bg-panel text-sm">
+            <div className="absolute left-0 right-0 z-10 mt-1.5 overflow-hidden rounded-2xl border border-line bg-white text-sm shadow-soft-lg">
               {suggestions.map((s) => (
                 <button
                   type="button"
                   key={s}
                   onClick={() => addTag(s)}
-                  className="block w-full px-3 py-1.5 text-left text-dim hover:text-accent"
+                  className="block w-full px-4 py-2 text-left text-dim transition-colors hover:bg-bg hover:text-accent"
                 >
                   #{s}
                 </button>
@@ -298,35 +310,35 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
         </div>
       </div>
 
-      <label className="flex items-start gap-2 text-sm text-dim">
+      <label className="flex items-start gap-2.5 text-sm text-dim">
         <input
           type="checkbox"
           checked={isOriginal}
           onChange={(e) => setIsOriginal(e.target.checked)}
-          className="mt-0.5"
+          className="mt-0.5 accent-accent"
         />
         this is my original work
       </label>
 
-      <div className="flex flex-col gap-3 rounded border border-line bg-panel p-4">
-        <p className="text-accent">▍ before you upload</p>
+      <div className="flex flex-col gap-3.5 rounded-[24px] border border-line bg-white p-5 shadow-soft">
+        <p className="font-heading font-semibold text-text">before you upload</p>
 
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex items-start gap-2.5 text-sm">
           <input
             type="checkbox"
             checked={ownsRights}
             onChange={(e) => setOwnsRights(e.target.checked)}
-            className="mt-0.5"
+            className="mt-0.5 accent-accent"
           />
           {OWNERSHIP_DECLARATION_TEXT}
         </label>
 
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex items-start gap-2.5 text-sm">
           <input
             type="checkbox"
             checked={agreesToTos}
             onChange={(e) => setAgreesToTos(e.target.checked)}
-            className="mt-0.5"
+            className="mt-0.5 accent-accent"
           />
           <span>
             {TOS_DECLARATION_TEXT}{" "}
@@ -334,7 +346,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
               href="/tos"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-accent"
+              className="font-medium text-accent underline"
             >
               read it here
             </Link>
@@ -343,14 +355,19 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
         </label>
       </div>
 
-      {submitError && <p className="text-sm text-dim">✕ {submitError}</p>}
+      {submitError && (
+        <p className="flex items-center gap-1.5 text-sm text-warn">
+          <AlertCircle size={14} strokeWidth={2.25} />
+          {submitError}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="rounded bg-accent px-6 py-3 font-bold text-bg disabled:opacity-40"
+        className="gradient-brand rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
       >
-        {submitting ? "$ uploading..." : "$ upload"}
+        {submitting ? "uploading..." : "upload"}
       </button>
     </form>
   );

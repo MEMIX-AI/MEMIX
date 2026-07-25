@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Play, Pause } from "lucide-react";
 
 const BAR_COUNT = 48;
 
@@ -46,7 +47,7 @@ export function AudioPlayer({
   }
 
   return (
-    <div className="rounded border border-line bg-panel p-6">
+    <div className="rounded-[24px] border border-line bg-white p-7 shadow-soft">
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio
         ref={audioRef}
@@ -63,23 +64,26 @@ export function AudioPlayer({
         <track kind="captions" />
       </audio>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5">
         <button
           onClick={toggle}
           aria-label={playing ? `pause ${title}` : `play ${title}`}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-line text-xl text-accent hover:border-accent"
+          className="gradient-brand flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-soft transition-all duration-200 hover:shadow-glow"
         >
-          {playing ? "⏸" : "▸"}
+          {playing ? <Pause size={20} strokeWidth={2.25} fill="white" /> : <Play size={20} strokeWidth={2.25} fill="white" className="ml-0.5" />}
         </button>
 
-        <div className="flex h-16 flex-1 items-end gap-[2px] overflow-hidden">
+        <div className="flex h-16 flex-1 items-end gap-[3px] overflow-hidden">
           {heights.map((h, i) => {
             const active = i / heights.length <= progress;
             return (
               <div
                 key={i}
-                style={{ height: `${h}%` }}
-                className={`w-full rounded-sm ${active ? "bg-accent" : "bg-line"}`}
+                style={{
+                  height: `${h}%`,
+                  background: active ? "var(--gradient-brand)" : "var(--line)",
+                }}
+                className="w-full rounded-full transition-colors duration-150"
               />
             );
           })}

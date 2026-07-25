@@ -17,24 +17,26 @@ export default async function AdminLayout({
     redirect("/");
   }
 
+  const links = [
+    { href: "/admin", label: "dashboard" },
+    { href: "/admin/reports", label: "reports" },
+    { href: "/admin/assets", label: "assets" },
+    { href: "/admin/users", label: "users" },
+    { href: "/admin/logs", label: "logs" },
+  ];
+
   return (
-    <main className="flex-1 px-6 py-10">
-      <nav className="mb-8 flex flex-wrap gap-4 text-sm text-dim">
-        <Link href="/admin" className="hover:text-accent">
-          [dashboard]
-        </Link>
-        <Link href="/admin/reports" className="hover:text-accent">
-          [reports]
-        </Link>
-        <Link href="/admin/assets" className="hover:text-accent">
-          [assets]
-        </Link>
-        <Link href="/admin/users" className="hover:text-accent">
-          [users]
-        </Link>
-        <Link href="/admin/logs" className="hover:text-accent">
-          [logs]
-        </Link>
+    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+      <nav className="mb-8 flex flex-wrap gap-1.5 rounded-full border border-line bg-white p-1.5 shadow-soft w-fit">
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="rounded-full px-4 py-1.5 text-sm font-medium text-dim transition-all duration-200 hover:bg-bg hover:text-text"
+          >
+            {l.label}
+          </Link>
+        ))}
       </nav>
       {children}
     </main>

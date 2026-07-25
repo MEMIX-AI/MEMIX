@@ -39,26 +39,31 @@ AI agent librarian untuk meme library berbasis web. Baca file ini di setiap sesi
 
 ## PRINSIP DESAIN VISUAL (WAJIB, konsisten di semua halaman & fase — jangan diganti tanpa perintah owner)
 
-- Arah: terminal/CLI aesthetic ala dev.fun — "arsip meme yang dikelola lewat terminal". Serius di kulit, meme di isi.
-- Font: monospace untuk SEMUA teks (stack: `ui-monospace, "SF Mono", Menlo, Consolas, monospace`). Tidak ada font kedua.
-- Semua copy UI lowercase (kecuali nama asset/user-generated content).
-- Design tokens (pakai CSS variables, jangan hardcode di komponen):
-  - `--bg: #0b0d10` (near-black)
-  - `--panel: #11141a`
-  - `--line: #232833` (border 1px)
-  - `--text: #e8e6e0`
-  - `--dim: #8a919e`
-  - `--accent: #ffd23f` (kuning meme — SATU-SATUNYA warna aksen)
-  - `--ok: #7ee787` (status sukses saja)
-- Vokabuler visual khas (pakai konsisten):
-  - Marker section: karakter `▍` warna aksen sebagai pengganti heading dekoratif.
-  - Nav pakai bracket: `[library] [upload] [agent] [docs]`.
-  - Cursor blink `▊` di logo dan footer (footer selalu diakhiri `:~$▊`).
-  - Prefix `$ ` untuk elemen bergaya command, `› ` untuk balasan agent, `▸ ` untuk label panel.
-  - Data ditampilkan gaya spec-sheet: grid sel ber-border 1px, label kecil dim di atas value bold.
-- Komponen: border-radius kecil (4-8px), border 1px `var(--line)`, hover → border jadi `var(--accent)`. TANPA gradient, TANPA glassmorphism, TANPA drop-shadow warna-warni. Shadow hitam halus boleh untuk panel utama saja.
-- Motion minimal: cursor blink, pulse dot untuk status live, transisi border/transform ≤200ms. Hormati `prefers-reduced-motion`.
-- Kontras dari konten: kulit site disiplin & monokrom, yang "rame" adalah meme-nya sendiri (thumbnail, emoji di judul asset, dsb).
+**v2 — diganti total 2026-07-25 atas perintah eksplisit owner** (redesign "modern, premium, cerah seperti startup AI/SaaS 2025", referensi Linear/Raycast/Vercel/Framer/Notion Calendar/Arc Browser). Versi v1 (dark terminal/CLI aesthetic — bg near-black, monospace-only, aksen kuning tunggal, tanpa gradient/glassmorphism) sudah tidak berlaku — jangan dikembalikan tanpa perintah owner yang baru. Layout/posisi/struktur halaman TIDAK berubah dari v1; yang berubah murni visual (warna, tipografi, radius, shadow, animasi, ikon).
+
+- Arah: clean, minimal, modern, premium, soft glassmorphism, white theme, gradient halus, rounded corner, smooth animation.
+- Font: 3 track (bukan monospace-only lagi) — heading `Space Grotesk` (`font-heading` / `var(--font-heading)`), body `Inter` (default, `var(--font-body)`), code/spec-sheet-style `JetBrains Mono` (`font-mono` / `var(--font-code)`). Dimuat via `next/font/google` di `app/layout.tsx`.
+- Semua copy UI tetap lowercase (kecuali nama asset/user-generated content) — konvensi ini TIDAK berubah dari v1.
+- Design tokens (CSS variables di `app/globals.css`, jangan hardcode di komponen):
+  - `--bg: #f8fafc`
+  - `--panel: #ffffff`
+  - `--line: #e5e7eb`
+  - `--text: #111827`
+  - `--dim: #6b7280`
+  - `--accent: #6d5df6`, `--accent-2: #8b5cf6`
+  - `--ok: #22c55e` (sukses), `--warn: #f59e0b` (peringatan)
+  - `--gradient-brand: linear-gradient(135deg, #6d5df6, #a855f7, #60a5fa)` — dipakai lewat utility class `.gradient-brand` (background) / `.gradient-text` (teks), BUKAN lewat `bg-accent` (`background-color` gak bisa nampung gradient).
+  - `--shadow-soft`, `--shadow-soft-lg`, `--shadow-glow` — dipakai lewat `.shadow-soft` / `.shadow-soft-lg` / `.shadow-glow` (juga terdaftar di `tailwind.config.ts` sebagai `shadow-soft` dll).
+- Vokabuler visual khas v2 (ganti total dari vokabuler ASCII v1 — TIDAK ada lagi `▍ › ▸ $` sebagai section marker/prefix, TIDAK ada lagi bracket nav `[library]`):
+  - Section heading pakai dot gradient kecil + `<h2 className="font-heading font-bold">` (lihat `SectionHeading` di `app/page.tsx`).
+  - Icon pakai `lucide-react` (sudah jadi dependency) — bukan glyph ASCII (▸ ✕ dst).
+  - Tag warna deterministik per nama lewat `lib/tag-colors.ts#tagColor()` — funny=hijau, gaming=oranye, cat=biru, reaction=ungu, sisanya hash ke palet pastel yang sama.
+  - Footer tetap satu-satunya tempat monospace/cursor-blink dipertahankan (`memevault :~$▊`, `.cursor-blink`) — ini disengaja, bukan sisa v1 yang lupa dihapus.
+- Komponen: border-radius besar & lega (12px default via `tailwind.config.ts borderRadius.DEFAULT`, `rounded-2xl`/`rounded-[20px]`/`rounded-[24px]` untuk card/panel besar, `rounded-full` untuk semua button/pill/tag/nav-link). Border 1px `var(--line)` tetap dipakai tapi lebih sebagai pemisah halus, bukan elemen utama — soft shadow (`.shadow-soft`) yang mendefinisikan kedalaman. Semua CTA/button utama pakai `.gradient-brand text-white` + `.shadow-soft` idle → `.shadow-glow` hover.
+- Glassmorphism: `.glass` (`backdrop-blur: 20px` + `bg-white/72%`) dipakai di `Navbar` (sticky) dan panel `LibrarianWidget`.
+- Background dekoratif: `.bg-decoration` (fixed, di belakang semua konten, `z-index: -1`) — gradient putih→abu muda + 3 blur blob warna (`.bg-blob-violet/blue/pink`, opacity ~0.22, blur 90px) + dot pattern halus (`.bg-dots`) di `app/layout.tsx`. Tidak pernah mempengaruhi layout/scroll karena `position: fixed`.
+- Motion: `.card-lift` (hover naik 6px + shadow bertambah, 200ms) di semua card, `.page-enter` (fade-in 320ms saat halaman dimuat) di root layout, transisi hover/focus 200–300ms di seluruh button/input/tag. Tetap hormati `prefers-reduced-motion` (semua animasi/transisi di-nolkan lewat media query di `globals.css`, tidak berubah dari v1).
+- Kontras dari konten: sama seperti v1 — kulit site tetap disiplin (sekarang: putih/lembut, bukan gelap), yang "rame" tetap meme-nya sendiri (thumbnail, tag warna-warni).
 
 ## STRUKTUR FOLDER
 

@@ -10,7 +10,7 @@ type PreviewAsset = Pick<
 export function AssetPreview({ asset }: { asset: PreviewAsset }) {
   if (asset.type === "IMAGE") {
     return (
-      <div className="relative h-[50vh] max-h-[480px] w-full overflow-hidden rounded border border-line bg-bg">
+      <div className="relative h-[50vh] max-h-[480px] w-full overflow-hidden rounded-[24px] border border-line bg-white shadow-soft">
         <Image
           src={asset.fileUrl}
           alt={asset.title}
@@ -24,7 +24,7 @@ export function AssetPreview({ asset }: { asset: PreviewAsset }) {
 
   if (asset.type === "VIDEO") {
     return (
-      <div className="overflow-hidden rounded border border-line bg-bg">
+      <div className="overflow-hidden rounded-[24px] border border-line bg-white shadow-soft">
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video
           src={asset.fileUrl}

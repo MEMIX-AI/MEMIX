@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
 import { getAssetById } from "@/lib/assets";
-import { contentTypeForExtension } from "@/lib/mime";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
 
 // No login, no wallet, no page in between — a plain link straight to this
@@ -36,17 +35,16 @@ export async function GET(
 
   // asset.fileUrl is a bare storage key (not a resolved URL — see
   // lib/storage.ts) precisely so this works unchanged regardless of which
-  // StorageAdapter is active.
+  // StorageAdapter is active. Against Supabase Storage, `getUrl` mints a
+  // short-lived signed URL rather than bytes we could stream ourselves —
+  // `downloadFilename` asks Supabase to set Content-Disposition on that
+  // signed URL's response, so the clean-filename download behavior is
+  // preserved even though this route no longer reads the bytes itself.
   const key = asset.fileUrl;
-  const data = await storage.read(key);
   const ext = path.extname(key);
+  const url = await storage.getUrl(key, { downloadFilename: `${slugify(asset.title)}${ext}` });
 
-  return new NextResponse(new Uint8Array(data), {
-    headers: {
-      "Content-Type": contentTypeForExtension(ext),
-      "Content-Disposition": `attachment; filename="${slugify(asset.title)}${ext}"`,
-    },
-  });
+  return NextResponse.redirect(url, { status: 307 });
 }
 
 function slugify(input: string): string {

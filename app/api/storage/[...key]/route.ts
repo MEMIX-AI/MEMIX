@@ -1,40 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import { prisma } from "@/lib/prisma";
-import { storage } from "@/lib/storage";
-import { contentTypeForExtension } from "@/lib/mime";
+import { NextResponse } from "next/server";
 
-// Files stay in storage after a takedown (30-day dispute retention — see
-// lib/admin-actions.ts), but a taken-down asset must actually stop being
-// reachable, not just disappear from listings. This is the one route that
-// serves raw bytes straight from a storage key with no Asset lookup at
-// all, so it's the one place that must independently re-check visibility
-// — a public fileUrl/thumbnailUrl handed out before a takedown must not
-// keep working after one.
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { key: string[] } },
-) {
-  const key = params.key.join("/");
-
-  // Asset.fileUrl/thumbnailUrl store the bare storage key (see the note
-  // at the top of lib/storage.ts), matching what this route was called
-  // with directly — no path prefix to reconstruct.
-  const asset = await prisma.asset.findFirst({
-    where: { OR: [{ fileUrl: key }, { thumbnailUrl: key }] },
-    select: { status: true, uploader: { select: { status: true } } },
-  });
-  if (asset && (asset.status !== "ACTIVE" || asset.uploader?.status === "BANNED")) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
-
-  try {
-    const data = await storage.read(key);
-    const contentType = contentTypeForExtension(path.extname(key));
-    return new NextResponse(new Uint8Array(data), {
-      headers: { "Content-Type": contentType },
-    });
-  } catch {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
+// Dead code now that Supabase Storage is the active adapter (see
+// lib/storage.ts) — files are served directly via short-lived signed
+// URLs from lib/asset-urls.ts, not proxied through this app route
+// anymore. This route only ever existed to make LocalStorageAdapter's
+// "permanent" local path safe (re-checking the owning Asset's
+// visibility on every fetch, since a local path never expires on its
+// own) — a private Supabase bucket's signed URL expires by itself
+// instead, so nothing should be requesting this path in production.
+// Kept as an inert 404 (not deleted) so a future local-dev fallback to
+// LocalStorageAdapter has something to restore rather than recreate.
+export async function GET() {
+  return NextResponse.json({ error: "not found" }, { status: 404 });
 }

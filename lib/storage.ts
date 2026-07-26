@@ -50,8 +50,13 @@ export interface StorageAdapter {
    * Resolves a storage key to an actually-fetchable URL. Async because a
    * private-bucket backend needs a network round trip to mint a signed
    * URL — never persist the return value, call it fresh at serve time.
+   *
+   * `downloadFilename`, when given, asks the backend to set a
+   * Content-Disposition that triggers a download with that filename
+   * (used by the human-facing download route) instead of an inline
+   * fetch (used when rendering thumbnails/media).
    */
-  getUrl(key: string): Promise<string>;
+  getUrl(key: string, options?: { downloadFilename?: string }): Promise<string>;
   delete(key: string): Promise<void>;
 }
 
@@ -91,6 +96,9 @@ export class LocalStorageAdapter implements StorageAdapter {
     // app/api/storage/[...key]/route.ts re-checks the owning Asset's
     // status on every single request. Don't copy this "permanent path"
     // pattern for a private-bucket adapter; see SupabaseStorageAdapter.
+    // (downloadFilename is a no-op here — this route was never wired to
+    // set Content-Disposition from a query param, and this adapter is
+    // no longer the active one now that Supabase Storage is live.)
     return `/api/storage/${key}`;
   }
 
@@ -167,10 +175,14 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     return { key, size: file.buffer.byteLength };
   }
 
-  async getUrl(key: string): Promise<string> {
+  async getUrl(key: string, options?: { downloadFilename?: string }): Promise<string> {
     const { data, error } = await this.client.storage
       .from(this.bucket)
-      .createSignedUrl(key, SIGNED_URL_EXPIRY_SECONDS);
+      .createSignedUrl(
+        key,
+        SIGNED_URL_EXPIRY_SECONDS,
+        options?.downloadFilename ? { download: options.downloadFilename } : undefined,
+      );
     if (error || !data) {
       throw new Error(`Supabase signed URL failed for ${key}: ${error?.message ?? "unknown error"}`);
     }
@@ -185,7 +197,4 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   }
 }
 
-// TODO: swap to SupabaseStorageAdapter when deploying — see the class's
-// own doc comment above for what else needs to change at the same time
-// (the two .read()-dependent local-only call sites).
-export const storage: LocalStorageAdapter = new LocalStorageAdapter();
+export const storage: StorageAdapter = new SupabaseStorageAdapter();

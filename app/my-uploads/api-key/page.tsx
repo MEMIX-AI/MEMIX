@@ -1,10 +1,16 @@
 import { redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Ban } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { ApiKeyPanel } from "@/components/ApiKeyPanel";
 
 export default async function ApiKeyPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/");
+
+  const key = await prisma.apiKey.findUnique({
+    where: { ownerWallet: user.walletAddress },
+  });
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
@@ -14,16 +20,20 @@ export default async function ApiKeyPage() {
         a foundation, not the paid layer yet.
       </p>
 
-      <div className="flex flex-col items-center gap-3 rounded-[24px] border border-line bg-panel px-6 py-14 text-center shadow-soft">
-        <span className="gradient-brand flex h-12 w-12 items-center justify-center rounded-full text-white">
-          <Sparkles size={22} strokeWidth={2.25} />
-        </span>
-        <p className="font-heading text-lg font-bold text-text">coming soon</p>
-        <p className="max-w-sm text-sm text-dim">
-          key generation for developers &amp; agents is on the way — check
-          back soon.
+      {user.status === "BANNED" ? (
+        <p className="flex items-center gap-2.5 rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-dim shadow-soft">
+          <Ban size={16} strokeWidth={2.25} className="shrink-0 text-warn" />
+          this account is banned. api keys are disabled.
         </p>
-      </div>
+      ) : (
+        <ApiKeyPanel
+          hasKey={!!key}
+          tier={key?.tier ?? null}
+          createdAt={key?.createdAt.toISOString() ?? null}
+          lastUsedAt={key?.lastUsedAt?.toISOString() ?? null}
+          requestCount={key?.requestCount ?? 0}
+        />
+      )}
     </main>
   );
 }

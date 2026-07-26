@@ -46,6 +46,27 @@ SQLite-only features are used, so this is a provider swap, not a rewrite.
    rm -rf prisma/migrations
    npx prisma migrate dev --name init_postgres
    ```
+
+   > **Gotcha actually hit doing this (2026-07-26): both `migrate dev` and
+   > `db push` hang indefinitely (no error, no timeout) against Supabase's
+   > transaction-mode pooler (port 6543, `?pgbouncer=true`).** DDL
+   > (`CREATE TABLE` etc.) needs session-level state that PgBouncer's
+   > transaction pooling doesn't provide — the underlying protocol
+   > exchange just stalls instead of erroring cleanly. Confirmed the
+   > pooler and the database itself were both fine the whole time (raw
+   > `pg` client connected and queried successfully on both :5432 and
+   > :6543 in under a second) — this is specifically a Prisma-CLI
+   > DDL-over-pooler limitation, not a network/credentials problem.
+   > **Fix**: run schema-changing commands (`db push`, `migrate dev`,
+   > `migrate deploy`) with `DATABASE_URL` temporarily pointed at the
+   > **direct/session connection (port 5432)** instead of the pooler —
+   > e.g. `DATABASE_URL="<the :5432 URL>" npx prisma db push`. Schema
+   > `directUrl` (used for `migrate dev`'s shadow database) does **not**
+   > cover this — `db push` doesn't use `directUrl` at all, and
+   > `migrate dev`'s actual "apply the migration" step still goes through
+   > the main `url`. The app's real `.env` `DATABASE_URL` should stay on
+   > the pooler (:6543) for normal runtime traffic — only override it
+   > for one-off schema commands.
 5. Real user data only exists in whatever `dev.db` you were running locally
    — there is no production dataset to migrate yet. If that changes before
    this checklist is used, add a `pg_dump`/`prisma db seed`-equivalent data

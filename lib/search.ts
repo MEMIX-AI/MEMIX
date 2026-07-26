@@ -19,13 +19,13 @@ export function isAssetType(value: string | undefined): value is AssetType {
 /**
  * Plain LIKE-based contains search across title/description/tag names.
  *
- * TODO: upgrade to SQLite FTS5 (virtual table + MATCH) for real
- * full-text ranking once the catalog is big enough to need it — this
- * simple version was explicitly OK'd as the starting point.
+ * TODO: upgrade to Postgres full-text search (tsvector/tsquery) for real
+ * ranking once the catalog is big enough to need it — this simple
+ * version was explicitly OK'd as the starting point.
  *
- * Note: SQLite's LIKE is case-insensitive for ASCII by default, unlike
- * Postgres — add `mode: "insensitive"` to the `contains` filters below
- * when migrating (see CLAUDE.md STACK on SQLite->Postgres portability).
+ * `mode: "insensitive"` is required here on Postgres (unlike SQLite,
+ * whose LIKE was case-insensitive for ASCII by default) — see
+ * docs/deploy-checklist.md's SQLite->Postgres portability note.
  */
 export async function searchAssets({
   q,
@@ -41,9 +41,9 @@ export async function searchAssets({
   if (q) {
     conditions.push({
       OR: [
-        { title: { contains: q } },
-        { description: { contains: q } },
-        { tags: { some: { name: { contains: q } } } },
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { tags: { some: { name: { contains: q, mode: "insensitive" } } } },
       ],
     });
   }

@@ -16,7 +16,7 @@ export function TerminalHeroDemo() {
   return (
     <div className="overflow-hidden rounded-[24px] border border-line bg-panel shadow-soft-lg">
       <div className="gradient-brand flex items-center gap-2 px-5 py-3 text-xs font-medium text-white/90">
-        <Sparkles size={14} strokeWidth={2.25} />
+        <Sparkles size={14} strokeWidth={1.75} />
         <span>the librarian — try a search</span>
       </div>
 
@@ -39,7 +39,7 @@ export function TerminalHeroDemo() {
         </div>
 
         <p className="mb-5 flex items-center gap-1.5 font-medium text-ok">
-          <CheckCircle2 size={15} strokeWidth={2.25} />
+          <CheckCircle2 size={15} strokeWidth={1.75} />
           {DEMO_RESULTS.length} results · free download
         </p>
 

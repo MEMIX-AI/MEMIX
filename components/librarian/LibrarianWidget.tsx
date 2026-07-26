@@ -78,16 +78,16 @@ export function LibrarianWidget({ configured }: { configured: boolean }) {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "close the librarian" : "open the librarian"}
-        className="gradient-brand fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft-lg transition-all duration-200 hover:shadow-glow hover:scale-105"
+        className="gradient-brand fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft-lg transition-all duration-250 hover:shadow-glow hover:scale-105"
       >
-        {open ? <X size={22} strokeWidth={2.25} /> : <Sparkles size={22} strokeWidth={2.25} />}
+        {open ? <X size={22} strokeWidth={1.75} /> : <Sparkles size={22} strokeWidth={1.75} />}
       </button>
 
       {open && (
         <div className="glass fixed bottom-24 right-6 z-40 flex h-[70vh] max-h-[600px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-[24px] border border-line shadow-soft-lg">
           <div className="gradient-brand flex items-center justify-between px-5 py-3.5 text-sm text-white">
             <span className="flex items-center gap-1.5 font-heading font-semibold">
-              <Sparkles size={14} strokeWidth={2.25} />
+              <Sparkles size={14} strokeWidth={1.75} />
               librarian
             </span>
             {configured && <span className="h-2 w-2 animate-pulse rounded-full bg-panel" />}
@@ -96,7 +96,7 @@ export function LibrarianWidget({ configured }: { configured: boolean }) {
           {!configured ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
               <span className="gradient-brand flex h-11 w-11 items-center justify-center rounded-full text-white">
-                <Sparkles size={18} strokeWidth={2.25} />
+                <Sparkles size={18} strokeWidth={1.75} />
               </span>
               <p className="font-heading font-semibold text-text">coming soon</p>
               <p className="text-sm text-dim">
@@ -159,9 +159,9 @@ export function LibrarianWidget({ configured }: { configured: boolean }) {
                   onClick={send}
                   disabled={sending || !input.trim()}
                   aria-label="send"
-                  className="gradient-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-40"
+                  className="gradient-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:opacity-40"
                 >
-                  <Send size={15} strokeWidth={2.25} />
+                  <Send size={15} strokeWidth={1.75} />
                 </button>
               </div>
             </>

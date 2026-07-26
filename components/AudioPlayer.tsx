@@ -68,9 +68,9 @@ export function AudioPlayer({
         <button
           onClick={toggle}
           aria-label={playing ? `pause ${title}` : `play ${title}`}
-          className="gradient-brand flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+          className="gradient-brand flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-soft transition-all duration-250 hover:shadow-glow"
         >
-          {playing ? <Pause size={20} strokeWidth={2.25} fill="white" /> : <Play size={20} strokeWidth={2.25} fill="white" className="ml-0.5" />}
+          {playing ? <Pause size={20} strokeWidth={1.75} fill="white" /> : <Play size={20} strokeWidth={1.75} fill="white" className="ml-0.5" />}
         </button>
 
         <div className="flex h-16 flex-1 items-end gap-[3px] overflow-hidden">

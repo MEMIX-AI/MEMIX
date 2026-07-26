@@ -13,17 +13,17 @@ export function AssetCard({ asset }: { asset: AssetWithTags }) {
   return (
     <Link
       href={`/asset/${asset.id}`}
-      className="card-lift group flex flex-col gap-3 rounded-[20px] border border-[rgba(30,120,130,0.12)] bg-white p-4 shadow-[0_12px_30px_rgba(20,120,120,0.08)]"
+      className="card-lift group flex flex-col gap-3 rounded-[24px] border border-white/50 bg-white/65 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.06)] backdrop-blur-[18px]"
     >
       <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-dim">
         <span>{assetTypeLabel(asset.type)}</span>
-        <span className="flex items-center gap-1 text-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <ActionIcon size={11} strokeWidth={2.5} />
+        <span className="flex items-center gap-1 text-accent opacity-0 transition-opacity duration-250 group-hover:opacity-100">
+          <ActionIcon size={11} strokeWidth={2} />
           {assetActionLabel(asset.type)}
         </span>
       </div>
 
-      <div className="relative aspect-square w-full overflow-hidden rounded-[18px] border border-line bg-bg">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[18px] border border-line bg-bg shadow-soft">
         {asset.thumbnailUrl ? (
           <Image
             src={asset.thumbnailUrl}
@@ -52,7 +52,7 @@ export function AssetCard({ asset }: { asset: AssetWithTags }) {
           {license.label}
         </span>
         <span className="flex items-center gap-1 text-xs text-dim">
-          <Download size={12} strokeWidth={2.25} />
+          <Download size={12} strokeWidth={1.75} />
           {asset.downloadCount}
         </span>
       </div>

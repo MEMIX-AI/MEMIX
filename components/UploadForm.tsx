@@ -156,7 +156,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
             setDragOver(false);
             handleFile(e.dataTransfer.files?.[0] ?? null);
           }}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border-2 border-dashed bg-panel p-10 text-center transition-all duration-200 ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[24px] border-2 border-dashed bg-panel p-10 text-center transition-all duration-250 ${
             dragOver
               ? "border-accent shadow-glow"
               : "border-line hover:border-accent/50 hover:shadow-soft"
@@ -165,7 +165,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
           {!file ? (
             <>
               <span className="gradient-brand flex h-12 w-12 items-center justify-center rounded-full text-white">
-                <UploadCloud size={22} strokeWidth={2.25} />
+                <UploadCloud size={22} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-text">
                 drop a file here, or click to browse
@@ -199,7 +199,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
               )}
               {detectedType === "SOUND" && (
                 <span className="gradient-brand flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white">
-                  <Music2 size={22} strokeWidth={2.25} />
+                  <Music2 size={22} strokeWidth={1.75} />
                 </span>
               )}
               <div className="min-w-0 flex-1">
@@ -214,14 +214,14 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
                 onClick={() => handleFile(null)}
                 className="shrink-0 rounded-full p-1.5 text-dim transition-colors hover:bg-bg hover:text-warn"
               >
-                <X size={16} strokeWidth={2.25} />
+                <X size={16} strokeWidth={1.75} />
               </button>
             </div>
           )}
         </div>
         {fileError && (
           <p className="mt-2 flex items-center gap-1.5 text-sm text-warn">
-            <AlertCircle size={14} strokeWidth={2.25} />
+            <AlertCircle size={14} strokeWidth={1.75} />
             {fileError}
           </p>
         )}
@@ -272,7 +272,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
                   onClick={() => removeTag(t)}
                   className="text-dim hover:text-warn"
                 >
-                  <X size={11} strokeWidth={2.5} />
+                  <X size={11} strokeWidth={2} />
                 </button>
               </span>
             ))}
@@ -357,7 +357,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
 
       {submitError && (
         <p className="flex items-center gap-1.5 text-sm text-warn">
-          <AlertCircle size={14} strokeWidth={2.25} />
+          <AlertCircle size={14} strokeWidth={1.75} />
           {submitError}
         </p>
       )}
@@ -365,7 +365,7 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
       <button
         type="submit"
         disabled={!canSubmit}
-        className="gradient-brand rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+        className="gradient-brand rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
       >
         {submitting ? "uploading..." : "upload"}
       </button>

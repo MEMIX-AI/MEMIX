@@ -13,7 +13,7 @@ export function ReportButton({ assetId }: { assetId: string }) {
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 text-xs font-medium text-dim transition-colors hover:text-accent"
       >
-        <Flag size={13} strokeWidth={2.25} />
+        <Flag size={13} strokeWidth={1.75} />
         report this asset
       </button>
       {open && <ReportModal assetId={assetId} onClose={() => setOpen(false)} />}

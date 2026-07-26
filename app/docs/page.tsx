@@ -121,7 +121,7 @@ export default function DocsPage() {
 X-API-Key: mxk_••••••••••••••••••••`}
         </pre>
         <p className="flex items-start gap-2">
-          <KeyRound size={15} strokeWidth={2.25} className="mt-0.5 shrink-0 text-dim" />
+          <KeyRound size={15} strokeWidth={1.75} className="mt-0.5 shrink-0 text-dim" />
           Keys are shown once at generation time and never stored in
           retrievable form. Losing it means generating a new one — that
           invalidates the old one. One key per wallet for now.

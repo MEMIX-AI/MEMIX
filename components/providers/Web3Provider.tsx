@@ -27,14 +27,14 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
               "--ck-font-family":
                 "var(--font-body), ui-sans-serif, system-ui, sans-serif",
               "--ck-border-radius": "20px",
-              "--ck-accent-color": "#1ca6b8",
+              "--ck-accent-color": "#12c7d6",
               "--ck-accent-text-color": "#ffffff",
-              "--ck-body-background": "#f2fffd",
-              "--ck-body-background-secondary": "#dff6f3",
-              "--ck-body-color": "#12333a",
-              "--ck-body-color-muted": "#4b6a72",
-              "--ck-body-divider": "rgba(40, 120, 130, 0.15)",
-              "--ck-focus-color": "#1ca6b8",
+              "--ck-body-background": "#fbfffe",
+              "--ck-body-background-secondary": "#ddfcf6",
+              "--ck-body-color": "#12283a",
+              "--ck-body-color-muted": "#4b6478",
+              "--ck-body-divider": "rgba(60, 100, 180, 0.14)",
+              "--ck-focus-color": "#12c7d6",
               "--ck-primary-button-border-radius": "9999px",
             }}
           >

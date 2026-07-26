@@ -11,8 +11,8 @@ export function SearchCommandInput({
   showCursor?: boolean;
 }) {
   return (
-    <div className="group relative flex items-center gap-2.5 rounded-2xl border border-line bg-panel px-4 py-3 shadow-soft transition-all duration-200 focus-within:border-accent/50 focus-within:shadow-glow">
-      <Search size={17} strokeWidth={2.25} className="shrink-0 text-dim transition-colors group-focus-within:text-accent" />
+    <div className="group relative flex items-center gap-2.5 rounded-[20px] border border-white/60 bg-white/55 px-4 py-3 shadow-soft backdrop-blur-xl transition-all duration-250 focus-within:border-accent/50 focus-within:shadow-glow">
+      <Search size={17} strokeWidth={1.75} className="shrink-0 text-dim transition-colors group-focus-within:text-accent" />
       <input
         type="text"
         name="q"
@@ -32,7 +32,7 @@ export function SearchCommandInput({
       <button
         type="submit"
         aria-label="search"
-        className="shrink-0 rounded-full p-1.5 text-dim transition-all duration-200 hover:gradient-brand hover:text-white"
+        className="shrink-0 rounded-full p-1.5 text-dim transition-all duration-250 hover:gradient-brand hover:text-white"
       >
         ↵
       </button>

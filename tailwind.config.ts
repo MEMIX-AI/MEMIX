@@ -29,6 +29,9 @@ const config: Config = {
       borderRadius: {
         DEFAULT: "12px",
       },
+      transitionDuration: {
+        "250": "250ms",
+      },
       boxShadow: {
         soft: "var(--shadow-soft)",
         "soft-lg": "var(--shadow-soft-lg)",

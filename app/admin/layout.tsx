@@ -32,7 +32,7 @@ export default async function AdminLayout({
           <Link
             key={l.href}
             href={l.href}
-            className="rounded-full px-4 py-1.5 text-sm font-medium text-dim transition-all duration-200 hover:bg-bg hover:text-text"
+            className="rounded-full px-4 py-1.5 text-sm font-medium text-dim transition-all duration-250 hover:bg-bg hover:text-text"
           >
             {l.label}
           </Link>

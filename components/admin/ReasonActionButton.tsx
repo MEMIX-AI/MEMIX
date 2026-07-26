@@ -59,7 +59,7 @@ export function ReasonActionButton({
           setReason("");
           setError(null);
         }}
-        className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
+        className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-250 ${
           variant === "accent"
             ? "gradient-brand text-white shadow-soft hover:shadow-glow"
             : "border border-line bg-panel text-dim shadow-soft hover:border-accent/40 hover:text-text"
@@ -96,7 +96,7 @@ export function ReasonActionButton({
 
             {error && (
               <p className="mb-2 flex items-center gap-1.5 text-sm text-warn">
-                <AlertCircle size={13} strokeWidth={2.25} />
+                <AlertCircle size={13} strokeWidth={1.75} />
                 {error}
               </p>
             )}
@@ -105,14 +105,14 @@ export function ReasonActionButton({
               <button
                 onClick={submit}
                 disabled={submitting}
-                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
+                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:opacity-50"
               >
                 {submitting ? "submitting..." : confirmLabel}
               </button>
               <button
                 onClick={() => setOpen(false)}
                 disabled={submitting}
-                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
+                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-250 hover:border-accent/40"
               >
                 cancel
               </button>

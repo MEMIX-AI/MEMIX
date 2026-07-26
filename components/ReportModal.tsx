@@ -58,7 +58,7 @@ export function ReportModal({
         {status === "done" ? (
           <>
             <p className="mb-2 flex items-center gap-2 font-heading font-bold text-ok">
-              <CheckCircle2 size={20} strokeWidth={2.25} />
+              <CheckCircle2 size={20} strokeWidth={1.75} />
               report received
             </p>
             <p className="mb-5 text-sm leading-relaxed text-dim">
@@ -67,7 +67,7 @@ export function ReportModal({
             </p>
             <button
               onClick={onClose}
-              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-250 hover:border-accent/40"
             >
               close
             </button>
@@ -85,7 +85,7 @@ export function ReportModal({
                   type="button"
                   key={r.value}
                   onClick={() => setReason(r.value)}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-250 ${
                     reason === r.value
                       ? "gradient-brand text-white shadow-glow"
                       : "border border-line bg-panel text-dim hover:border-accent/40"
@@ -129,7 +129,7 @@ export function ReportModal({
 
             {status === "error" && (
               <p className="mb-4 flex items-center gap-1.5 text-sm text-warn">
-                <XCircle size={14} strokeWidth={2.25} />
+                <XCircle size={14} strokeWidth={1.75} />
                 something went wrong, try again.
               </p>
             )}
@@ -138,14 +138,14 @@ export function ReportModal({
               <button
                 type="submit"
                 disabled={status === "submitting"}
-                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-60"
+                className="gradient-brand flex-1 rounded-full px-4 py-2.5 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:opacity-60"
               >
                 {status === "submitting" ? "sending..." : "submit report"}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-200 hover:border-accent/40"
+                className="rounded-full border border-line bg-panel px-4 py-2.5 text-dim shadow-soft transition-all duration-250 hover:border-accent/40"
               >
                 cancel
               </button>

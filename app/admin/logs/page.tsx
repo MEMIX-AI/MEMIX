@@ -57,15 +57,15 @@ export default async function AdminLogsPage({
         </select>
         <button
           type="submit"
-          className="rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+          className="rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-250 hover:border-accent/40"
         >
           filter
         </button>
         <Link
           href={`/api/admin/logs/export?${exportParams.toString()}`}
-          className="gradient-brand flex items-center gap-1.5 rounded-full px-4 py-2 font-medium text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+          className="gradient-brand flex items-center gap-1.5 rounded-full px-4 py-2 font-medium text-white shadow-soft transition-all duration-250 hover:shadow-glow"
         >
-          <Download size={14} strokeWidth={2.25} />
+          <Download size={14} strokeWidth={1.75} />
           export csv
         </Link>
       </form>

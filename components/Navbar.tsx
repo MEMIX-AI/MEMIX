@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAccount, useSwitchChain } from "wagmi";
 import { base } from "wagmi/chains";
 import { ConnectKitButton, useSIWE } from "connectkit";
-import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, ArrowLeftRight, Sparkles } from "lucide-react";
 import { useAccountRole } from "@/lib/hooks/useAccountRole";
 
 const NAV_LINKS = [
@@ -48,10 +48,12 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-line/80 px-4 py-3.5 shadow-soft sm:px-6">
-      <Link href="/" className="flex items-center gap-1 font-heading text-lg font-bold">
-        <span className="gradient-text">memix</span>
-        <span className="cursor-blink text-accent">▊</span>
+    <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-b-[22px] border-b border-white/40 px-4 py-3.5 shadow-soft sm:px-6">
+      <Link href="/" className="flex items-center gap-2 font-heading text-lg font-bold">
+        <span className="gradient-logo flex h-7 w-7 items-center justify-center rounded-full text-white shadow-soft">
+          <Sparkles size={14} strokeWidth={2} />
+        </span>
+        <span className="gradient-logo-text">memix</span>
       </Link>
 
       <nav className="flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
@@ -61,7 +63,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`rounded-full px-4 py-2 font-medium transition-all duration-200 ${
+              className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
                 active
                   ? "gradient-brand text-white shadow-glow"
                   : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
@@ -80,7 +82,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`rounded-full px-4 py-2 font-medium transition-all duration-200 ${
+              className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
                 active
                   ? "gradient-brand text-white shadow-glow"
                   : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
@@ -97,9 +99,9 @@ export function Navbar() {
               return (
                 <button
                   onClick={show}
-                  className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+                  className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
                 >
-                  <Wallet size={15} strokeWidth={2.25} />
+                  <Wallet size={15} strokeWidth={1.75} />
                   connect
                 </button>
               );
@@ -109,10 +111,10 @@ export function Navbar() {
               return (
                 <button
                   onClick={() => switchChain({ chainId: base.id })}
-                  className="ml-1 flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-200 hover:bg-warn/15 disabled:opacity-60"
+                  className="ml-1 flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-250 hover:bg-warn/15 disabled:opacity-60"
                   disabled={switchingChain}
                 >
-                  <ArrowLeftRight size={15} strokeWidth={2.25} />
+                  <ArrowLeftRight size={15} strokeWidth={1.75} />
                   {switchingChain ? "switching…" : "switch to base"}
                 </button>
               );
@@ -122,10 +124,10 @@ export function Navbar() {
               return (
                 <button
                   onClick={() => signIn()}
-                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
+                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
                   disabled={isLoading}
                 >
-                  <Wallet size={15} strokeWidth={2.25} />
+                  <Wallet size={15} strokeWidth={1.75} />
                   {isLoading ? "signing…" : "sign in"}
                 </button>
               );
@@ -139,19 +141,19 @@ export function Navbar() {
               <div className="relative ml-1" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
+                  className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-brand text-white">
-                    <User size={13} strokeWidth={2.5} />
+                    <User size={13} strokeWidth={2} />
                   </span>
                   {truncated}
                   {isAdmin && (
                     <span className="gradient-brand flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      <ShieldCheck size={11} strokeWidth={2.5} />
+                      <ShieldCheck size={11} strokeWidth={2} />
                       admin
                     </span>
                   )}
-                  <ChevronDown size={14} className={`text-dim transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={14} className={`text-dim transition-transform duration-250 ${menuOpen ? "rotate-180" : ""}`} />
                 </button>
                 {menuOpen && (
                   <div className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-line bg-panel text-sm shadow-soft-lg">

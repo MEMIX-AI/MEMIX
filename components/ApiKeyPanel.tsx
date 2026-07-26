@@ -53,7 +53,7 @@ export function ApiKeyPanel({
     return (
       <div className="rounded-[24px] border border-accent/30 bg-panel p-6 shadow-soft-lg">
         <p className="mb-2 flex items-center gap-2 font-heading font-bold text-accent">
-          <KeyRound size={18} strokeWidth={2.25} />
+          <KeyRound size={18} strokeWidth={1.75} />
           your new key (shown once)
         </p>
         <p className="mb-4 text-sm leading-relaxed text-dim">
@@ -65,9 +65,9 @@ export function ApiKeyPanel({
         </div>
         <button
           onClick={copy}
-          className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-200 hover:border-accent/40"
+          className="mr-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium shadow-soft transition-all duration-250 hover:border-accent/40"
         >
-          {copied ? <Check size={14} strokeWidth={2.5} className="text-ok" /> : <Copy size={14} strokeWidth={2.25} />}
+          {copied ? <Check size={14} strokeWidth={2} className="text-ok" /> : <Copy size={14} strokeWidth={1.75} />}
           {copied ? "copied" : "copy"}
         </button>
         <button
@@ -117,7 +117,7 @@ export function ApiKeyPanel({
           {!confirming ? (
             <button
               onClick={() => setConfirming(true)}
-              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-200 hover:border-accent/40 hover:text-text"
+              className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-250 hover:border-accent/40 hover:text-text"
             >
               regenerate
             </button>
@@ -129,7 +129,7 @@ export function ApiKeyPanel({
               <button
                 onClick={generate}
                 disabled={generating}
-                className="gradient-brand rounded-full px-3.5 py-1.5 font-medium text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
+                className="gradient-brand rounded-full px-3.5 py-1.5 font-medium text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:opacity-50"
               >
                 {generating ? "generating..." : "confirm"}
               </button>
@@ -151,9 +151,9 @@ export function ApiKeyPanel({
           <button
             onClick={generate}
             disabled={generating}
-            className="gradient-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-50"
+            className="gradient-brand inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:opacity-50"
           >
-            <KeyRound size={16} strokeWidth={2.25} />
+            <KeyRound size={16} strokeWidth={1.75} />
             {generating ? "generating..." : "generate key"}
           </button>
         </>
@@ -161,7 +161,7 @@ export function ApiKeyPanel({
 
       {error && (
         <p className="mt-4 flex items-center gap-1.5 text-sm text-warn">
-          <AlertCircle size={14} strokeWidth={2.25} />
+          <AlertCircle size={14} strokeWidth={1.75} />
           {error}
         </p>
       )}

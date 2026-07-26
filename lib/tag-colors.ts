@@ -3,21 +3,22 @@
 // examples from the design brief get their exact requested color; any
 // other tag falls back to a stable hash into the same palette.
 const TAG_PALETTE = [
-  { bg: "#d7f5ec", text: "#0f7a5c", border: "#b7e9d9" }, // mint
-  { bg: "#d3f3f5", text: "#0e7c86", border: "#aee6ea" }, // cyan
-  { bg: "#cdeeee", text: "#0d6e73", border: "#a3dedd" }, // turquoise
-  { bg: "#dbe9fb", text: "#2456a8", border: "#bcd7f7" }, // soft blue
-  { bg: "#cdeae6", text: "#106b64", border: "#a4dbd3" }, // teal
-  { bg: "#e4f7e0", text: "#3c8a4a", border: "#c3ecba" }, // pale green
-  { bg: "#e6f4fb", text: "#1f6f95", border: "#c4e6f6" }, // sky
+  { bg: "#d7f5ec", text: "#0f7a5c", border: "#b7e9d9" }, // mint (cat)
+  { bg: "#e4f7e0", text: "#3c8a4a", border: "#c3ecba" }, // soft green (funny)
+  { bg: "#fdecd6", text: "#b3651a", border: "#f6d9ae" }, // soft orange (gaming)
+  { bg: "#ece3fb", text: "#6b46c1", border: "#d9c7f7" }, // soft purple (reaction)
+  { bg: "#dbe9fb", text: "#2456a8", border: "#bcd7f7" }, // soft blue (wojak)
+  { bg: "#d3f3f5", text: "#0e7c86", border: "#aee6ea" }, // soft cyan (qa)
+  { bg: "#e6f4fb", text: "#1f6f95", border: "#c4e6f6" }, // sky (fallback)
 ] as const;
 
 const NAMED_INDEX: Record<string, number> = {
-  funny: 0,
-  gaming: 1,
-  cat: 2,
+  cat: 0,
+  funny: 1,
+  gaming: 2,
   reaction: 3,
-  video: 4,
+  wojak: 4,
+  qa: 5,
 };
 
 export function tagColor(name: string): (typeof TAG_PALETTE)[number] {

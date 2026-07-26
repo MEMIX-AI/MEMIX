@@ -68,13 +68,13 @@ export default async function LibraryPage({
             <Link
               key={f.label}
               href={hrefWith({ type: f.value })}
-              className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-250 ${
                 active
                   ? "gradient-brand border-transparent text-white shadow-glow"
-                  : "border-line bg-transparent text-dim hover:gradient-brand hover:border-transparent hover:text-white hover:shadow-glow"
+                  : "border-white/60 bg-white/40 text-dim hover:gradient-brand hover:border-transparent hover:text-white hover:shadow-glow"
               }`}
             >
-              <Icon size={14} strokeWidth={2.25} />
+              <Icon size={14} strokeWidth={1.75} />
               {f.label}
             </Link>
           );
@@ -95,7 +95,7 @@ export default async function LibraryPage({
                     ? undefined
                     : { background: c.bg, color: c.text, borderColor: c.border }
                 }
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft ${
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-250 hover:-translate-y-0.5 hover:shadow-soft ${
                   active ? "gradient-brand border-transparent text-white shadow-glow" : ""
                 }`}
               >
@@ -144,7 +144,7 @@ export default async function LibraryPage({
         {page > 1 ? (
           <Link
             href={hrefWith({ page: String(page - 1) })}
-            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
+            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
           >
             <ChevronLeft size={15} /> prev
           </Link>
@@ -157,7 +157,7 @@ export default async function LibraryPage({
         {page < totalPages ? (
           <Link
             href={hrefWith({ page: String(page + 1) })}
-            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
+            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
           >
             next <ChevronRight size={15} />
           </Link>

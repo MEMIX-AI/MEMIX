@@ -9,7 +9,7 @@ export default function TokenomicsPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
       <span className="gradient-brand mb-6 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-soft-lg">
-        <Coins size={20} strokeWidth={2.25} />
+        <Coins size={20} strokeWidth={1.75} />
       </span>
       <h1 className="mb-4 font-heading text-2xl font-bold text-text sm:text-3xl">
         No token yet.

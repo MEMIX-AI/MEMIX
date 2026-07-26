@@ -51,11 +51,11 @@ export default async function AdminUsersPage() {
                   {user.status.toLowerCase()}
                 </span>
                 <span className="flex items-center gap-1.5 text-dim">
-                  <FolderOpen size={13} strokeWidth={2.25} />
+                  <FolderOpen size={13} strokeWidth={1.75} />
                   {user._count.assets} asset{user._count.assets === 1 ? "" : "s"}
                 </span>
                 <span className="flex items-center gap-1.5 text-dim">
-                  <Flag size={13} strokeWidth={2.25} />
+                  <Flag size={13} strokeWidth={1.75} />
                   {reportCount} report{reportCount === 1 ? "" : "s"}
                 </span>
                 <div className="ml-auto">

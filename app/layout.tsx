@@ -39,13 +39,15 @@ export default function RootLayout({
     >
       <body className="antialiased">
         {/* Decorative background layer — fixed behind everything, never
-            affects document flow/layout. Teal/mint gradient wash +
-            blurred color blobs + a faint dot grid, per the redesign
-            brief — deliberately not plain white. */}
+            affects document flow/layout. Aurora gradient wash + large
+            slow-drifting blurred color blobs + a faint sparkle layer +
+            a very-low-opacity dot grid, per the redesign brief —
+            deliberately not plain white. */}
         <div aria-hidden className="bg-decoration">
-          <div className="bg-blob bg-blob-cyan" />
-          <div className="bg-blob bg-blob-mint" />
-          <div className="bg-blob bg-blob-turquoise" />
+          <div className="bg-blob bg-blob-teal" />
+          <div className="bg-blob bg-blob-sky" />
+          <div className="bg-blob bg-blob-lavender" />
+          <div className="bg-sparkle" />
           <div className="bg-dots" />
         </div>
 

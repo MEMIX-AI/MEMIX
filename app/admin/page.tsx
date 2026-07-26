@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl border border-line bg-panel p-4 shadow-soft">
             <span className="gradient-brand mb-3 flex h-9 w-9 items-center justify-center rounded-xl text-white">
-              <s.icon size={16} strokeWidth={2.25} />
+              <s.icon size={16} strokeWidth={1.75} />
             </span>
             <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-dim">{s.label}</p>
             <p className="font-heading text-xl font-bold text-text">{s.value}</p>

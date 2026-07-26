@@ -41,7 +41,7 @@ export function MyUploadCard({ asset }: { asset: OwnAsset }) {
   const isDeleted = asset.status === "TAKEN_DOWN";
 
   return (
-    <div className="rounded-2xl border border-line bg-panel p-4 shadow-soft transition-shadow duration-200 hover:shadow-soft-lg">
+    <div className="rounded-2xl border border-line bg-panel p-4 shadow-soft transition-shadow duration-250 hover:shadow-soft-lg">
       <div className="mb-2.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-dim">
         <span>{assetTypeLabel(asset.type)}</span>
         <span className={`rounded-full border px-2 py-0.5 ${STATUS_STYLE[asset.status]}`}>
@@ -59,7 +59,7 @@ export function MyUploadCard({ asset }: { asset: OwnAsset }) {
 
       {error && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-warn">
-          <AlertCircle size={12} strokeWidth={2.25} />
+          <AlertCircle size={12} strokeWidth={1.75} />
           {error}
         </p>
       )}
@@ -71,7 +71,7 @@ export function MyUploadCard({ asset }: { asset: OwnAsset }) {
               onClick={() => setConfirming(true)}
               className="flex items-center gap-1.5 text-xs font-medium text-dim transition-colors hover:text-warn"
             >
-              <Trash2 size={12} strokeWidth={2.25} />
+              <Trash2 size={12} strokeWidth={1.75} />
               delete
             </button>
           ) : (

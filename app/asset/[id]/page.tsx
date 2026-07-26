@@ -41,9 +41,9 @@ export default async function AssetDetailPage({
 
           <a
             href={`/api/assets/${asset.id}/download`}
-            className="gradient-brand mb-6 inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+            className="gradient-brand mb-6 inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
           >
-            <Download size={17} strokeWidth={2.25} />
+            <Download size={17} strokeWidth={1.75} />
             download
           </a>
 
@@ -78,7 +78,7 @@ export default async function AssetDetailPage({
                     key={tag.id}
                     href={`/library?tag=${encodeURIComponent(tag.name)}`}
                     style={{ background: c.bg, color: c.text, borderColor: c.border }}
-                    className="rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
+                    className="rounded-full border px-3 py-1 text-xs font-medium transition-all duration-250 hover:-translate-y-0.5 hover:shadow-soft"
                   >
                     #{tag.name}
                   </Link>

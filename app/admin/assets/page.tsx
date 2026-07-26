@@ -39,7 +39,7 @@ export default async function AdminAssetsPage({
           <Link
             key={f.label}
             href={f.value ? `/admin/assets?status=${f.value}` : "/admin/assets"}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-250 ${
               status === f.value
                 ? "gradient-brand text-white shadow-glow"
                 : "border border-line bg-panel text-dim shadow-soft hover:border-accent/40"

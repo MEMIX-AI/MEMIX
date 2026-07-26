@@ -82,7 +82,7 @@ export default function PrivacyPage() {
 
       <CatalogSection number="MV—P07" title="Contact &amp; jurisdiction">
         <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
-          <AlertCircle size={18} strokeWidth={2.25} className="mt-0.5 shrink-0" />
+          <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium leading-relaxed">
             Not filled in yet: a data controller contact address and
             applicable jurisdiction. Both are required before this page goes

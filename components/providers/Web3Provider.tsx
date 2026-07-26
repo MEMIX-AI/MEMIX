@@ -11,7 +11,14 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <WagmiProvider config={wagmiConfig}>
+    // reconnectOnMount=false: owner explicitly wants the wallet picker
+    // every time, not a silent auto-reconnect to whatever wallet was used
+    // last visit. This only affects wagmi's client-side connection state
+    // — the actual mv_session cookie (server-side, checked independently
+    // via getCurrentUser()) is untouched, so an already-signed-in user
+    // isn't logged out, they just have to reconnect+re-pick their wallet
+    // before the UI shows them as connected again.
+    <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
       <QueryClientProvider client={queryClient}>
         <SIWEProvider {...siweConfig}>
           <ConnectKitProvider

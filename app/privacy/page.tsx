@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogHero>
 
-      <CatalogSection number="MV—P01" title="Browsing the library">
+      <CatalogSection title="Browsing the library">
         <p>
           Searching and downloading from the public library doesn&apos;t
           require an account. No name, email, or personal identifier is
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P02" title="Wallet connection">
+      <CatalogSection title="Wallet connection">
         <p>
           Connecting a wallet uses SIWE (Sign-In with Ethereum). MEMIX
           stores the public wallet address used to sign in — nothing more.
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P03" title="Uploads &amp; ownership declarations">
+      <CatalogSection title="Uploads &amp; ownership declarations">
         <p>
           The ownership/authorization declaration made at upload time
           (including the uploading wallet address, a timestamp, and a hashed
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P04" title="API keys &amp; usage">
+      <CatalogSection title="API keys &amp; usage">
         <p>
           An API key is tied to the wallet address that generated it. Call
           volume and which endpoints are used are logged for billing and
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P05" title="Takedown records">
+      <CatalogSection title="Takedown records">
         <p>
           Every takedown request and its resolution is recorded permanently
           in an append-only log. See{" "}
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P06" title="What is never sold">
+      <CatalogSection title="What is never sold">
         <Callout>
           MEMIX never sells wallet addresses, upload history, or query
           logs to third parties.
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
         <p>What is sold is access to the structured catalogue data, via the API.</p>
       </CatalogSection>
 
-      <CatalogSection number="MV—P07" title="Contact &amp; jurisdiction">
+      <CatalogSection title="Contact &amp; jurisdiction">
         <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
           <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium leading-relaxed">

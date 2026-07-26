@@ -40,13 +40,14 @@ export default function DocsPage() {
           verdict layer — <code className="font-mono text-accent">status</code>,{" "}
           <code className="font-mono text-accent">works_when</code>,{" "}
           <code className="font-mono text-accent">avoid_when</code> — is the
-          direction, not yet the shipped response. See MV—005 for what{" "}
+          direction, not yet the shipped response. See “The verdict fields”
+          below for what{" "}
           <code className="font-mono text-accent">/api/v1/*</code> actually
           returns today.
         </p>
       </CatalogHero>
 
-      <CatalogSection number="MV—000" title="What MEMIX is">
+      <CatalogSection title="What MEMIX is">
         <p>
           MEMIX is a catalogue of internet meme culture — images, video,
           and sound — searchable and free to download for anyone. Nothing in
@@ -66,7 +67,7 @@ export default function DocsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—001" title="What you get">
+      <CatalogSection title="What you get">
         <p>
           A read API over the whole catalogue — images, video, sound. Search
           returns structured entries, not a blob of files.
@@ -80,7 +81,7 @@ export default function DocsPage() {
         <p>An API key gates programmatic access — not human visitors.</p>
       </CatalogSection>
 
-      <CatalogSection number="MV—002" title="How to use MEMIX">
+      <CatalogSection title="How to use MEMIX">
         <p className="rounded-2xl border border-line bg-panel px-4 py-3 text-xs leading-relaxed text-dim shadow-soft">
           There is no smart contract and no node to run here — MEMIX is a
           web app, not its own chain or protocol. Wallet connection is used
@@ -97,8 +98,8 @@ export default function DocsPage() {
             connect your wallet from the nav bar and sign in (SIWE — no gas,
             no funds moved), then generate a key at{" "}
             <code className="font-mono text-accent">/my-uploads/api-key</code>. Call
-            the API with the key in the Authorization header (see MV—003) —
-            usage is metered from the first call.
+            the API with the key in the Authorization header (see
+            Authentication, next) — usage is metered from the first call.
           </li>
           <li>
             <span className="font-semibold text-text">3. Managing the catalogue (admins)</span> —
@@ -109,7 +110,7 @@ export default function DocsPage() {
         </ol>
       </CatalogSection>
 
-      <CatalogSection number="MV—003" title="Authentication">
+      <CatalogSection title="Authentication">
         <p>
           Every <code className="font-mono text-accent">/api/v1/*</code> call needs a key —
           there is no unauthenticated tier. Generate one from{" "}
@@ -128,7 +129,7 @@ X-API-Key: mxk_••••••••••••••••••••`}
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—004" title="Endpoints">
+      <CatalogSection title="Endpoints">
         <div className="flex flex-col gap-2 font-mono text-xs text-text sm:text-[13px]">
           <p>
             <span className="font-semibold text-accent">GET</span>{" "}
@@ -159,7 +160,7 @@ X-API-Key: mxk_••••••••••••••••••••`}
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—005" title="The verdict fields">
+      <CatalogSection title="The verdict fields">
         <p>
           The table below is the schema this catalogue is designed to grow
           into — it is <span className="font-semibold text-text">not</span> what
@@ -193,7 +194,7 @@ X-API-Key: mxk_••••••••••••••••••••`}
         </div>
       </CatalogSection>
 
-      <CatalogSection number="MV—006" title="Ownership &amp; takedown">
+      <CatalogSection title="Ownership &amp; takedown">
         <p>
           MEMIX claims no ownership of the works it catalogues. It claims
           its catalogue: the descriptions, the verdicts, and the notes.

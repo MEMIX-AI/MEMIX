@@ -6,37 +6,31 @@ export const metadata = {
 };
 
 const ITEMS: {
-  number: string;
   status: "shipped" | "in progress" | "planned";
   title: string;
   body: string;
 }[] = [
   {
-    number: "MV—R01",
     status: "shipped",
     title: "The library",
     body: "Images, video, and sound — searchable and free to download for anyone, no login or wallet. This is the core, and it is live.",
   },
   {
-    number: "MV—R02",
     status: "in progress",
     title: "The Librarian",
     body: "A curator you can ask directly. Natural search over the catalogue, answered in the archive's own voice, returning entries with their verdicts attached.",
   },
   {
-    number: "MV—R03",
     status: "in progress",
     title: "API v1 for machines",
     body: "Programmatic access for agents and bots, gated by API key. Humans stay free; machines are billed per call.",
   },
   {
-    number: "MV—R04",
     status: "planned",
     title: "Creator shops",
     body: "Creators with genuinely original work connect a wallet and sell their own originals directly. Optional, separate from the free catalogue.",
   },
   {
-    number: "MV—R05",
     status: "planned",
     title: "Agent skills",
     body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call.",
@@ -54,11 +48,7 @@ export default function RoadmapPage() {
 
       <ol className="flex flex-col gap-8">
         {ITEMS.map((item) => (
-          <li key={item.number}>
-            <div className="mb-2.5 flex items-center gap-2.5 font-mono text-xs text-dim">
-              <span className="tracking-[0.2em] text-accent/70">▍▍▍</span>
-              <span className="font-medium uppercase tracking-wider">{item.number}</span>
-            </div>
+          <li key={item.title}>
             <div className="mb-2 flex flex-wrap items-center gap-2.5">
               <h2 className="font-heading text-lg font-bold text-text">{item.title}</h2>
               <StatusBadge status={item.status} />

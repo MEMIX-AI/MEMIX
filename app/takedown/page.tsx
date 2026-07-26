@@ -15,7 +15,7 @@ export default function TakedownPage() {
         lede="If you hold rights to something catalogued here and want it removed, this is the process. It's short on purpose."
       />
 
-      <CatalogSection number="MV—D01" title="Who can request removal">
+      <CatalogSection title="Who can request removal">
         <p>
           A rights holder, or someone authorized to act on their behalf. No
           formal legal filing is required — a good-faith request with
@@ -23,7 +23,7 @@ export default function TakedownPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—D02" title="What to include">
+      <CatalogSection title="What to include">
         <ol className="flex flex-col gap-2">
           <li>1. The URL or entry ID.</li>
           <li>2. A short statement of your relationship to the work (creator, rights holder, or authorized agent).</li>
@@ -35,7 +35,7 @@ export default function TakedownPage() {
         </Callout>
       </CatalogSection>
 
-      <CatalogSection number="MV—D03" title="What happens next">
+      <CatalogSection title="What happens next">
         <p>
           File access is revoked — not just delisted from search, actually
           unreachable. The request and the action taken are recorded in an
@@ -49,7 +49,7 @@ export default function TakedownPage() {
         </Callout>
       </CatalogSection>
 
-      <CatalogSection number="MV—D04" title="Disputes &amp; re-upload">
+      <CatalogSection title="Disputes &amp; re-upload">
         <p>
           An uploader can dispute a takedown with evidence of their own
           rights. MEMIX reviews it and may reinstate the entry — that
@@ -58,7 +58,7 @@ export default function TakedownPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—D05" title="Where to send a request">
+      <CatalogSection title="Where to send a request">
         <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
           <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium leading-relaxed">

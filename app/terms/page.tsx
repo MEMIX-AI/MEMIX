@@ -21,7 +21,7 @@ export default function TermsPage() {
         </p>
       </CatalogHero>
 
-      <CatalogSection number="MV—T01" title="What MEMIX is">
+      <CatalogSection title="What MEMIX is">
         <p>
           MEMIX is a catalogue and search platform for internet meme
           assets. It does not create the works in the catalogue — assets are
@@ -33,7 +33,7 @@ export default function TermsPage() {
         </Callout>
       </CatalogSection>
 
-      <CatalogSection number="MV—T02" title="What is free, and what is paid">
+      <CatalogSection title="What is free, and what is paid">
         <p>
           Browsing and downloading are free for anyone — no account, no
           wallet, no charge. Programmatic access (search, entry data,
@@ -48,7 +48,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T03" title="Uploading content">
+      <CatalogSection title="Uploading content">
         <p>
           An uploader must confirm ownership of, or authorization to share,
           each asset at upload time; that declaration is recorded and
@@ -57,7 +57,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T04" title="Ownership">
+      <CatalogSection title="Ownership">
         <p>
           MEMIX claims no ownership of the works it catalogues. It
           claims its catalogue: the descriptions, verdicts, status labels,
@@ -66,7 +66,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T05" title="Takedown &amp; reporting">
+      <CatalogSection title="Takedown &amp; reporting">
         <p>
           A rights holder may request removal at any time; requests are
           honoured without argument. See{" "}
@@ -82,7 +82,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T06" title="Prohibited content and conduct">
+      <CatalogSection title="Prohibited content and conduct">
         <ul className="flex flex-col gap-2">
           <li>Content the uploader doesn&apos;t hold the rights to, or isn&apos;t authorized to share.</li>
           <li>
@@ -100,7 +100,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T07" title="API terms">
+      <CatalogSection title="API terms">
         <p>
           Keys are issued per wallet-verified account and are
           non-transferable. Usage is metered and billed per the published
@@ -109,7 +109,7 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T08" title="Disclaimer &amp; limitation of liability">
+      <CatalogSection title="Disclaimer &amp; limitation of liability">
         <p>
           The catalogue — including its status and verdict fields — is
           provided as-is. MEMIX makes no guarantee about the accuracy of
@@ -119,14 +119,14 @@ export default function TermsPage() {
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T09" title="Changes to these terms">
+      <CatalogSection title="Changes to these terms">
         <p>
           These terms may be updated as the service evolves. Continued use
           after a posted change constitutes acceptance.
         </p>
       </CatalogSection>
 
-      <CatalogSection number="MV—T10" title="Governing law &amp; contact">
+      <CatalogSection title="Governing law &amp; contact">
         <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
           <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
           <p className="text-sm font-medium leading-relaxed">

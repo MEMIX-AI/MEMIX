@@ -32,20 +32,14 @@ export function CatalogHero({
 }
 
 export function CatalogSection({
-  number,
   title,
   children,
 }: {
-  number: string;
   title: string;
   children: ReactNode;
 }) {
   return (
     <section className="mb-10">
-      <div className="mb-2.5 flex items-center gap-2.5 font-mono text-xs text-dim">
-        <span className="tracking-[0.2em] text-accent/70">▍▍▍</span>
-        <span className="font-medium uppercase tracking-wider">{number}</span>
-      </div>
       <h2 className="mb-3 font-heading text-lg font-bold text-text">{title}</h2>
       <div className="flex flex-col gap-3.5 text-sm leading-relaxed text-dim">{children}</div>
     </section>

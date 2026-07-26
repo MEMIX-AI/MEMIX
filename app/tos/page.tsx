@@ -1,7 +1,7 @@
 import { CURRENT_TOS_VERSION } from "@/lib/declaration";
 
 export const metadata = {
-  title: "terms of service — memevault",
+  title: "terms of service — memix",
 };
 
 export default function TosPage() {
@@ -18,9 +18,9 @@ export default function TosPage() {
 
       <div className="flex flex-col gap-4 text-dim">
         <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
-          <p className="mb-2 font-heading font-semibold text-text">1. what memevault is</p>
+          <p className="mb-2 font-heading font-semibold text-text">1. what memix is</p>
           <p className="leading-relaxed">
-            memevault is a free library of user-uploaded memes — images,
+            memix is a free library of user-uploaded memes — images,
             video, sound. anyone can browse, search, and download without an
             account, a wallet, or payment. we don&apos;t upload content
             ourselves — every public asset comes from a user who agreed to
@@ -47,7 +47,7 @@ export default function TosPage() {
           <p className="mb-2 font-heading font-semibold text-text">3. no paywalled third-party content</p>
           <p className="leading-relaxed">
             content you don&apos;t hold the rights to never goes behind a
-            paywall or paid feature on memevault, regardless of your
+            paywall or paid feature on memix, regardless of your
             account status. only original work from a verified creator can
             ever be listed for sale.
           </p>
@@ -75,7 +75,7 @@ export default function TosPage() {
         <section className="rounded-2xl border border-line bg-panel p-5 shadow-soft">
           <p className="mb-2 font-heading font-semibold text-text">6. no warranty</p>
           <p className="leading-relaxed">
-            memevault is provided as-is. we make no guarantee about
+            memix is provided as-is. we make no guarantee about
             uptime, accuracy, or fitness for any particular purpose.
           </p>
         </section>

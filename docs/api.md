@@ -1,4 +1,4 @@
-# memevault API v1
+# memix API v1
 
 Read-only, foundation-phase API for programmatic access to the library.
 Free while it's a foundation — see [`acp-plan.md`](./acp-plan.md) for what
@@ -58,7 +58,7 @@ Search and browse assets.
 
 ```bash
 curl -s "https://your-domain.example/api/v1/assets?q=fail&type=SOUND" \
-  -H "Authorization: Bearer mvk_..."
+  -H "Authorization: Bearer mxk_..."
 ```
 
 ```json
@@ -93,7 +93,7 @@ the public library pages).
 
 ```bash
 curl -s "https://your-domain.example/api/v1/assets/cmr..." \
-  -H "X-API-Key: mvk_..."
+  -H "X-API-Key: mxk_..."
 ```
 
 ### `GET /api/v1/trending`
@@ -107,7 +107,7 @@ Currently-popular assets.
 
 ```bash
 curl -s "https://your-domain.example/api/v1/trending?limit=5" \
-  -H "Authorization: Bearer mvk_..."
+  -H "Authorization: Bearer mxk_..."
 ```
 
 > **Note:** "trending" is a real rolling 7-day window (top downloads in the
@@ -123,7 +123,7 @@ increments the asset's download count, not this call.
 
 ```bash
 curl -s "https://your-domain.example/api/v1/assets/cmr.../download-url" \
-  -H "Authorization: Bearer mvk_..."
+  -H "Authorization: Bearer mxk_..."
 ```
 
 ```json

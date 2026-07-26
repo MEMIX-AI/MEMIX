@@ -1,8 +1,8 @@
 import { CatalogHero, StatusBadge, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
-  title: "roadmap — memevault",
-  description: "What's shipped, in progress, and planned for MEMEVAULT.",
+  title: "roadmap — memix",
+  description: "What's shipped, in progress, and planned for MEMIX.",
 };
 
 const ITEMS: {
@@ -49,7 +49,7 @@ export default function RoadmapPage() {
       <CatalogHero
         status="the library is live"
         title="What is on the shelf, and what is being catalogued next."
-        lede="MEMEVAULT ships in order. Each stage is finished, tested, and committed before the next one starts. No dates are promised — only sequence."
+        lede="MEMIX ships in order. Each stage is finished, tested, and committed before the next one starts. No dates are promised — only sequence."
       />
 
       <ol className="flex flex-col gap-8">

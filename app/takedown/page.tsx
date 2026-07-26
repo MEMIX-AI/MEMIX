@@ -2,7 +2,7 @@ import { AlertCircle } from "lucide-react";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
-  title: "takedown — memevault",
+  title: "takedown — memix",
   description: "Removal requests are honoured without argument.",
 };
 
@@ -30,7 +30,7 @@ export default function TakedownPage() {
           <li>3. A contact for follow-up.</li>
         </ol>
         <Callout>
-          You don&apos;t need to provide proof of ownership upfront — MEMEVAULT
+          You don&apos;t need to provide proof of ownership upfront — MEMIX
           acts first. Follow-up only happens if a request looks abusive.
         </Callout>
       </CatalogSection>
@@ -52,7 +52,7 @@ export default function TakedownPage() {
       <CatalogSection number="MV—D04" title="Disputes &amp; re-upload">
         <p>
           An uploader can dispute a takedown with evidence of their own
-          rights. MEMEVAULT reviews it and may reinstate the entry — that
+          rights. MEMIX reviews it and may reinstate the entry — that
           decision is logged too. Repeated bad-faith takedown or re-upload
           requests can result in account restrictions.
         </p>

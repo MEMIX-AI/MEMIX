@@ -107,7 +107,7 @@ below is already written and type-checked in `lib/storage.ts` — see
 `SupabaseStorageAdapter` there — this section is about *activating* it,
 not designing it from scratch.
 
-1. Create a Supabase Storage bucket (e.g. `memevault-assets`) and mark it
+1. Create a Supabase Storage bucket (e.g. `memix-assets`) and mark it
    **private**. Do not toggle it public at any point, including
    temporarily for testing — see the blocker above.
 2. `SupabaseStorageAdapter` in `lib/storage.ts` is already implemented
@@ -168,7 +168,7 @@ template and Vercel's Environment Variables UI for the real values.
 | `COPYRIGHT_EMAIL` | recommended | Public contact address for formal legal/copyright notices, shown on `/tos`. Without it, the ToS page just says a contact address isn't configured yet — the in-app report system still works regardless. |
 | `SUPABASE_URL` | yes, once storage migrates | Project URL, used by `SupabaseStorageAdapter` (§2, already implemented in `lib/storage.ts`). |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes, once storage migrates | **Service role, not anon/public key** — the adapter needs it to upload/delete/sign URLs server-side. Never expose this one to the client. |
-| `SUPABASE_STORAGE_BUCKET` | yes, once storage migrates | Name of the **private** bucket (§2) — e.g. `memevault-assets`. |
+| `SUPABASE_STORAGE_BUCKET` | yes, once storage migrates | Name of the **private** bucket (§2) — e.g. `memix-assets`. |
 
 ## 4. Pre-deploy safety checks (re-run this list before every prod deploy)
 

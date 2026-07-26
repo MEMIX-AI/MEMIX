@@ -44,7 +44,7 @@ export function Footer() {
         </nav>
 
         <p className="font-mono text-sm text-dim">
-          memevault :~$<span className="cursor-blink text-accent">▊</span>
+          memix :~$<span className="cursor-blink text-accent">▊</span>
         </p>
       </div>
     </footer>

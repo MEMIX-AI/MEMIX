@@ -23,7 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "memevault",
+  title: "memix",
   description: "the librarian for the internet's meme library.",
 };
 

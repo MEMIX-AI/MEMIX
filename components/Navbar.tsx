@@ -50,7 +50,7 @@ export function Navbar() {
   return (
     <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-line/80 px-4 py-3.5 shadow-soft sm:px-6">
       <Link href="/" className="flex items-center gap-1 font-heading text-lg font-bold">
-        <span className="gradient-text">memevault</span>
+        <span className="gradient-text">memix</span>
         <span className="cursor-blink text-accent">▊</span>
       </Link>
 

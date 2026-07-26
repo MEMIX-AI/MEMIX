@@ -18,7 +18,7 @@ export default async function UploadPage() {
         <div className="flex items-start gap-3 rounded-2xl border border-line bg-panel p-6 text-sm text-dim shadow-soft">
           <Wallet size={18} strokeWidth={2.25} className="mt-0.5 shrink-0 text-accent" />
           connect your wallet to upload. uploading is the one thing on
-          memevault that needs a wallet — browsing and downloading never do.
+          memix that needs a wallet — browsing and downloading never do.
         </div>
       ) : user.status === "BANNED" ? (
         <div className="flex items-start gap-3 rounded-2xl border border-line bg-panel p-6 text-sm text-dim shadow-soft">

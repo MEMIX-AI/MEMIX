@@ -3,8 +3,8 @@ import Link from "next/link";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
-  title: "privacy — memevault",
-  description: "What MEMEVAULT keeps, and why.",
+  title: "privacy — memix",
+  description: "What MEMIX keeps, and why.",
 };
 
 export default function PrivacyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
       <CatalogHero
         status="draft — not yet in force"
-        title="What MEMEVAULT keeps, and why."
+        title="What MEMIX keeps, and why."
         lede="A plain account of what data is collected from browsers, uploaders, and API users, and what it's used for."
       >
         <p className="mt-4 text-xs font-medium uppercase tracking-wide text-dim">
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
       <CatalogSection number="MV—P02" title="Wallet connection">
         <p>
-          Connecting a wallet uses SIWE (Sign-In with Ethereum). MEMEVAULT
+          Connecting a wallet uses SIWE (Sign-In with Ethereum). MEMIX
           stores the public wallet address used to sign in — nothing more.
           No private key, seed phrase, or balance is ever collected. Signing
           in never triggers a payment or an on-chain transaction.
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
 
       <CatalogSection number="MV—P06" title="What is never sold">
         <Callout>
-          MEMEVAULT never sells wallet addresses, upload history, or query
+          MEMIX never sells wallet addresses, upload history, or query
           logs to third parties.
         </Callout>
         <p>What is sold is access to the structured catalogue data, via the API.</p>

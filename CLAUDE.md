@@ -1,4 +1,4 @@
-# MEMEVAULT
+# MEMIX
 
 AI agent librarian untuk meme library berbasis web. Baca file ini di setiap sesi/fase dan patuhi tanpa terkecuali — instruksi di sini override default behavior.
 
@@ -57,7 +57,7 @@ AI agent librarian untuk meme library berbasis web. Baca file ini di setiap sesi
 - Glassmorphism: `.glass` (`backdrop-blur: 18px` + `rgba(240,255,252,.75)`) di `Navbar` (sticky) dan panel `LibrarianWidget`.
 - Background dekoratif: `.bg-decoration` (fixed, `z-index: -1`) — gradient `135deg #D7F5EF→#CBEFEA→#DDF8F6→#EAFDFC` + 3 blur blob (`.bg-blob-cyan/mint/turquoise`, opacity ~0.18, blur 90px) + dot pattern di `app/layout.tsx`. Gak pernah pengaruhi layout/scroll (`position: fixed`).
 - Motion: `.card-lift` (hover naik 6px **+ scale 1.02**, shadow bertambah, border jadi `var(--hover)`/cyan, 200ms) — scale ditambahin di v3, TIDAK ada di v2. `.page-enter` (fade-in 320ms), transisi hover/focus 200–300ms di semua interactive element. Hormati `prefers-reduced-motion` (tidak berubah).
-- Icon: `lucide-react`, tidak berubah dari v2. Font: Space Grotesk/Inter/JetBrains Mono via `next/font/google`, tidak berubah dari v2. Footer tetap satu-satunya tempat monospace/cursor-blink (`memevault :~$▊`).
+- Icon: `lucide-react`, tidak berubah dari v2. Font: Space Grotesk/Inter/JetBrains Mono via `next/font/google`, tidak berubah dari v2. Footer tetap satu-satunya tempat monospace/cursor-blink (`memix :~$▊`).
 - Kontras dari konten: kulit site tetap disiplin (sekarang: teal/mint lembut, bukan putih polos ataupun gelap), yang "rame" tetap meme-nya sendiri (thumbnail, tag warna-warni).
 
 ## STRUKTUR FOLDER

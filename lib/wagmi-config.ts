@@ -7,7 +7,7 @@ import { getDefaultConfig } from "connectkit";
 // CLAUDE.md) with default public RPC transports is enough.
 export const wagmiConfig = createConfig(
   getDefaultConfig({
-    appName: "memevault",
+    appName: "memix",
     appDescription: "the librarian for the internet's meme library",
     walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
     chains: [base],

@@ -30,7 +30,7 @@ export default async function Home() {
       <TerminalHeroDemo />
 
       <p className="mb-16 mt-7 max-w-xl text-sm leading-relaxed text-dim">
-        memevault is a free meme library — images, video, sound — searchable
+        memix is a free meme library — images, video, sound — searchable
         and downloadable by anyone. no login, no wallet, no paywall.
         <br />
         <span className="font-semibold text-text">free for humans.</span>{" "}

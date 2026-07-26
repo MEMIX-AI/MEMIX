@@ -3,7 +3,7 @@ import { AlertCircle } from "lucide-react";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
-  title: "terms — memevault",
+  title: "terms — memix",
   description: "The rules of the catalogue.",
 };
 
@@ -13,7 +13,7 @@ export default function TermsPage() {
       <CatalogHero
         status="draft — not yet in force"
         title="The rules of the catalogue."
-        lede="Plain terms for using MEMEVAULT — as a browser, an uploader, or a machine calling the API."
+        lede="Plain terms for using MEMIX — as a browser, an uploader, or a machine calling the API."
       >
         <p className="mt-4 text-xs font-medium uppercase tracking-wide text-dim">
           Last updated: draft — insert date on publish · this is a starting
@@ -21,14 +21,14 @@ export default function TermsPage() {
         </p>
       </CatalogHero>
 
-      <CatalogSection number="MV—T01" title="What MEMEVAULT is">
+      <CatalogSection number="MV—T01" title="What MEMIX is">
         <p>
-          MEMEVAULT is a catalogue and search platform for internet meme
+          MEMIX is a catalogue and search platform for internet meme
           assets. It does not create the works in the catalogue — assets are
-          uploaded by users, not MEMEVAULT.
+          uploaded by users, not MEMIX.
         </p>
         <Callout>
-          MEMEVAULT is a hosting and cataloguing platform, not a publisher of
+          MEMIX is a hosting and cataloguing platform, not a publisher of
           the works it indexes.
         </Callout>
       </CatalogSection>
@@ -38,7 +38,7 @@ export default function TermsPage() {
           Browsing and downloading are free for anyone — no account, no
           wallet, no charge. Programmatic access (search, entry data,
           verdicts via the API) requires an API key and is billed to the
-          calling application — this is access to MEMEVAULT&apos;s catalogue
+          calling application — this is access to MEMIX&apos;s catalogue
           and metadata, not a sale of the underlying asset.
         </p>
         <p>
@@ -52,14 +52,14 @@ export default function TermsPage() {
         <p>
           An uploader must confirm ownership of, or authorization to share,
           each asset at upload time; that declaration is recorded and
-          retained. Uploading grants MEMEVAULT a license to host, display,
+          retained. Uploading grants MEMIX a license to host, display,
           and catalogue the asset — the uploader retains ownership.
         </p>
       </CatalogSection>
 
       <CatalogSection number="MV—T04" title="Ownership">
         <p>
-          MEMEVAULT claims no ownership of the works it catalogues. It
+          MEMIX claims no ownership of the works it catalogues. It
           claims its catalogue: the descriptions, verdicts, status labels,
           and structure. Rights to the underlying image, clip, or sound
           remain with the prior rights holder.
@@ -76,8 +76,8 @@ export default function TermsPage() {
           . Every request and its resolution is logged and retained.
         </p>
         <p className="text-xs text-dim">
-          Removal affects the asset and MEMEVAULT&apos;s own file access —
-          cached copies outside MEMEVAULT&apos;s systems are outside its
+          Removal affects the asset and MEMIX&apos;s own file access —
+          cached copies outside MEMIX&apos;s systems are outside its
           control.
         </p>
       </CatalogSection>
@@ -104,7 +104,7 @@ export default function TermsPage() {
         <p>
           Keys are issued per wallet-verified account and are
           non-transferable. Usage is metered and billed per the published
-          rate. MEMEVAULT may suspend a key for abuse, non-payment, or
+          rate. MEMIX may suspend a key for abuse, non-payment, or
           violation of these terms.
         </p>
       </CatalogSection>
@@ -112,7 +112,7 @@ export default function TermsPage() {
       <CatalogSection number="MV—T08" title="Disclaimer &amp; limitation of liability">
         <p>
           The catalogue — including its status and verdict fields — is
-          provided as-is. MEMEVAULT makes no guarantee about the accuracy of
+          provided as-is. MEMIX makes no guarantee about the accuracy of
           any classification and isn&apos;t liable for decisions made using
           it. The service is provided without warranty to the extent
           permitted by law.

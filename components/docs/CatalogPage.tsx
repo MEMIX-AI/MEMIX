@@ -74,10 +74,10 @@ export function Callout({
 export function PageColophon({ tagline }: { tagline?: string }) {
   return (
     <div className="mt-16 border-t border-line pt-6 font-mono text-xs text-dim">
-      <p className="font-semibold text-text">MEMEVAULT · catalogue of record</p>
+      <p className="font-semibold text-text">MEMIX · catalogue of record</p>
       {tagline && <p className="mt-1">{tagline}</p>}
       <p className="mt-2.5 text-dim/80">
-        librarian@memevault:~$<span className="cursor-blink text-accent">▊</span>
+        librarian@memix:~$<span className="cursor-blink text-accent">▊</span>
       </p>
     </div>
   );

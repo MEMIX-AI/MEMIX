@@ -59,7 +59,7 @@ async function placeholderBuffer(type: AssetType, index: number): Promise<Buffer
   }
   // No real audio/video fixtures — just enough bytes to exercise storage.
   return Buffer.from(
-    `MEMEVAULT DEV SEED PLACEHOLDER #${index} — not real media, dev only.`,
+    `MEMIX DEV SEED PLACEHOLDER #${index} — not real media, dev only.`,
   );
 }
 

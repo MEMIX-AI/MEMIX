@@ -3,8 +3,8 @@ import { KeyRound } from "lucide-react";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
-  title: "docs — memevault",
-  description: "MEMEVAULT API v1 — read-only programmatic access to the catalogue.",
+  title: "docs — memix",
+  description: "MEMIX API v1 — read-only programmatic access to the catalogue.",
 };
 
 export default function DocsPage() {
@@ -13,7 +13,7 @@ export default function DocsPage() {
       <CatalogHero
         status="api v1 · free for humans · billed for machines"
         title="Other meme APIs return a file. This one returns a judgment."
-        lede="MEMEVAULT is a catalogue of internet culture structured for machines. Every entry is more than a file — it carries the read on whether the format still lands, where it works, and where using it is a mistake."
+        lede="MEMIX is a catalogue of internet culture structured for machines. Every entry is more than a file — it carries the read on whether the format still lands, where it works, and where using it is a mistake."
       >
         <div className="mt-8 overflow-hidden rounded-[24px] border border-line bg-panel shadow-soft-lg">
           <div className="gradient-brand flex items-center justify-between px-5 py-3 text-xs font-medium text-white/90">
@@ -46,12 +46,12 @@ export default function DocsPage() {
         </p>
       </CatalogHero>
 
-      <CatalogSection number="MV—000" title="What MEMEVAULT is">
+      <CatalogSection number="MV—000" title="What MEMIX is">
         <p>
-          MEMEVAULT is a catalogue of internet meme culture — images, video,
+          MEMIX is a catalogue of internet meme culture — images, video,
           and sound — searchable and free to download for anyone. Nothing in
-          the library is uploaded by MEMEVAULT itself; every asset comes from
-          a user, which is what lets MEMEVAULT operate as a platform rather
+          the library is uploaded by MEMIX itself; every asset comes from
+          a user, which is what lets MEMIX operate as a platform rather
           than a publisher. The direction we&apos;re building toward is that
           every entry eventually carries a verdict, not just a file: whether
           the format is still current, the context it works in, and the
@@ -80,9 +80,9 @@ export default function DocsPage() {
         <p>An API key gates programmatic access — not human visitors.</p>
       </CatalogSection>
 
-      <CatalogSection number="MV—002" title="How to use MEMEVAULT">
+      <CatalogSection number="MV—002" title="How to use MEMIX">
         <p className="rounded-2xl border border-line bg-panel px-4 py-3 text-xs leading-relaxed text-dim shadow-soft">
-          There is no smart contract and no node to run here — MEMEVAULT is a
+          There is no smart contract and no node to run here — MEMIX is a
           web app, not its own chain or protocol. Wallet connection is used
           only to sign in (SIWE), never to deploy or run anything.
         </p>
@@ -117,8 +117,8 @@ export default function DocsPage() {
           wallet, then send it as either header:
         </p>
         <pre className="overflow-x-auto rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-xs text-text shadow-soft">
-{`Authorization: Bearer mvk_••••••••••••••••••••
-X-API-Key: mvk_••••••••••••••••••••`}
+{`Authorization: Bearer mxk_••••••••••••••••••••
+X-API-Key: mxk_••••••••••••••••••••`}
         </pre>
         <p className="flex items-start gap-2">
           <KeyRound size={15} strokeWidth={2.25} className="mt-0.5 shrink-0 text-dim" />
@@ -195,7 +195,7 @@ X-API-Key: mvk_••••••••••••••••••••`}
 
       <CatalogSection number="MV—006" title="Ownership &amp; takedown">
         <p>
-          MEMEVAULT claims no ownership of the works it catalogues. It claims
+          MEMIX claims no ownership of the works it catalogues. It claims
           its catalogue: the descriptions, the verdicts, and the notes.
           Assets are uploaded by users, not by the platform. Rights holders
           requesting removal are honoured without argument — see{" "}

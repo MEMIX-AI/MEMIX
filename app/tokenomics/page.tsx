@@ -1,8 +1,8 @@
 import { Coins } from "lucide-react";
 
 export const metadata = {
-  title: "tokenomics — memevault",
-  description: "MEMEVAULT does not have a token.",
+  title: "tokenomics — memix",
+  description: "MEMIX does not have a token.",
 };
 
 export default function TokenomicsPage() {
@@ -15,7 +15,7 @@ export default function TokenomicsPage() {
         No token yet.
       </h1>
       <p className="max-w-md text-sm leading-relaxed text-dim">
-        MEMEVAULT does not have a token. This page will carry the
+        MEMIX does not have a token. This page will carry the
         distribution, utility, and supply details if and when one is
         introduced.
       </p>

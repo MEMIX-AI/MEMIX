@@ -1,4 +1,4 @@
-# memevault
+# memix
 
 A free, user-generated meme library — images, video, sound — with an AI
 agent librarian ("The Librarian") as its search-and-recommend front door.

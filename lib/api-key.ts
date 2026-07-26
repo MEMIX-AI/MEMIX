@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 
-const KEY_PREFIX = "mvk_";
+const KEY_PREFIX = "mxk_";
 
 // Plain SHA-256 (no per-key salt) is the right tool here, unlike password
 // hashing — this hashes a high-entropy random token, not a low-entropy

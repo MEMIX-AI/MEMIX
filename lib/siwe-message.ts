@@ -21,7 +21,7 @@ export function buildSiweMessage({
   return `${domain} wants you to sign in with your Ethereum account:
 ${address}
 
-Sign in to memevault. This request will not trigger a blockchain transaction or cost any gas fees.
+Sign in to memix. This request will not trigger a blockchain transaction or cost any gas fees.
 
 URI: ${uri}
 Version: 1

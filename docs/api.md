@@ -57,7 +57,7 @@ Search and browse assets.
 | `pageSize` | number | `20` | Max `50` |
 
 ```bash
-curl -s "https://your-domain.example/api/v1/assets?q=fail&type=SOUND" \
+curl -s "https://memixmeme.xyz/api/v1/assets?q=fail&type=SOUND" \
   -H "Authorization: Bearer mxk_..."
 ```
 
@@ -69,7 +69,7 @@ curl -s "https://your-domain.example/api/v1/assets?q=fail&type=SOUND" \
       "title": "sad-trombone-fail.mp3",
       "description": "...",
       "type": "SOUND",
-      "fileUrl": "https://your-domain.example/api/storage/....mp3",
+      "fileUrl": "https://memixmeme.xyz/api/storage/....mp3",
       "thumbnailUrl": null,
       "fileSize": 48213,
       "duration": null,
@@ -92,7 +92,7 @@ exist, isn't `ACTIVE`, or its uploader is banned (same visibility rule as
 the public library pages).
 
 ```bash
-curl -s "https://your-domain.example/api/v1/assets/cmr..." \
+curl -s "https://memixmeme.xyz/api/v1/assets/cmr..." \
   -H "X-API-Key: mxk_..."
 ```
 
@@ -106,7 +106,7 @@ Currently-popular assets.
 | `days` | number | — | Accepted but currently ignored — see note below |
 
 ```bash
-curl -s "https://your-domain.example/api/v1/trending?limit=5" \
+curl -s "https://memixmeme.xyz/api/v1/trending?limit=5" \
   -H "Authorization: Bearer mxk_..."
 ```
 
@@ -122,12 +122,12 @@ can change without breaking callers. Fetching the returned URL is what
 increments the asset's download count, not this call.
 
 ```bash
-curl -s "https://your-domain.example/api/v1/assets/cmr.../download-url" \
+curl -s "https://memixmeme.xyz/api/v1/assets/cmr.../download-url" \
   -H "Authorization: Bearer mxk_..."
 ```
 
 ```json
-{ "data": { "url": "https://your-domain.example/api/assets/cmr.../download", "expiresAt": null } }
+{ "data": { "url": "https://memixmeme.xyz/api/assets/cmr.../download", "expiresAt": null } }
 ```
 
 ## Errors
@@ -140,10 +140,10 @@ curl -s "https://your-domain.example/api/v1/assets/cmr.../download-url" \
 
 ```bash
 # without a key
-curl -s https://your-domain.example/api/v1/assets
+curl -s https://memixmeme.xyz/api/v1/assets
 # {"error":"missing API key — pass it as `Authorization: Bearer <key>` or `X-API-Key: <key>`"}
 
 # with a bad key
-curl -s https://your-domain.example/api/v1/assets -H "X-API-Key: not-a-real-key"
+curl -s https://memixmeme.xyz/api/v1/assets -H "X-API-Key: not-a-real-key"
 # {"error":"invalid API key"}
 ```

@@ -22,7 +22,11 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// Resolves relative Open Graph/Twitter image paths and powers the
+// canonical URL Next.js writes into <head> — needs a stable production
+// domain, which memixmeme.xyz now is.
 export const metadata: Metadata = {
+  metadataBase: new URL("https://memixmeme.xyz"),
   title: "memix",
   description: "the librarian for the internet's meme library.",
 };

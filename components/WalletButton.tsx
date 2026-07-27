@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import { base } from "wagmi/chains";
 import { ConnectKitButton, useModal, useSIWE } from "connectkit";
 import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, ArrowLeftRight } from "lucide-react";
@@ -24,6 +24,7 @@ import { useAccountRole } from "@/lib/hooks/useAccountRole";
 export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   const { address, isConnected, chain } = useAccount();
   const { switchChain, isPending: switchingChain, error: switchChainError } = useSwitchChain();
+  const { disconnect } = useDisconnect();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
   // Only Base is a configured chain (lib/wagmi-config.ts) — if a wallet is
   // connected but sitting on a different network (very common: most
@@ -75,7 +76,7 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
 
         if (wrongChain) {
           return (
-            <div className="relative ml-1">
+            <div className="relative ml-1 flex items-center gap-2">
               <button
                 onClick={() => switchChain({ chainId: base.id })}
                 className="flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-250 hover:bg-warn/15 disabled:opacity-60"
@@ -83,6 +84,18 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
               >
                 <ArrowLeftRight size={15} strokeWidth={1.75} />
                 {switchingChain ? "switching…" : "switch to base"}
+              </button>
+              {/* Escape hatch — without this, a wallet stuck on the wrong
+                  chain (or one where the auto switch-network prompt never
+                  surfaces) has no way back to "connect"/sign-out at all,
+                  since that menu only renders once past this branch. */}
+              <button
+                onClick={() => disconnect()}
+                title="disconnect wallet"
+                aria-label="disconnect wallet"
+                className="flex items-center gap-1 rounded-full border border-line bg-panel px-3 py-2 text-sm font-medium text-dim shadow-soft transition-all duration-250 hover:border-accent/40 hover:text-text"
+              >
+                <LogOut size={15} strokeWidth={1.75} />
               </button>
               {switchChainError && (
                 <div className="absolute right-0 top-full z-10 mt-2 w-64 rounded-xl border border-warn/40 bg-panel px-3 py-2 text-xs text-dim shadow-soft-lg">

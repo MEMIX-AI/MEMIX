@@ -23,7 +23,7 @@ import { useAccountRole } from "@/lib/hooks/useAccountRole";
 // already changed the connect state in the meantime.
 export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   const { address, isConnected, chain } = useAccount();
-  const { switchChain, isPending: switchingChain } = useSwitchChain();
+  const { switchChain, isPending: switchingChain, error: switchChainError } = useSwitchChain();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
   // Only Base is a configured chain (lib/wagmi-config.ts) — if a wallet is
   // connected but sitting on a different network (very common: most
@@ -75,14 +75,26 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
 
         if (wrongChain) {
           return (
-            <button
-              onClick={() => switchChain({ chainId: base.id })}
-              className="ml-1 flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-250 hover:bg-warn/15 disabled:opacity-60"
-              disabled={switchingChain}
-            >
-              <ArrowLeftRight size={15} strokeWidth={1.75} />
-              {switchingChain ? "switching…" : "switch to base"}
-            </button>
+            <div className="relative ml-1">
+              <button
+                onClick={() => switchChain({ chainId: base.id })}
+                className="flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-250 hover:bg-warn/15 disabled:opacity-60"
+                disabled={switchingChain}
+              >
+                <ArrowLeftRight size={15} strokeWidth={1.75} />
+                {switchingChain ? "switching…" : "switch to base"}
+              </button>
+              {switchChainError && (
+                <div className="absolute right-0 top-full z-10 mt-2 w-64 rounded-xl border border-warn/40 bg-panel px-3 py-2 text-xs text-dim shadow-soft-lg">
+                  couldn&apos;t switch network:{" "}
+                  {"shortMessage" in switchChainError
+                    ? (switchChainError as { shortMessage: string }).shortMessage
+                    : switchChainError.message}
+                  . check your wallet extension for a pending request, or switch to Base
+                  manually inside it.
+                </div>
+              )}
+            </div>
           );
         }
 

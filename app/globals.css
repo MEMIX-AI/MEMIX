@@ -52,35 +52,41 @@ h1, h2, h3, h4, h5, h6 {
   );
 }
 
+/* Same soft, diffuse color wash as before, but built from a
+   radial-gradient with a smooth multi-stop falloff instead of a solid
+   circle pushed through filter: blur(320px). A blur that large forces
+   the GPU to hold and continuously recomposite a ~600px-square blurred
+   bitmap per blob, on every single page (root layout) — a gradient
+   produces the same soft-edged look with no blur pass at all. Sized up
+   from the original circle to reproduce how far the old blur's visible
+   spread actually reached. */
 .bg-blob {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(320px);
-  opacity: 0.16;
   will-change: transform;
   animation: aurora-float 24s ease-in-out infinite;
 }
 .bg-blob-teal {
-  top: -14%;
-  left: -10%;
-  width: 44vw;
-  height: 44vw;
-  background: #54e2d0;
+  top: -34%;
+  left: -30%;
+  width: 90vw;
+  height: 90vw;
+  background: radial-gradient(circle, rgba(84, 226, 208, 0.16) 0%, rgba(84, 226, 208, 0.12) 20%, rgba(84, 226, 208, 0.08) 38%, rgba(84, 226, 208, 0.04) 55%, rgba(84, 226, 208, 0.015) 70%, rgba(84, 226, 208, 0) 85%);
 }
 .bg-blob-sky {
-  top: 18%;
-  right: -14%;
-  width: 40vw;
-  height: 40vw;
-  background: #62d7ff;
+  top: -2%;
+  right: -34%;
+  width: 84vw;
+  height: 84vw;
+  background: radial-gradient(circle, rgba(98, 215, 255, 0.16) 0%, rgba(98, 215, 255, 0.12) 20%, rgba(98, 215, 255, 0.08) 38%, rgba(98, 215, 255, 0.04) 55%, rgba(98, 215, 255, 0.015) 70%, rgba(98, 215, 255, 0) 85%);
   animation-delay: -8s;
 }
 .bg-blob-lavender {
-  bottom: -16%;
-  left: 20%;
-  width: 38vw;
-  height: 38vw;
-  background: #9f8bff;
+  bottom: -36%;
+  left: 0%;
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(circle, rgba(159, 139, 255, 0.16) 0%, rgba(159, 139, 255, 0.12) 20%, rgba(159, 139, 255, 0.08) 38%, rgba(159, 139, 255, 0.04) 55%, rgba(159, 139, 255, 0.015) 70%, rgba(159, 139, 255, 0) 85%);
   animation-delay: -16s;
 }
 

@@ -35,6 +35,24 @@ export async function resolveAssetUrls<T extends WithFileKeys>(asset: T): Promis
   return { ...asset, fileUrl, thumbnailUrl } as T;
 }
 
+// Batches every fileUrl/thumbnailUrl key across the whole list into one
+// storage.getUrls() round trip, instead of resolveAssetUrls()'s per-asset
+// calls — the difference between 1 request and up to 2*N requests for a
+// page like /library or the home page's featured/trending/fresh rails.
 export async function resolveAssetUrlsMany<T extends WithFileKeys>(assets: T[]): Promise<T[]> {
-  return Promise.all(assets.map(resolveAssetUrls));
+  const keys = new Set<string>();
+  for (const asset of assets) {
+    if (isStorageKey(asset.fileUrl)) keys.add(asset.fileUrl);
+    if (asset.thumbnailUrl && isStorageKey(asset.thumbnailUrl)) keys.add(asset.thumbnailUrl);
+  }
+  const resolved = keys.size > 0 ? await storage.getUrls(Array.from(keys)) : new Map<string, string>();
+
+  return assets.map((asset) => ({
+    ...asset,
+    fileUrl: isStorageKey(asset.fileUrl) ? resolved.get(asset.fileUrl) ?? asset.fileUrl : asset.fileUrl,
+    thumbnailUrl:
+      asset.thumbnailUrl && isStorageKey(asset.thumbnailUrl)
+        ? resolved.get(asset.thumbnailUrl) ?? asset.thumbnailUrl
+        : asset.thumbnailUrl,
+  }));
 }

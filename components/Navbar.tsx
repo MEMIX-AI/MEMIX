@@ -1,13 +1,35 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useAccount, useSwitchChain } from "wagmi";
-import { base } from "wagmi/chains";
-import { ConnectKitButton, useSIWE } from "connectkit";
-import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, ArrowLeftRight, Sparkles } from "lucide-react";
-import { useAccountRole } from "@/lib/hooks/useAccountRole";
+import { Wallet, Sparkles } from "lucide-react";
+
+// wagmi/viem/connectkit (~1.2MB uncompressed) only exist for this one
+// button — code-split so that JS is never even requested until someone
+// actually goes to connect a wallet, per the "wallet must init lazily"
+// requirement. The static placeholder below is pixel-identical to
+// WalletButton's real disconnected state, so there's no visible
+// difference before vs. after the click — clicking it just starts the
+// dynamic import and flips to the real, wagmi-backed button, which
+// replays the click (see WalletButton's `autoShow`) so the connect modal
+// still opens on the very first click, not the second.
+const WalletWidget = dynamic(
+  () => import("./providers/WalletWidget").then((m) => m.WalletWidget),
+  {
+    ssr: false,
+    loading: () => (
+      <button
+        className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250"
+        disabled
+      >
+        <Wallet size={15} strokeWidth={1.75} />
+        connect
+      </button>
+    ),
+  },
+);
 
 const NAV_LINKS = [
   { href: "/library", label: "library" },
@@ -21,31 +43,7 @@ const CATALOG_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { address, isConnected, chain } = useAccount();
-  const { switchChain, isPending: switchingChain } = useSwitchChain();
-  const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
-  // Only Base is a configured chain (lib/wagmi-config.ts) — if a wallet is
-  // connected but sitting on a different network (very common: most
-  // MetaMask installs default to Ethereum Mainnet), wagmi can't resolve a
-  // `chain`, and ConnectKit's own signIn() throws "No chainId found" the
-  // moment sign-in is attempted. That surfaces to a real person as "I
-  // click connect/sign-in and nothing happens" — so this has to be caught
-  // and handled with its own explicit step, not left for the SIWE call to
-  // fail on.
-  const wrongChain = isConnected && chain?.id !== base.id;
-  const { isAdmin } = useAccountRole(isSignedIn ? address : undefined);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, []);
+  const [walletRequested, setWalletRequested] = useState(false);
 
   return (
     <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-b-[22px] border-b border-white/40 px-4 py-3.5 shadow-soft sm:px-6">
@@ -93,112 +91,17 @@ export function Navbar() {
           );
         })}
 
-        <ConnectKitButton.Custom>
-          {({ show }) => {
-            if (!isConnected) {
-              return (
-                <button
-                  onClick={show}
-                  className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
-                >
-                  <Wallet size={15} strokeWidth={1.75} />
-                  connect
-                </button>
-              );
-            }
-
-            if (wrongChain) {
-              return (
-                <button
-                  onClick={() => switchChain({ chainId: base.id })}
-                  className="ml-1 flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-4 py-2 text-sm font-semibold text-warn shadow-soft transition-all duration-250 hover:bg-warn/15 disabled:opacity-60"
-                  disabled={switchingChain}
-                >
-                  <ArrowLeftRight size={15} strokeWidth={1.75} />
-                  {switchingChain ? "switching…" : "switch to base"}
-                </button>
-              );
-            }
-
-            if (!isSignedIn) {
-              return (
-                <button
-                  onClick={() => signIn()}
-                  className="ml-1 flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
-                  disabled={isLoading}
-                >
-                  <Wallet size={15} strokeWidth={1.75} />
-                  {isLoading ? "signing…" : "sign in"}
-                </button>
-              );
-            }
-
-            const truncated = address
-              ? `${address.slice(0, 6)}…${address.slice(-4)}`
-              : "";
-
-            return (
-              <div className="relative ml-1" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-sm font-medium text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full gradient-brand text-white">
-                    <User size={13} strokeWidth={2} />
-                  </span>
-                  {truncated}
-                  {isAdmin && (
-                    <span className="gradient-brand flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      <ShieldCheck size={11} strokeWidth={2} />
-                      admin
-                    </span>
-                  )}
-                  <ChevronDown size={14} className={`text-dim transition-transform duration-250 ${menuOpen ? "rotate-180" : ""}`} />
-                </button>
-                {menuOpen && (
-                  <div className="absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-line bg-panel text-sm shadow-soft-lg">
-                    <Link
-                      href="/my-uploads"
-                      className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <User size={14} className="text-dim" />
-                      my uploads
-                    </Link>
-                    <Link
-                      href="/my-uploads/api-key"
-                      className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <KeyRound size={14} className="text-dim" />
-                      api key
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <ShieldCheck size={14} className="text-dim" />
-                        admin panel
-                      </Link>
-                    )}
-                    <button
-                      className="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-left text-dim transition-colors hover:bg-bg hover:text-text"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        signOut();
-                      }}
-                    >
-                      <LogOut size={14} />
-                      disconnect
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          }}
-        </ConnectKitButton.Custom>
+        {walletRequested ? (
+          <WalletWidget autoShow />
+        ) : (
+          <button
+            onClick={() => setWalletRequested(true)}
+            className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+          >
+            <Wallet size={15} strokeWidth={1.75} />
+            connect
+          </button>
+        )}
       </nav>
     </header>
   );

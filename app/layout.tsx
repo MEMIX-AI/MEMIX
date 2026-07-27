@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { LibrarianWidget } from "@/components/librarian/LibrarianWidget";
@@ -55,14 +54,12 @@ export default function RootLayout({
           <div className="bg-dots" />
         </div>
 
-        <Web3Provider>
-          <div className="page-enter relative flex min-h-screen flex-col">
-            <Navbar />
-            <div className="flex flex-1 flex-col">{children}</div>
-            <Footer />
-          </div>
-          <LibrarianWidget configured={!!process.env.ANTHROPIC_API_KEY} />
-        </Web3Provider>
+        <div className="page-enter relative flex min-h-screen flex-col">
+          <Navbar />
+          <div className="flex flex-1 flex-col">{children}</div>
+          <Footer />
+        </div>
+        <LibrarianWidget configured={!!process.env.ANTHROPIC_API_KEY} />
       </body>
     </html>
   );

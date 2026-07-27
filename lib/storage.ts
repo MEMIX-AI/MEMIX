@@ -57,6 +57,13 @@ export interface StorageAdapter {
    * fetch (used when rendering thumbnails/media).
    */
   getUrl(key: string, options?: { downloadFilename?: string }): Promise<string>;
+  /**
+   * Batched form of getUrl() — resolves many keys in as few round trips as
+   * the backend allows. No per-key downloadFilename support (nothing that
+   * lists many assets at once needs a Content-Disposition override); use
+   * getUrl() for that single-asset case instead.
+   */
+  getUrls(keys: string[]): Promise<Map<string, string>>;
   delete(key: string): Promise<void>;
 }
 
@@ -102,6 +109,10 @@ export class LocalStorageAdapter implements StorageAdapter {
     return `/api/storage/${key}`;
   }
 
+  async getUrls(keys: string[]): Promise<Map<string, string>> {
+    return new Map(keys.map((key) => [key, `/api/storage/${key}`]));
+  }
+
   async delete(key: string): Promise<void> {
     await unlink(resolveKey(key)).catch(() => undefined);
   }
@@ -136,13 +147,10 @@ const SIGNED_URL_EXPIRY_SECONDS = 60;
  * bucket needs is already guaranteed by how the app is structured, not by
  * anything inside this class.
  *
- * Known follow-up, not solved by this class alone: a list of N assets
- * (e.g. the /library grid) resolves N signed URLs one at a time today via
- * Promise.all in lib/asset-urls.ts. Supabase's storage API supports
- * `createSignedUrls` (plural) to batch-sign a whole list in one round
- * trip — worth switching to once this adapter is actually live and the
- * per-page URL count is known, rather than guessing at a batching scheme
- * against a bucket that doesn't exist yet.
+ * getUrls() batches via `createSignedUrls` (plural) — one round trip for
+ * a whole list of keys instead of N — used by lib/asset-urls.ts's
+ * resolveAssetUrlsMany() for any page that renders more than one asset
+ * (library grid, home page rails, admin asset list, the librarian chat).
  */
 export class SupabaseStorageAdapter implements StorageAdapter {
   private readonly bucket: string;
@@ -157,7 +165,23 @@ export class SupabaseStorageAdapter implements StorageAdapter {
         "SupabaseStorageAdapter needs SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_STORAGE_BUCKET set.",
       );
     }
-    this.client = createClient(url, serviceKey);
+    // Next.js's App Router patches the global `fetch` to cache responses
+    // by default (even outside any route's own caching config) — and
+    // supabase-js's storage methods (createSignedUrl(s), upload, remove)
+    // all go through that same global fetch under the hood. Without this
+    // override, the *first* signed URL ever minted for a given key gets
+    // cached indefinitely and is replayed for every future request for
+    // that key — including long after its own 60s expiry, so thumbnails/
+    // downloads start 400ing forever once the cached token goes stale.
+    // Found live: a fresh page load kept returning an identical `iat` on
+    // its signed URL across multiple, minutes-apart requests. Storage
+    // operations must never be cached, so force every request this client
+    // makes to bypass Next's fetch cache.
+    this.client = createClient(url, serviceKey, {
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+      },
+    });
     this.bucket = bucket;
   }
 
@@ -187,6 +211,24 @@ export class SupabaseStorageAdapter implements StorageAdapter {
       throw new Error(`Supabase signed URL failed for ${key}: ${error?.message ?? "unknown error"}`);
     }
     return data.signedUrl;
+  }
+
+  async getUrls(keys: string[]): Promise<Map<string, string>> {
+    if (keys.length === 0) return new Map();
+    const { data, error } = await this.client.storage
+      .from(this.bucket)
+      .createSignedUrls(keys, SIGNED_URL_EXPIRY_SECONDS);
+    if (error || !data) {
+      throw new Error(`Supabase batched signed URL failed: ${error?.message ?? "unknown error"}`);
+    }
+    const urls = new Map<string, string>();
+    for (const entry of data) {
+      if (entry.error || !entry.signedUrl || !entry.path) {
+        throw new Error(`Supabase signed URL failed for ${entry.path ?? "?"}: ${entry.error ?? "unknown error"}`);
+      }
+      urls.set(entry.path, entry.signedUrl);
+    }
+    return urls;
   }
 
   async delete(key: string): Promise<void> {

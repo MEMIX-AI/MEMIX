@@ -1,5 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Thumbnails/files now come from Supabase Storage signed URLs
+  // (lib/storage.ts's SupabaseStorageAdapter) — next/image refuses to
+  // optimize an external host unless it's explicitly allow-listed here.
+  // Without this, every <Image> pointed at a *.supabase.co URL either
+  // errors or silently falls through un-optimized (full-resolution
+  // original bytes, no resizing/format negotiation, no lazy srcset).
+  // AVIF/WebP formats let the built-in image optimizer serve a much
+  // smaller file than the uploaded original when the browser supports it.
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/sign/**",
+      },
+    ],
+    formats: ["image/avif", "image/webp"],
+  },
   webpack: (config) => {
     // @wagmi/connectors' Coinbase "Base Account" connector pulls in
     // @coinbase/cdp-sdk's x402 payment code, which depends on @x402/*

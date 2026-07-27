@@ -3,6 +3,6 @@
 // automatically, no component change needed. Same idea for `github`: null
 // until the repo is public.
 export const SOCIAL_LINKS: { github: string | null; x: string | null } = {
-  github: "https://github.com/MEMIX-AI/MEMIX-MEME-AI-REMIX-",
+  github: "https://github.com/MEMIX-AI/MEMIX",
   x: null,
 };

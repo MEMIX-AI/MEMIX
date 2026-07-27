@@ -1,5 +1,4 @@
 import type { SIWEConfig } from "connectkit";
-import { base } from "wagmi/chains";
 import { buildSiweMessage } from "./siwe-message";
 
 // Wires ConnectKit's built-in SIWE flow to our own API routes. ConnectKit
@@ -31,7 +30,13 @@ export const siweConfig: SIWEConfig = {
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.walletAddress) return null;
-    return { address: data.walletAddress, chainId: base.id };
+    // Our own session (mv_session) is chain-agnostic — it only ever
+    // encodes the wallet address, never a chain. ConnectKit's SIWESession
+    // type requires a chainId field regardless, but Web3Provider disables
+    // `signOutOnNetworkChange` (the only thing that reads it), so this
+    // value is never actually compared against anything. 0 makes that
+    // explicit rather than implying a specific chain was recorded.
+    return { address: data.walletAddress, chainId: 0 };
   },
 
   signOut: async () => {

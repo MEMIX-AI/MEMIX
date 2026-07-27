@@ -20,7 +20,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
     // before the UI shows them as connected again.
     <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
       <QueryClientProvider client={queryClient}>
-        <SIWEProvider {...siweConfig}>
+        <SIWEProvider {...siweConfig} signOutOnNetworkChange={false}>
           <ConnectKitProvider
             theme="soft"
             customTheme={{

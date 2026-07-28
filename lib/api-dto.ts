@@ -31,5 +31,16 @@ export async function serializeAsset(
     tags: resolved.tags.map((t) => t.name),
     uploaderWallet: resolved.uploaderWallet,
     createdAt: resolved.createdAt,
+    // MV—005 verdict fields. verdictStatus is admin-filled and nullable
+    // (see components/admin/VerdictEditor.tsx) — reported as "unverdicted"
+    // rather than a bare null/missing key, so a caller can tell "not yet
+    // judged" apart from a bug. peaked/works_when/avoid_when stay null
+    // when unset; there's no equivalent "not applicable" state for those.
+    // snake_case here (unlike the rest of this DTO) to match the exact
+    // shape already documented on /docs' "target shape" example.
+    status: resolved.verdictStatus ? resolved.verdictStatus.toLowerCase() : "unverdicted",
+    peaked: resolved.peaked,
+    works_when: resolved.worksWhen,
+    avoid_when: resolved.avoidWhen,
   };
 }

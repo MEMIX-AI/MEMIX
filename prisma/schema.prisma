@@ -23,6 +23,20 @@ enum AssetStatus {
   PENDING_REVIEW
 }
 
+// The "verdict" taxonomy from /docs' documented target shape (MV—005) —
+// distinct from AssetStatus above, which is a moderation state
+// (ACTIVE/TAKEN_DOWN/PENDING_REVIEW). Naming this VerdictStatus (not
+// `status`) avoids colliding with Asset.status; the API layer maps it to
+// the externally-documented `status` JSON key instead.
+enum VerdictStatus {
+  EMERGING
+  LIVE
+  PEAKING
+  FADING
+  DATED
+  DEAD
+}
+
 enum UserRole {
   VISITOR_CREATOR
   ADMIN
@@ -101,6 +115,15 @@ model Asset {
   downloadCount Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  // Editorial "verdict" fields (MV—005) — all nullable, all admin-filled
+  // for now (see components/admin/VerdictEditor.tsx). Every pre-existing
+  // asset gets NULL here automatically; the API layer reports that as
+  // "unverdicted", never as an empty/missing field.
+  verdictStatus VerdictStatus?
+  peaked        String?
+  worksWhen     String?
+  avoidWhen     String?
 
   uploaderWallet String?
   uploader        User?   @relation(fields: [uploaderWallet], references: [walletAddress])

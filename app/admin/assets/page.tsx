@@ -7,6 +7,7 @@ import { assetTypeLabel, shortenWallet } from "@/lib/format";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
 import { FeatureToggleButton } from "@/components/admin/FeatureToggleButton";
+import { VerdictEditor } from "@/components/admin/VerdictEditor";
 
 const STATUS_FILTERS: { value?: AssetStatus; label: string }[] = [
   { value: undefined, label: "all" },
@@ -118,6 +119,13 @@ export default async function AdminAssetsPage({
                   modalTitle="delete asset permanently"
                   url={`/api/admin/assets/${asset.id}/delete`}
                   confirmLabel="delete forever"
+                />
+                <VerdictEditor
+                  assetId={asset.id}
+                  verdictStatus={asset.verdictStatus}
+                  peaked={asset.peaked}
+                  worksWhen={asset.worksWhen}
+                  avoidWhen={asset.avoidWhen}
                 />
               </div>
             </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Wallet, Sparkles } from "lucide-react";
+import { useLibrarianOpen } from "./librarian/LibrarianOpenContext";
 
 // wagmi/viem/connectkit (~1.2MB uncompressed) only exist for this one
 // button — code-split so that JS is never even requested until someone
@@ -44,6 +45,7 @@ const CATALOG_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const [walletRequested, setWalletRequested] = useState(false);
+  const { open: librarianOpen, setOpen: setLibrarianOpen } = useLibrarianOpen();
 
   return (
     <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-b-[22px] border-b border-white/40 px-4 py-3.5 shadow-soft sm:px-6">
@@ -71,9 +73,16 @@ export function Navbar() {
             </Link>
           );
         })}
-        <span className="cursor-default rounded-full px-4 py-2 font-medium text-dim/60">
+        <button
+          onClick={() => setLibrarianOpen((v) => !v)}
+          className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
+            librarianOpen
+              ? "gradient-brand text-white shadow-glow"
+              : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
+          }`}
+        >
           agent
-        </span>
+        </button>
         {CATALOG_LINKS.map((link) => {
           const active = pathname === link.href || pathname?.startsWith(link.href + "/");
           return (

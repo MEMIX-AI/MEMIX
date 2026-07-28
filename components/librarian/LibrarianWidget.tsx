@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { Asset, Tag } from "@prisma/client";
 import { Sparkles, X, Send } from "lucide-react";
 import { AssetCard } from "@/components/AssetCard";
+import { useLibrarianOpen } from "./LibrarianOpenContext";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -20,7 +21,7 @@ type ChatMessage = {
 // soon" gate needed anymore.
 export function LibrarianWidget() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useLibrarianOpen();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);

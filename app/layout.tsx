@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { LibrarianWidget } from "@/components/librarian/LibrarianWidget";
+import { LibrarianOpenProvider } from "@/components/librarian/LibrarianOpenContext";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -54,12 +55,14 @@ export default function RootLayout({
           <div className="bg-dots" />
         </div>
 
-        <div className="page-enter relative flex min-h-screen flex-col">
-          <Navbar />
-          <div className="flex flex-1 flex-col">{children}</div>
-          <Footer />
-        </div>
-        <LibrarianWidget />
+        <LibrarianOpenProvider>
+          <div className="page-enter relative flex min-h-screen flex-col">
+            <Navbar />
+            <div className="flex flex-1 flex-col">{children}</div>
+            <Footer />
+          </div>
+          <LibrarianWidget />
+        </LibrarianOpenProvider>
       </body>
     </html>
   );

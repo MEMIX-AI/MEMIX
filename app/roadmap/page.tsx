@@ -31,9 +31,9 @@ const ITEMS: {
     body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call.",
   },
   {
-    status: "planned",
+    status: "shipped",
     title: "Token",
-    body: "A token tied to the catalogue and its agent skills, introduced once there's something real for it to connect to. No supply, allocation, or timeline details are final yet; this section will be filled in when they are.",
+    body: "$MIX is live — a token tied to the catalogue and its agent skills. Launched via Virtuals on Robinhood Chain. No private sale, no VC, no presale.",
   },
   {
     status: "planned",

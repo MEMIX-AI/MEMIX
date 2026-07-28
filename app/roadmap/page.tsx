@@ -13,12 +13,12 @@ const ITEMS: {
   {
     status: "shipped",
     title: "The library",
-    body: "Images, video, and sound — searchable and free to download for anyone, no login or wallet. This is the core, and it is live.",
+    body: "Images, video, and sound — searchable and free to download for anyone, no login or wallet. This is the core, and it is live. More formats — clippers and GIFs — are on the way.",
   },
   {
     status: "in progress",
     title: "The Librarian",
-    body: "A curator you can ask directly. Natural search over the catalogue, answered in the archive's own voice, returning entries with their verdicts attached.",
+    body: "A curator you can ask directly. Natural search over the catalogue, answered in the archive's own voice, returning entries with their verdicts attached rather than a wall of results.",
   },
   {
     status: "in progress",
@@ -27,13 +27,18 @@ const ITEMS: {
   },
   {
     status: "planned",
-    title: "Creator shops",
-    body: "Creators with genuinely original work connect a wallet and sell their own originals directly. Optional, separate from the free catalogue.",
+    title: "Agent skills",
+    body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call.",
   },
   {
     status: "planned",
-    title: "Agent skills",
-    body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call.",
+    title: "Token",
+    body: "A token tied to the catalogue and its agent skills, introduced once there's something real for it to connect to. No supply, allocation, or timeline details are final yet; this section will be filled in when they are.",
+  },
+  {
+    status: "planned",
+    title: "Creator",
+    body: "Creators with genuinely original work get their own public profile. Anyone can browse a directory of creators, open a profile, and see what they've made. Sales are settled in $MEMIX, with a stablecoin option alongside it so creators aren't fully exposed to token volatility.",
   },
 ];
 

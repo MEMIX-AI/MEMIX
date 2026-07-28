@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
@@ -59,14 +58,11 @@ export default function TakedownPage() {
       </CatalogSection>
 
       <CatalogSection title="Where to send a request">
-        <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
-          <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
-          <p className="text-sm font-medium leading-relaxed">
-            Not filled in yet: the actual submission channel (form, email,
-            or in-app report button) and expected response time. Required
-            before this page goes live.
-          </p>
-        </div>
+        <p>
+          Send takedown requests to memix631@gmail.com with the asset URL
+          or ID and a brief note on your relationship to the work. We aim
+          to respond within 48 hours.
+        </p>
       </CatalogSection>
 
       <PageColophon />

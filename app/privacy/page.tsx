@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
@@ -81,14 +80,7 @@ export default function PrivacyPage() {
       </CatalogSection>
 
       <CatalogSection title="Contact &amp; jurisdiction">
-        <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
-          <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
-          <p className="text-sm font-medium leading-relaxed">
-            Not filled in yet: a data controller contact address and
-            applicable jurisdiction. Both are required before this page goes
-            live.
-          </p>
-        </div>
+        <p>Questions about this policy or your data can be sent to memix631@gmail.com.</p>
       </CatalogSection>
 
       <PageColophon />

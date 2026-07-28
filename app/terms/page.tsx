@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AlertCircle } from "lucide-react";
 import { CatalogHero, CatalogSection, Callout, PageColophon } from "@/components/docs/CatalogPage";
 
 export const metadata = {
@@ -127,13 +126,7 @@ export default function TermsPage() {
       </CatalogSection>
 
       <CatalogSection title="Governing law &amp; contact">
-        <div className="flex items-start gap-3 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-3.5 text-warn shadow-soft">
-          <AlertCircle size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" />
-          <p className="text-sm font-medium leading-relaxed">
-            Not filled in yet: jurisdiction/governing law, and a support or
-            legal contact. Both are required before this page goes live.
-          </p>
-        </div>
+        <p>Questions about these terms? Reach out at memix631@gmail.com.</p>
       </CatalogSection>
 
       <PageColophon />

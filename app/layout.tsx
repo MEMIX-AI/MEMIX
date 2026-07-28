@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://memixmeme.xyz"),
   title: "memix",
   description: "the librarian for the internet's meme library.",
+  // Domain-ownership verification for Virtuals Protocol — do not remove.
+  other: {
+    "virtual-protocol-site-verification": "86f1e3622501cdfd5196cfe251f6395f",
+  },
 };
 
 export default function RootLayout({

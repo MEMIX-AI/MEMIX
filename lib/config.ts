@@ -1,8 +1,7 @@
-// Centralized external/social links. The X account doesn't exist yet — set
-// `x` to a real URL the moment it's created and the footer icon appears
-// automatically, no component change needed. Same idea for `github`: null
-// until the repo is public.
+// Centralized external/social links. Footer.tsx renders each icon only
+// when its value is non-null — no component change needed when one of
+// these goes from null to a real URL, or back.
 export const SOCIAL_LINKS: { github: string | null; x: string | null } = {
   github: "https://github.com/MEMIX-AI/MEMIX",
-  x: null,
+  x: "https://x.com/Memixzwg",
 };

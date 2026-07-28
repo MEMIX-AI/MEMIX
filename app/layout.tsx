@@ -59,7 +59,7 @@ export default function RootLayout({
           <div className="flex flex-1 flex-col">{children}</div>
           <Footer />
         </div>
-        <LibrarianWidget configured={!!process.env.ANTHROPIC_API_KEY} />
+        <LibrarianWidget />
       </body>
     </html>
   );

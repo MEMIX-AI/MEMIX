@@ -19,6 +19,8 @@ import { SpecCell } from "@/components/SpecCell";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { LikeButton } from "@/components/LikeButton";
 import { ViewTracker } from "@/components/ViewTracker";
+import { DownloadLink } from "@/components/DownloadLink";
+import { DownloadSpecValue } from "@/components/DownloadSpecValue";
 
 export default async function AssetDetailPage({
   params,
@@ -46,13 +48,13 @@ export default async function AssetDetailPage({
           </h1>
 
           <div className="mb-6 flex items-center gap-2">
-            <a
-              href={`/api/assets/${asset.id}/download`}
+            <DownloadLink
+              assetId={asset.id}
               className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
             >
               <Download size={17} strokeWidth={1.75} />
               download
-            </a>
+            </DownloadLink>
             <ShareMenu assetId={asset.id} title={asset.title} />
           </div>
 
@@ -110,7 +112,7 @@ export default async function AssetDetailPage({
             />
             <SpecCell
               label="downloads"
-              value={String(asset.downloadCount)}
+              value={<DownloadSpecValue assetId={asset.id} initialCount={asset.downloadCount} />}
               span2={asset.duration == null}
             />
           </div>

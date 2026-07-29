@@ -4,7 +4,7 @@ export function SpecCell({
   span2,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   /** Fills the full row instead of leaving a blank grid cell behind it —
    * needed whenever the cell count in the parent 2-col grid is odd (e.g.
    * an asset with no `duration`). */

@@ -6,6 +6,9 @@ import { assetTypeLabel, formatDuration, formatRelativeTime, shortenWallet } fro
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { ShareMenu } from "@/components/ShareMenu";
 import { LikeButton } from "@/components/LikeButton";
+import { ViewCountDisplay } from "@/components/ViewCountDisplay";
+import { DownloadCount } from "@/components/DownloadCount";
+import { DownloadLink } from "@/components/DownloadLink";
 
 type AssetWithTags = Asset & { tags: Tag[] };
 
@@ -90,24 +93,18 @@ export function AssetCard({
           never a placeholder. */}
       <div className="mb-3 mt-3 flex items-center gap-3.5 border-b border-line pb-3 text-[12.5px] text-dim">
         <LikeButton assetId={asset.id} initialCount={asset.likeCount} />
-        <span className="flex items-center gap-1.5">
-          <Eye size={13} strokeWidth={1.75} />
-          {asset.viewCount}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <DownloadIcon size={13} strokeWidth={1.75} />
-          {asset.downloadCount}
-        </span>
+        <ViewCountDisplay assetId={asset.id} initialCount={asset.viewCount} />
+        <DownloadCount assetId={asset.id} initialCount={asset.downloadCount} />
       </div>
 
       <div className="flex items-center gap-2">
-        <a
-          href={`/api/assets/${asset.id}/download`}
+        <DownloadLink
+          assetId={asset.id}
           className="gradient-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-[11px] text-[13.5px] font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
         >
           <DownloadIcon size={14} strokeWidth={1.75} />
           Download
-        </a>
+        </DownloadLink>
         <ShareMenu assetId={asset.id} title={asset.title} />
       </div>
     </div>

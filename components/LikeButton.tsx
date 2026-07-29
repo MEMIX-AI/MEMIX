@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
+import { likeStore } from "@/lib/asset-stats-store";
 
 const CLIENT_ID_KEY = "mv_client_id";
 
@@ -26,18 +27,26 @@ export function LikeButton({
   initialCount: number;
   size?: "sm" | "lg";
 }) {
-  const [liked, setLiked] = useState(false);
-  const [count, setCount] = useState(initialCount);
+  // Shared across every card/detail-page instance showing this same asset
+  // on this same page — toggling from any one of them updates them all
+  // instantly, no reload (see lib/asset-stats-store.ts).
+  const { liked, count } = likeStore.useValue(assetId, { liked: false, count: initialCount });
   const [pending, setPending] = useState(false);
 
   // The server can't tell "has this browser liked this" anymore (no
   // wallet/session tied to it) — the browser is the only place that
-  // knows, so read it from localStorage after mount. This means the
-  // heart briefly renders unfilled-then-filled on load for a previously
-  // liked asset; that's an accepted tradeoff for dropping the wallet
+  // knows, so correct it from localStorage after mount. This means the
+  // heart can briefly render unfilled-then-filled on load for a
+  // previously liked asset; accepted tradeoff for dropping the wallet
   // requirement, not an oversight.
   useEffect(() => {
-    setLiked(localStorage.getItem(`mv_liked:${assetId}`) === "1");
+    if (localStorage.getItem(`mv_liked:${assetId}`) === "1") {
+      const current = likeStore.get(assetId);
+      if (current && !current.liked) {
+        likeStore.set(assetId, { ...current, liked: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetId]);
 
   async function toggle(e: React.MouseEvent) {
@@ -45,12 +54,15 @@ export function LikeButton({
     e.stopPropagation();
     if (pending) return;
 
-    const prevLiked = liked;
-    const prevCount = count;
-    // Optimistic update — rolled back below if the request fails, so the
-    // displayed count never silently drifts from the real one.
-    setLiked(!prevLiked);
-    setCount(prevLiked ? prevCount - 1 : prevCount + 1);
+    const prev = likeStore.get(assetId) ?? { liked, count };
+    const next = {
+      liked: !prev.liked,
+      count: prev.liked ? prev.count - 1 : prev.count + 1,
+    };
+    // Optimistic update — every card showing this asset updates instantly;
+    // rolled back below if the request fails, so the displayed count
+    // never silently drifts from the real one.
+    likeStore.set(assetId, next);
     setPending(true);
 
     try {
@@ -62,12 +74,10 @@ export function LikeButton({
       });
       if (!res.ok) throw new Error("like request failed");
       const data = await res.json();
-      setLiked(data.liked);
-      setCount(data.likeCount);
+      likeStore.set(assetId, { liked: data.liked, count: data.likeCount });
       localStorage.setItem(`mv_liked:${assetId}`, data.liked ? "1" : "0");
     } catch {
-      setLiked(prevLiked);
-      setCount(prevCount);
+      likeStore.set(assetId, prev);
     } finally {
       setPending(false);
     }

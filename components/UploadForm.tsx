@@ -3,7 +3,16 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UploadCloud, Music2, X, AlertCircle } from "lucide-react";
+import {
+  UploadCloud,
+  Music2,
+  X,
+  AlertCircle,
+  Heart,
+  Eye,
+  Download as DownloadIcon,
+  Share2,
+} from "lucide-react";
 import {
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
@@ -14,11 +23,18 @@ import {
   OWNERSHIP_DECLARATION_TEXT,
   TOS_DECLARATION_TEXT,
 } from "@/lib/declaration";
+import { shortenWallet } from "@/lib/format";
 
 const MAX_TAGS = 8;
 const ACCEPT_ATTR = Object.values(ALLOWED_MIME_TYPES).flat().join(",");
 
-export function UploadForm({ existingTags }: { existingTags: string[] }) {
+export function UploadForm({
+  existingTags,
+  creatorWallet,
+}: {
+  existingTags: string[];
+  creatorWallet: string;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,7 +150,8 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[22px] border border-line bg-panel p-6 shadow-soft-lg">
       <div>
         <input
           ref={fileInputRef}
@@ -370,5 +387,73 @@ export function UploadForm({ existingTags }: { existingTags: string[] }) {
         {submitting ? "uploading..." : "upload"}
       </button>
     </form>
+
+    <aside className="lg:sticky lg:top-24">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-dim">
+        live preview
+      </p>
+      <div className="rounded-[22px] border border-line bg-panel p-3.5 shadow-soft-lg">
+        <div className="relative mb-3.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-[18px] border border-line bg-bg">
+          {detectedType === "IMAGE" && previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+          ) : detectedType === "VIDEO" && previewUrl ? (
+            <video src={previewUrl} muted className="h-full w-full object-cover" />
+          ) : detectedType === "SOUND" ? (
+            <span className="gradient-brand flex h-14 w-14 items-center justify-center rounded-2xl text-white">
+              <Music2 size={22} strokeWidth={1.75} />
+            </span>
+          ) : (
+            <span className="text-xs text-dim/60">thumbnail preview</span>
+          )}
+          {detectedType && (
+            <span className="absolute bottom-2.5 right-2.5 z-10 rounded-lg bg-[rgba(20,50,60,0.55)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+              {detectedType}
+            </span>
+          )}
+        </div>
+
+        <p className="mb-1.5 truncate font-heading text-base font-semibold tracking-tight text-text">
+          {title.trim() || "untitled asset"}
+        </p>
+
+        <div className="mb-2.5 flex items-center gap-1.5 text-[13px] text-dim">
+          <span className="gradient-brand h-5 w-5 shrink-0 rounded-full" />
+          <span>by {shortenWallet(creatorWallet)}</span>
+        </div>
+
+        {/* Real zeros — this asset doesn't exist yet, so there is nothing
+            to have been liked/viewed/downloaded. Once published these
+            become the same real, tracked columns AssetCard shows. */}
+        <div className="mb-3 flex items-center gap-3.5 border-b border-line pb-3 text-[12.5px] text-dim">
+          <span className="flex items-center gap-1.5">
+            <Heart size={13} strokeWidth={1.75} />0
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Eye size={13} strokeWidth={1.75} />0
+          </span>
+          <span className="flex items-center gap-1.5">
+            <DownloadIcon size={13} strokeWidth={1.75} />0
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 opacity-60">
+          <span className="gradient-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-[11px] text-[13.5px] font-semibold text-white">
+            <DownloadIcon size={14} strokeWidth={1.75} />
+            download
+          </span>
+          <span className="flex items-center justify-center gap-1.5 rounded-xl border border-line px-3 py-[11px] text-[13.5px] font-semibold text-dim">
+            <Share2 size={14} strokeWidth={1.75} />
+          </span>
+        </div>
+      </div>
+
+      <p className="mt-3.5 rounded-2xl bg-accent/[0.06] p-3 text-xs leading-relaxed text-dim">
+        this is how your card looks once published. likes/views/downloads
+        all start at real 0 and grow from actual use — a verdict gets
+        added later by the Librarian, so there&apos;s nothing to set here.
+      </p>
+    </aside>
+    </div>
   );
 }

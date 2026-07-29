@@ -1,37 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { searchAssets } from "@/lib/search";
-import type { AssetType, VerdictStatus } from "@prisma/client";
+import { searchAssets, CATEGORY_FILTERS } from "@/lib/search";
 import { publicAssetWhere } from "@/lib/asset-visibility";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetCard } from "@/components/AssetCard";
 import { SearchCommandInput } from "@/components/SearchCommandInput";
-
-// Verdict-first category pills — a flat, mutually-exclusive list mixing
-// three different underlying filters (verdict status, peaked year, asset
-// type), unified behind one `cat` query param so the UI stays a single
-// row of pills instead of three separate filter groups. "gifs" maps to
-// the real IMAGE type — there's no distinct GIF type in the schema (an
-// uploaded GIF is stored as an image), so this is a relabel of a real
-// filter, not a fabricated one.
-const CATEGORY_FILTERS: {
-  key: string;
-  label: string;
-  type?: AssetType;
-  verdictStatus?: VerdictStatus;
-  peaked?: string;
-}[] = [
-  { key: "all", label: "all" },
-  { key: "live", label: "live", verdictStatus: "LIVE" },
-  { key: "dated", label: "dated", verdictStatus: "DATED" },
-  { key: "peaked-2025", label: "peaked 2025", peaked: "2025" },
-  { key: "peaked-2024", label: "peaked 2024", peaked: "2024" },
-  { key: "sounds", label: "sounds", type: "SOUND" },
-  { key: "videos", label: "videos", type: "VIDEO" },
-  { key: "gifs", label: "gifs", type: "IMAGE" },
-];
 
 export default async function LibraryPage({
   searchParams,
@@ -85,17 +60,17 @@ export default async function LibraryPage({
         <SearchCommandInput defaultValue={q} placeholder='Search a meme, sound, or vibe…' />
       </form>
 
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap gap-[9px]">
         {CATEGORY_FILTERS.map((f) => {
           const active = activeCat.key === f.key;
           return (
             <Link
               key={f.key}
               href={hrefWith({ cat: f.key === "all" ? undefined : f.key })}
-              className={`rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-200 active:scale-95 ${
+              className={`rounded-full border px-4 py-[9px] text-[13.5px] font-medium transition-all duration-150 active:scale-95 ${
                 active
                   ? "gradient-brand border-transparent text-white shadow-glow"
-                  : "border-white/60 bg-white/40 text-dim hover:border-accent/40 hover:text-accent"
+                  : "border-line bg-[rgba(255,255,255,0.55)] text-dim hover:scale-[1.04] hover:border-accent/40 hover:text-accent"
               }`}
             >
               {f.label}

@@ -35,6 +35,30 @@ export function isAssetType(value: string | undefined): value is AssetType {
   return !!value && (ASSET_TYPES as string[]).includes(value);
 }
 
+// Verdict-first category pills — a flat, mutually-exclusive list mixing
+// three different underlying filters (verdict status, peaked year, asset
+// type), unified behind one `cat` key so callers (the /library filter
+// row, the home page hero) can render one row of pills instead of three
+// separate filter groups. "gifs" maps to the real IMAGE type — there's
+// no distinct GIF type in the schema (an uploaded GIF is stored as an
+// image), so this is a relabel of a real filter, not a fabricated one.
+export const CATEGORY_FILTERS: {
+  key: string;
+  label: string;
+  type?: AssetType;
+  verdictStatus?: VerdictStatus;
+  peaked?: string;
+}[] = [
+  { key: "all", label: "All" },
+  { key: "live", label: "Live", verdictStatus: "LIVE" },
+  { key: "dated", label: "Dated", verdictStatus: "DATED" },
+  { key: "peaked-2025", label: "Peaked 2025", peaked: "2025" },
+  { key: "peaked-2024", label: "Peaked 2024", peaked: "2024" },
+  { key: "sounds", label: "Sounds", type: "SOUND" },
+  { key: "videos", label: "Videos", type: "VIDEO" },
+  { key: "gifs", label: "GIFs", type: "IMAGE" },
+];
+
 /**
  * Plain LIKE-based contains search across title/description/tag names.
  *

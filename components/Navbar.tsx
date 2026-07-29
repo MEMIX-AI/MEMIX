@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { Wallet, Sparkles } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { useLibrarianOpen } from "./librarian/LibrarianOpenContext";
 
 // wagmi/viem/connectkit (~1.2MB uncompressed) only exist for this one
@@ -22,25 +22,26 @@ const WalletWidget = dynamic(
     ssr: false,
     loading: () => (
       <button
-        className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250"
+        className="gradient-brand flex items-center gap-2 rounded-xl px-[18px] py-[11px] text-sm font-semibold text-white shadow-glow transition-transform duration-200"
         disabled
       >
         <Wallet size={15} strokeWidth={1.75} />
-        connect
+        Connect Wallet
       </button>
     ),
   },
 );
 
 const NAV_LINKS = [
-  { href: "/library", label: "library" },
-  { href: "/upload", label: "upload" },
-  { href: "/creators", label: "creators" },
+  { href: "/", label: "Home", exact: true },
+  { href: "/library", label: "Library" },
+  { href: "/creators", label: "Creators" },
+  { href: "/upload", label: "Upload" },
 ];
 
 const CATALOG_LINKS = [
-  { href: "/docs", label: "docs" },
-  { href: "/roadmap", label: "roadmap" },
+  { href: "/docs", label: "Docs" },
+  { href: "/roadmap", label: "Roadmap" },
 ];
 
 export function Navbar() {
@@ -48,71 +49,79 @@ export function Navbar() {
   const [walletRequested, setWalletRequested] = useState(false);
   const { open: librarianOpen, setOpen: setLibrarianOpen } = useLibrarianOpen();
 
+  function isActive(href: string, exact?: boolean) {
+    return exact ? pathname === href : pathname === href || pathname?.startsWith(href + "/");
+  }
+
   return (
-    <header className="glass sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-b-[22px] border-b border-white/40 px-4 py-3.5 shadow-soft sm:px-6">
-      <Link href="/" className="flex items-center gap-2 font-heading text-lg font-bold">
-        <span className="gradient-logo flex h-7 w-7 items-center justify-center rounded-full text-white shadow-soft">
-          <Sparkles size={14} strokeWidth={2} />
-        </span>
-        <span className="gradient-logo-text">memix</span>
-      </Link>
+    <div className="sticky top-4 z-30 mx-auto w-full max-w-[1192px] px-4 sm:px-6">
+      <header className="glass flex h-[72px] items-center gap-1 rounded-[20px] border border-line px-3.5 shadow-[0_8px_30px_rgba(24,184,216,0.10)] sm:px-5">
+        <Link href="/" className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight">
+          <span className="gradient-logo flex h-[30px] w-[30px] items-center justify-center rounded-[9px] text-base font-bold text-white shadow-glow">
+            m
+          </span>
+          <span className="gradient-logo-text">memix</span>
+        </Link>
 
-      <nav className="flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
-        {NAV_LINKS.map((link) => {
-          const active = pathname === link.href || pathname?.startsWith(link.href + "/");
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
-                active
-                  ? "gradient-brand text-white shadow-glow"
-                  : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
-              }`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
-        <button
-          onClick={() => setLibrarianOpen((v) => !v)}
-          className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
-            librarianOpen
-              ? "gradient-brand text-white shadow-glow"
-              : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
-          }`}
-        >
-          AI Agent
-        </button>
-        {CATALOG_LINKS.map((link) => {
-          const active = pathname === link.href || pathname?.startsWith(link.href + "/");
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded-full px-4 py-2 font-medium transition-all duration-250 ${
-                active
-                  ? "gradient-brand text-white shadow-glow"
-                  : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
-              }`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
-
-        {walletRequested ? (
-          <WalletWidget autoShow />
-        ) : (
+        <nav className="ml-3 flex flex-wrap items-center gap-0.5 text-sm">
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link.href, link.exact);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-[11px] px-3.5 py-2 font-medium transition-all duration-200 ${
+                  active
+                    ? "gradient-brand text-white shadow-glow"
+                    : "text-dim hover:-translate-y-px hover:bg-accent/[0.08] hover:text-text"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <button
-            onClick={() => setWalletRequested(true)}
-            className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+            onClick={() => setLibrarianOpen((v) => !v)}
+            className={`rounded-[11px] px-3.5 py-2 font-medium transition-all duration-200 ${
+              librarianOpen
+                ? "gradient-brand text-white shadow-glow"
+                : "text-dim hover:-translate-y-px hover:bg-accent/[0.08] hover:text-text"
+            }`}
           >
-            <Wallet size={15} strokeWidth={1.75} />
-            connect
+            AI Agent
           </button>
-        )}
-      </nav>
-    </header>
+          {CATALOG_LINKS.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-[11px] px-3.5 py-2 font-medium transition-all duration-200 ${
+                  active
+                    ? "gradient-brand text-white shadow-glow"
+                    : "text-dim hover:-translate-y-px hover:bg-accent/[0.08] hover:text-text"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2.5">
+          {walletRequested ? (
+            <WalletWidget autoShow />
+          ) : (
+            <button
+              onClick={() => setWalletRequested(true)}
+              className="gradient-brand flex items-center gap-2 rounded-xl px-[18px] py-[11px] text-sm font-semibold text-white shadow-glow transition-transform duration-200 hover:-translate-y-0.5"
+            >
+              <Wallet size={15} strokeWidth={1.75} />
+              Connect Wallet
+            </button>
+          )}
+        </div>
+      </header>
+    </div>
   );
 }

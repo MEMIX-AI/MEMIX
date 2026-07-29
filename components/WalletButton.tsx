@@ -54,10 +54,10 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
           return (
             <button
               onClick={show}
-              className="gradient-brand ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+              className="gradient-brand flex items-center gap-2 rounded-xl px-[18px] py-[11px] text-sm font-semibold text-white shadow-glow transition-transform duration-200 hover:-translate-y-0.5"
             >
               <Wallet size={15} strokeWidth={1.75} />
-              connect
+              Connect Wallet
             </button>
           );
         }

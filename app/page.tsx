@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Asset, Tag } from "@prisma/client";
-import { BookOpen } from "lucide-react";
+import { Search, BookOpen, ArrowRight } from "lucide-react";
 import {
   getFreshAssets,
   getLibrarianPicks,
@@ -8,8 +8,8 @@ import {
   getTrendingAssets,
 } from "@/lib/assets";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
+import { CATEGORY_FILTERS } from "@/lib/search";
 import { AssetCard } from "@/components/AssetCard";
-import { TerminalHeroDemo } from "@/components/TerminalHeroDemo";
 import { FeatureStrip } from "@/components/FeatureStrip";
 import { ComingSoonBadge } from "@/components/ComingSoonBadge";
 
@@ -34,55 +34,90 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-      <div className="mb-6 flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-medium text-dim shadow-soft w-fit">
-        <span className="h-2 w-2 rounded-full bg-ok" />
-        Live meme catalogue · free downloads
+    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+      <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
+        <div className="mb-6 flex items-center gap-2 rounded-full border border-line bg-[rgba(255,255,255,0.7)] px-[15px] py-[7px] text-[13px] font-semibold text-accent shadow-soft">
+          <span
+            className="h-[7px] w-[7px] rounded-full bg-ok"
+            style={{ boxShadow: "0 0 0 4px rgba(60,203,127,.18)" }}
+          />
+          Live meme catalogue · free downloads
+        </div>
+
+        <h1 className="text-balance mb-[22px] font-heading text-[clamp(38px,6vw,66px)] font-bold leading-[1.02] tracking-[-0.035em] text-text">
+          Every meme comes with a <span className="gradient-text">verdict.</span>
+        </h1>
+        <p className="mb-8 max-w-[560px] text-lg leading-[1.55] text-dim">
+          Other meme APIs return a file. Memix returns a judgment —
+          what&apos;s live, what&apos;s dated, what&apos;s dead. Free to browse
+          and download.
+        </p>
+
+        <div className="mb-11 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/library"
+            className="gradient-brand flex items-center gap-2 rounded-[13px] px-[26px] py-[14px] text-[15px] font-semibold text-white shadow-glow transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            Browse Library
+          </Link>
+          <Link
+            href="/docs"
+            className="flex items-center gap-2 rounded-[13px] border border-line bg-[rgba(255,255,255,0.6)] px-[26px] py-[14px] text-[15px] font-semibold text-text transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/85"
+          >
+            <BookOpen size={16} strokeWidth={1.75} />
+            Read the Docs
+          </Link>
+        </div>
+
+        <form action="/library" method="GET" className="relative mb-[22px] w-full max-w-[640px]">
+          <Search size={20} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-dim" />
+          <input
+            name="q"
+            type="text"
+            placeholder="Search a meme, sound, or vibe…"
+            className="w-full rounded-full border border-line bg-[rgba(255,255,255,0.8)] py-[18px] pl-[54px] pr-[22px] text-base text-text shadow-soft outline-none transition-all duration-200 focus:shadow-glow"
+          />
+        </form>
+
+        <div className="flex flex-wrap justify-center gap-[9px]">
+          {CATEGORY_FILTERS.map((f, i) => (
+            <Link
+              key={f.key}
+              href={f.key === "all" ? "/library" : `/library?cat=${f.key}`}
+              className={`rounded-full border px-4 py-[9px] text-[13.5px] font-medium transition-all duration-150 hover:scale-[1.04] hover:border-accent/40 hover:text-accent ${
+                i === 0
+                  ? "gradient-brand border-transparent text-white shadow-glow"
+                  : "border-line bg-[rgba(255,255,255,0.55)] text-dim"
+              }`}
+            >
+              {f.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
-      <h1 className="text-balance mb-4 max-w-2xl font-heading text-3xl font-bold leading-tight text-text sm:text-4xl">
-        Every meme comes with a verdict.
-      </h1>
-      <p className="mb-8 max-w-xl text-sm leading-relaxed text-dim">
-        Other meme APIs return a file. Memix returns a judgment — what&apos;s
-        live, what&apos;s dated, what&apos;s dead. Free to browse and
-        download.
-      </p>
-
-      <div className="mb-16 flex flex-wrap items-center gap-3">
-        <Link
-          href="/library"
-          className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
-        >
-          Browse Library
-        </Link>
-        <Link
-          href="/docs"
-          className="flex items-center gap-2 rounded-full border border-line bg-panel px-6 py-3 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
-        >
-          <BookOpen size={15} strokeWidth={1.75} />
-          Read the Docs
-        </Link>
-      </div>
-
-      <div className="mb-16">
-        <FeatureStrip />
-      </div>
-
-      <TerminalHeroDemo />
-
-      <section className="mb-16 mt-16">
-        <SectionHeading label="trending" />
-        <AssetGrid assets={trending} />
+      <section className="mt-16">
+        <SectionHeading
+          emoji="🔥"
+          label="Trending"
+          subtitle="What the catalogue says is worth using right now."
+          viewAllHref="/library"
+        />
+        <AssetGrid assets={trending} flag="TRENDING" />
       </section>
 
-      <section className="mb-16">
-        <SectionHeading label="fresh uploads" />
-        <AssetGrid assets={fresh} />
+      <section className="mt-16">
+        <SectionHeading emoji="✨" label="Fresh Uploads" subtitle="Just added to the catalogue." viewAllHref="/library" />
+        <AssetGrid assets={fresh} flag="NEW" />
       </section>
 
-      <section className="mb-16">
-        <SectionHeading label="librarian picks" badge="Beta" />
+      <section className="mt-16">
+        <SectionHeading
+          emoji="🤖"
+          label="Librarian Picks"
+          subtitle="Real verdicted entries, curated by what's actually been judged."
+          badge="Beta"
+        />
         {picks.length === 0 ? (
           <p className="text-sm text-dim">nothing verdicted yet.</p>
         ) : (
@@ -90,8 +125,8 @@ export default async function Home() {
         )}
       </section>
 
-      <section className="mb-16">
-        <SectionHeading label="popular sounds" />
+      <section className="mt-16">
+        <SectionHeading emoji="🔊" label="Popular Sounds" subtitle="Most downloaded in this format." viewAllHref="/library?cat=sounds" />
         {sounds.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
@@ -99,8 +134,8 @@ export default async function Home() {
         )}
       </section>
 
-      <section className="mb-16">
-        <SectionHeading label="popular videos" />
+      <section className="mt-16">
+        <SectionHeading emoji="🎬" label="Popular Videos" subtitle="Most downloaded in this format." viewAllHref="/library?cat=videos" />
         {videos.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
@@ -108,8 +143,8 @@ export default async function Home() {
         )}
       </section>
 
-      <section>
-        <SectionHeading label="top creators" badge="Soon" />
+      <section className="mt-16">
+        <SectionHeading emoji="👥" label="Top Creators" subtitle="The creator directory — not live yet." badge="Soon" />
         <div className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
           The creator directory isn&apos;t live yet — no profiles, earnings,
           or follower counts exist to show.{" "}
@@ -119,28 +154,63 @@ export default async function Home() {
           .
         </div>
       </section>
+
+      <div className="mt-16">
+        <FeatureStrip />
+      </div>
     </main>
   );
 }
 
-function SectionHeading({ label, badge }: { label: string; badge?: string }) {
+function SectionHeading({
+  emoji,
+  label,
+  subtitle,
+  badge,
+  viewAllHref,
+}: {
+  emoji: string;
+  label: string;
+  subtitle?: string;
+  badge?: string;
+  viewAllHref?: string;
+}) {
   return (
-    <div className="mb-5 flex items-center gap-2.5">
-      <span className="gradient-brand h-2 w-2 rounded-full" />
-      <h2 className="font-heading text-lg font-bold text-text">{label}</h2>
-      {badge && <ComingSoonBadge label={badge} />}
+    <div className="mb-[26px] flex items-end justify-between">
+      <div>
+        <h2 className="flex items-center gap-2.5 font-heading text-[26px] font-bold tracking-tight text-text">
+          <span>{emoji}</span>
+          {label}
+          {badge && <ComingSoonBadge label={badge} />}
+        </h2>
+        {subtitle && <p className="mt-1.5 text-sm text-dim">{subtitle}</p>}
+      </div>
+      {viewAllHref && (
+        <Link
+          href={viewAllHref}
+          className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold text-accent transition-colors duration-200 hover:bg-accent/[0.08]"
+        >
+          View All <ArrowRight size={14} strokeWidth={2} />
+        </Link>
+      )}
     </div>
   );
 }
 
-function AssetGrid({ assets }: { assets: (Asset & { tags: Tag[] })[] }) {
+function AssetGrid({
+  assets,
+  flag,
+}: {
+  assets: (Asset & { tags: Tag[] })[];
+  flag?: "TRENDING" | "NEW";
+}) {
   if (assets.length === 0) {
     return <p className="text-sm text-dim">nothing here yet.</p>;
   }
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {assets.map((asset) => (
-        <AssetCard key={asset.id} asset={asset} />
+        <AssetCard key={asset.id} asset={asset} flag={flag} />
       ))}
     </div>
   );

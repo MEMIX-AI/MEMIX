@@ -21,6 +21,7 @@
   --gradient-logo: linear-gradient(135deg, #18b8d8 0%, #7fe7d8 100%);
   --shadow-soft: 0 1px 2px rgba(20, 50, 60, 0.04), 0 4px 14px rgba(20, 50, 60, 0.05);
   --shadow-soft-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 22px 60px rgba(24, 184, 216, 0.18);
   --shadow-glow: 0 8px 26px rgba(24, 184, 216, 0.32);
 
   /* Verdict status semantics — LIVE/DATED/DEAD are the explicit brief
@@ -36,7 +37,10 @@
 
 body {
   color: var(--text);
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(127, 231, 216, 0.35), transparent 60%),
+    linear-gradient(160deg, #eafbff 0%, #d8f7ff 45%, #f6feff 100%);
+  background-attachment: fixed;
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -44,66 +48,26 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), var(--font-body), sans-serif;
 }
 
-/* Fixed decorative background — sits behind all content, never affects
-   layout/flow. Soft gradient wash + a few static (non-animated) low-
-   opacity color blobs + a faint dot grid. No `animation: infinite` here
-   by design — a v5 requirement, and it also means the compositor never
-   has continuous work to do for this layer. */
+/* Fixed decorative dot grid, fading out toward the bottom of the first
+   viewport — matches the mockup's body::before treatment. The gradient
+   wash itself lives directly on `body` above (a single composited
+   background, not stacked blob elements) — simpler and cheaper than the
+   earlier multi-blob approach, and a closer visual match besides. */
 .bg-decoration {
   position: fixed;
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  background: linear-gradient(135deg, #eafbff 0%, #d8f7ff 50%, #f6feff 100%);
-}
-
-/* Soft, diffuse color wash built from radial-gradient (no filter: blur —
-   see the performance note below) instead of an animated blob. */
-.bg-blob {
-  position: absolute;
-  border-radius: 9999px;
-}
-.bg-blob-teal {
-  top: -34%;
-  left: -30%;
-  width: 90vw;
-  height: 90vw;
-  background: radial-gradient(circle, rgba(24, 184, 216, 0.14) 0%, rgba(24, 184, 216, 0.09) 30%, rgba(24, 184, 216, 0.03) 55%, rgba(24, 184, 216, 0) 78%);
-}
-.bg-blob-sky {
-  top: -2%;
-  right: -34%;
-  width: 84vw;
-  height: 84vw;
-  background: radial-gradient(circle, rgba(99, 216, 242, 0.14) 0%, rgba(99, 216, 242, 0.09) 30%, rgba(99, 216, 242, 0.03) 55%, rgba(99, 216, 242, 0) 78%);
-}
-.bg-blob-lavender {
-  bottom: -36%;
-  left: 0%;
-  width: 80vw;
-  height: 80vw;
-  background: radial-gradient(circle, rgba(127, 231, 216, 0.14) 0%, rgba(127, 231, 216, 0.09) 30%, rgba(127, 231, 216, 0.03) 55%, rgba(127, 231, 216, 0) 78%);
-}
-
-.bg-sparkle {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.9) 1px, transparent 1.5px);
-  background-size: 160px 160px;
-  opacity: 0.2;
+  pointer-events: none;
 }
 
 .bg-dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(24, 184, 216, 0.1) 1px, transparent 1px);
-  background-size: 28px 28px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 8% 8%, black, transparent),
-    radial-gradient(ellipse 70% 60% at 95% 90%, black, transparent);
-  mask-image: radial-gradient(ellipse 70% 60% at 8% 8%, black, transparent),
-    radial-gradient(ellipse 70% 60% at 95% 90%, black, transparent);
-  -webkit-mask-composite: source-over;
-  mask-composite: add;
+  background-image: radial-gradient(rgba(24, 184, 216, 0.1) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 55%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 55%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -186,12 +150,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .card-lift {
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    transition: transform 220ms ease, box-shadow 220ms ease;
   }
   .card-lift:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--shadow-soft-lg);
-    border-color: var(--hover);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
   }
 
   .coming-soon-disabled {

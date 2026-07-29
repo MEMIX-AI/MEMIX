@@ -10,7 +10,7 @@ import {
   licenseBadge,
   shortenWallet,
 } from "@/lib/format";
-import { verdictColor } from "@/lib/verdict";
+import { verdictStyle } from "@/lib/verdict";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetPreview } from "@/components/AssetPreview";
 import { ReportButton } from "@/components/ReportButton";
@@ -28,7 +28,7 @@ export default async function AssetDetailPage({
   const asset = await resolveAssetUrls(rawAsset);
 
   const license = licenseBadge(asset.isOriginal);
-  const vColor = verdictColor(asset.verdictStatus);
+  const vStyle = verdictStyle(asset.verdictStatus);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
@@ -58,7 +58,7 @@ export default async function AssetDetailPage({
               the most visually prominent block on the page. */}
           <div
             className="mb-6 rounded-2xl border-2 bg-panel p-5 shadow-soft-lg"
-            style={{ borderColor: `${vColor}55` }}
+            style={{ borderColor: vStyle.dot + "55" }}
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-dim">

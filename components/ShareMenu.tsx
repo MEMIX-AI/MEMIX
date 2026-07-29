@@ -39,7 +39,7 @@ export function ShareMenu({ assetId, title }: { assetId: string; title: string }
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2.5 text-sm font-semibold text-text shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
+        className="flex items-center gap-1.5 rounded-xl border border-line bg-[rgba(255,255,255,0.6)] px-3.5 py-[11px] text-[13.5px] font-semibold text-text transition-colors duration-200 hover:bg-white/90"
       >
         <Share2 size={16} strokeWidth={1.75} />
         share

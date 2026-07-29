@@ -88,6 +88,7 @@ model User {
   assets       Asset[]
   declarations UploadDeclaration[]
   apiKey       ApiKey?
+  likes        AssetLike[]
 }
 
 model Tag {
@@ -113,6 +114,13 @@ model Asset {
   isOriginal    Boolean     @default(false)
   featured      Boolean     @default(false)
   downloadCount Int         @default(0)
+  // Real, tracked counters — viewCount increments on a genuine detail-page
+  // view (deduped per IP per window, see lib/assets.ts#trackView), and
+  // likeCount is maintained in lockstep with AssetLike rows (every write
+  // to either happens in the same transaction — see
+  // app/api/assets/[id]/like/route.ts). Neither is ever hand-set/faked.
+  viewCount     Int         @default(0)
+  likeCount     Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -133,6 +141,7 @@ model Asset {
   reports        Report[]
   takedowns      TakedownLog[]
   downloadEvents DownloadEvent[]
+  likes          AssetLike[]
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -234,6 +243,25 @@ model DownloadEvent {
   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, createdAt])
+}
+
+// One row per (asset, wallet) — the unique composite key is what
+// actually prevents a double-like, not application-level logic alone.
+// Asset.likeCount is a denormalized counter kept in sync with this
+// table's row count via the same transaction on every like/unlike (see
+// app/api/assets/[id]/like/route.ts) rather than COUNT()'d on every
+// read, since cards/listings need the count cheaply and often.
+model AssetLike {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+
+  assetId       String
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  walletAddress String
+  wallet        User     @relation(fields: [walletAddress], references: [walletAddress])
+
+  @@unique([assetId, walletAddress])
 }
 
 // DB-backed fixed-window rate limiting, shared across instances — replaces

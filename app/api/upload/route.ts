@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       uploaderWallet: user.walletAddress,
       declarationText: `${OWNERSHIP_DECLARATION_TEXT}\n\n${TOS_DECLARATION_TEXT}`,
       tosVersion: CURRENT_TOS_VERSION,
-      ipHash: hashIp(getClientIp(req)),
+      ipHash: hashIp(getClientIp(req.headers)),
     },
   });
 

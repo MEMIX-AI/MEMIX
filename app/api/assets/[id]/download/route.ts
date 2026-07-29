@@ -29,7 +29,7 @@ export async function GET(
       data: { downloadCount: { increment: 1 } },
     }),
     prisma.downloadEvent.create({
-      data: { assetId: asset.id, ipHash: hashIp(getClientIp(req)) },
+      data: { assetId: asset.id, ipHash: hashIp(getClientIp(req.headers)) },
     }),
   ]);
 

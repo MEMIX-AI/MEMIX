@@ -47,7 +47,7 @@ function pickOpener(): string {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = getClientIp(req);
+  const ip = getClientIp(req.headers);
   const rateLimit = await checkRateLimit(`librarian:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
   if (!rateLimit.ok) {
     return NextResponse.json(

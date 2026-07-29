@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
-import { getAssetById } from "@/lib/assets";
+import { Download, Eye } from "lucide-react";
+import { getAssetById, trackView } from "@/lib/assets";
 import { resolveAssetUrls } from "@/lib/asset-urls";
+import { getCurrentUser } from "@/lib/auth";
+import { getLikedAssetIds } from "@/lib/likes";
 import {
   assetTypeLabel,
   formatBytes,
@@ -17,6 +19,7 @@ import { ReportButton } from "@/components/ReportButton";
 import { ShareMenu } from "@/components/ShareMenu";
 import { SpecCell } from "@/components/SpecCell";
 import { VerdictBadge } from "@/components/VerdictBadge";
+import { LikeButton } from "@/components/LikeButton";
 
 export default async function AssetDetailPage({
   params,
@@ -25,7 +28,10 @@ export default async function AssetDetailPage({
 }) {
   const rawAsset = await getAssetById(params.id);
   if (!rawAsset) notFound();
+  await trackView(rawAsset.id);
   const asset = await resolveAssetUrls(rawAsset);
+  const user = await getCurrentUser();
+  const likedIds = await getLikedAssetIds(user?.walletAddress, [asset.id]);
 
   const license = licenseBadge(asset.isOriginal);
   const vStyle = verdictStyle(asset.verdictStatus);
@@ -52,6 +58,20 @@ export default async function AssetDetailPage({
               download
             </a>
             <ShareMenu assetId={asset.id} title={asset.title} />
+          </div>
+
+          <div className="mb-6 flex items-center gap-4 text-sm text-dim">
+            <LikeButton
+              assetId={asset.id}
+              initialLiked={likedIds.has(asset.id)}
+              initialCount={asset.likeCount}
+              signedIn={!!user}
+              size="lg"
+            />
+            <span className="flex items-center gap-1.5">
+              <Eye size={15} strokeWidth={1.75} />
+              {asset.viewCount} views
+            </span>
           </div>
 
           {/* The verdict — the judgment this asset carries, deliberately

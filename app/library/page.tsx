@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { searchAssets, CATEGORY_FILTERS } from "@/lib/search";
 import { publicAssetWhere } from "@/lib/asset-visibility";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
+import { getCurrentUser } from "@/lib/auth";
+import { getLikedAssetIds } from "@/lib/likes";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetCard } from "@/components/AssetCard";
 import { SearchCommandInput } from "@/components/SearchCommandInput";
@@ -32,6 +34,9 @@ export default async function LibraryPage({
   ]);
   const assets = await resolveAssetUrlsMany(rawAssets);
   const hasActiveFilter = Boolean(q || activeCat.key !== "all" || tag);
+
+  const user = await getCurrentUser();
+  const likedIds = await getLikedAssetIds(user?.walletAddress, assets.map((a) => a.id));
 
   function hrefWith(overrides: Record<string, string | undefined>): string {
     const merged: Record<string, string | undefined> = {
@@ -133,7 +138,12 @@ export default async function LibraryPage({
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {assets.map((asset) => (
-            <AssetCard key={asset.id} asset={asset} />
+            <AssetCard
+              key={asset.id}
+              asset={asset}
+              liked={likedIds.has(asset.id)}
+              signedIn={!!user}
+            />
           ))}
         </div>
       )}

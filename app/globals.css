@@ -3,24 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --bg: #ddfcf6;
-  --bg-2: #f0e8ff;
-  --panel: #fbfffe;
-  --line: rgba(60, 100, 180, 0.14);
-  --text: #12283a;
-  --dim: #4b6478;
-  --accent: #12c7d6;
-  --accent-2: #3b82f6;
-  --accent-3: #9f8bff;
-  --hover: #0eb8c9;
-  --ok: #21c48c;
-  --warn: #f6b84c;
+  --bg: #eafbff;
+  --bg-2: #f6feff;
+  --panel: rgba(255, 255, 255, 0.88);
+  --line: rgba(24, 184, 216, 0.12);
+  --text: #14323c;
+  --dim: #5c7a84;
+  --accent: #18b8d8;
+  --accent-2: #63d8f2;
+  --accent-3: #7fe7d8;
+  --hover: #0fa6c4;
+  --ok: #3ccb7f;
+  --warn: #f5a623;
+  --coming-soon: #9aa7ad;
 
-  --gradient-brand: linear-gradient(135deg, #12c7d6 0%, #3b82f6 100%);
-  --gradient-logo: linear-gradient(135deg, #12c7d6 0%, #1ca6b8 100%);
-  --shadow-soft: 0 1px 2px rgba(30, 60, 120, 0.05), 0 4px 12px rgba(30, 60, 120, 0.06);
-  --shadow-soft-lg: 0 12px 30px rgba(30, 60, 120, 0.08), 0 20px 44px rgba(30, 60, 120, 0.1);
-  --shadow-glow: 0 8px 26px rgba(18, 199, 214, 0.32);
+  --gradient-brand: linear-gradient(135deg, #18b8d8 0%, #63d8f2 100%);
+  --gradient-logo: linear-gradient(135deg, #18b8d8 0%, #7fe7d8 100%);
+  --shadow-soft: 0 1px 2px rgba(20, 50, 60, 0.04), 0 4px 14px rgba(20, 50, 60, 0.05);
+  --shadow-soft-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 8px 26px rgba(24, 184, 216, 0.32);
+
+  /* Verdict status semantics — LIVE/DATED/DEAD are the explicit brief
+     colors; EMERGING/PEAKING/FADING fill the gaps in between on the
+     same "how current is this" gradient. */
+  --verdict-emerging: #18b8d8;
+  --verdict-live: #3ccb7f;
+  --verdict-peaking: #63d8f2;
+  --verdict-fading: #f0b94d;
+  --verdict-dated: #f5a623;
+  --verdict-dead: #9aa7ad;
 }
 
 body {
@@ -34,65 +45,44 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Fixed decorative background — sits behind all content, never affects
-   layout/flow. Aurora gradient wash + large low-opacity blurred color
-   blobs (slow drift) + a faint sparkle layer + a very-low-opacity dot
-   grid — deliberately not plain white, per the brief. */
+   layout/flow. Soft gradient wash + a few static (non-animated) low-
+   opacity color blobs + a faint dot grid. No `animation: infinite` here
+   by design — a v5 requirement, and it also means the compositor never
+   has continuous work to do for this layer. */
 .bg-decoration {
   position: fixed;
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    #ddfcf6 0%,
-    #cff8f7 20%,
-    #c8f4ff 45%,
-    #d9ecff 70%,
-    #f0e8ff 100%
-  );
+  background: linear-gradient(135deg, #eafbff 0%, #d8f7ff 50%, #f6feff 100%);
 }
 
-/* Same soft, diffuse color wash as before, but built from a
-   radial-gradient with a smooth multi-stop falloff instead of a solid
-   circle pushed through filter: blur(320px). A blur that large forces
-   the GPU to hold and continuously recomposite a ~600px-square blurred
-   bitmap per blob, on every single page (root layout) — a gradient
-   produces the same soft-edged look with no blur pass at all. Sized up
-   from the original circle to reproduce how far the old blur's visible
-   spread actually reached. */
+/* Soft, diffuse color wash built from radial-gradient (no filter: blur —
+   see the performance note below) instead of an animated blob. */
 .bg-blob {
   position: absolute;
   border-radius: 9999px;
-  will-change: transform;
-  animation: aurora-float 24s ease-in-out infinite;
 }
 .bg-blob-teal {
   top: -34%;
   left: -30%;
   width: 90vw;
   height: 90vw;
-  background: radial-gradient(circle, rgba(84, 226, 208, 0.16) 0%, rgba(84, 226, 208, 0.12) 20%, rgba(84, 226, 208, 0.08) 38%, rgba(84, 226, 208, 0.04) 55%, rgba(84, 226, 208, 0.015) 70%, rgba(84, 226, 208, 0) 85%);
+  background: radial-gradient(circle, rgba(24, 184, 216, 0.14) 0%, rgba(24, 184, 216, 0.09) 30%, rgba(24, 184, 216, 0.03) 55%, rgba(24, 184, 216, 0) 78%);
 }
 .bg-blob-sky {
   top: -2%;
   right: -34%;
   width: 84vw;
   height: 84vw;
-  background: radial-gradient(circle, rgba(98, 215, 255, 0.16) 0%, rgba(98, 215, 255, 0.12) 20%, rgba(98, 215, 255, 0.08) 38%, rgba(98, 215, 255, 0.04) 55%, rgba(98, 215, 255, 0.015) 70%, rgba(98, 215, 255, 0) 85%);
-  animation-delay: -8s;
+  background: radial-gradient(circle, rgba(99, 216, 242, 0.14) 0%, rgba(99, 216, 242, 0.09) 30%, rgba(99, 216, 242, 0.03) 55%, rgba(99, 216, 242, 0) 78%);
 }
 .bg-blob-lavender {
   bottom: -36%;
   left: 0%;
   width: 80vw;
   height: 80vw;
-  background: radial-gradient(circle, rgba(159, 139, 255, 0.16) 0%, rgba(159, 139, 255, 0.12) 20%, rgba(159, 139, 255, 0.08) 38%, rgba(159, 139, 255, 0.04) 55%, rgba(159, 139, 255, 0.015) 70%, rgba(159, 139, 255, 0) 85%);
-  animation-delay: -16s;
-}
-
-@keyframes aurora-float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(2.5%, -3%) scale(1.05); }
+  background: radial-gradient(circle, rgba(127, 231, 216, 0.14) 0%, rgba(127, 231, 216, 0.09) 30%, rgba(127, 231, 216, 0.03) 55%, rgba(127, 231, 216, 0) 78%);
 }
 
 .bg-sparkle {
@@ -100,13 +90,13 @@ h1, h2, h3, h4, h5, h6 {
   inset: 0;
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.9) 1px, transparent 1.5px);
   background-size: 160px 160px;
-  opacity: 0.3;
+  opacity: 0.2;
 }
 
 .bg-dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(18, 199, 214, 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(24, 184, 216, 0.1) 1px, transparent 1px);
   background-size: 28px 28px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 8% 8%, black, transparent),
     radial-gradient(ellipse 70% 60% at 95% 90%, black, transparent);
@@ -129,15 +119,15 @@ h1, h2, h3, h4, h5, h6 {
   to { opacity: 1; transform: translateY(0); }
 }
 .page-enter {
-  animation: page-fade-in 320ms ease-out;
+  animation: page-fade-in 240ms ease-out;
 }
 
-@keyframes cursor-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
+/* No animation here by design — the v5 performance rule is explicit
+   about no `infinite` animations anywhere on the site. The class name
+   stays (still used by PageColophon's static "▊" cursor glyph) so no
+   caller needs updating, it's just visually static now. */
 .cursor-blink {
-  animation: cursor-blink 1.1s steps(1) infinite;
+  opacity: 1;
 }
 
 /* Reusable "brand" treatments — gradient can't be expressed through the
@@ -151,7 +141,7 @@ h1, h2, h3, h4, h5, h6 {
 
   .gradient-brand {
     background-image: var(--gradient-brand);
-    transition: filter 250ms ease;
+    transition: filter 200ms ease;
   }
   a.gradient-brand:hover, button.gradient-brand:hover {
     filter: brightness(1.08);
@@ -173,16 +163,16 @@ h1, h2, h3, h4, h5, h6 {
 
   .gradient-logo {
     background-image: var(--gradient-logo);
-    transition: filter 250ms ease;
+    transition: filter 200ms ease;
   }
   a.gradient-logo:hover, button.gradient-logo:hover {
     filter: brightness(1.08);
   }
 
   .glass {
-    background-color: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .shadow-soft {
@@ -196,11 +186,16 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .card-lift {
-    transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
   }
   .card-lift:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: var(--shadow-soft-lg);
     border-color: var(--hover);
+  }
+
+  .coming-soon-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }

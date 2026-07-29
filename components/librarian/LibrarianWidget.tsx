@@ -88,7 +88,9 @@ export function LibrarianWidget() {
               <Sparkles size={14} strokeWidth={1.75} />
               librarian
             </span>
-            <span className="h-2 w-2 animate-pulse rounded-full bg-panel" />
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              Beta
+            </span>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 text-sm">

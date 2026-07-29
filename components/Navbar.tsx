@@ -35,6 +35,7 @@ const WalletWidget = dynamic(
 const NAV_LINKS = [
   { href: "/library", label: "library" },
   { href: "/upload", label: "upload" },
+  { href: "/creators", label: "creators" },
 ];
 
 const CATALOG_LINKS = [
@@ -81,7 +82,7 @@ export function Navbar() {
               : "text-dim hover:bg-panel hover:text-text hover:shadow-soft"
           }`}
         >
-          agent
+          AI Agent
         </button>
         {CATALOG_LINKS.map((link) => {
           const active = pathname === link.href || pathname?.startsWith(link.href + "/");

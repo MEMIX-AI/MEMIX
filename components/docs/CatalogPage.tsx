@@ -19,7 +19,7 @@ export function CatalogHero({
   return (
     <div className="mb-14">
       <div className="mb-6 flex w-fit items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-medium text-dim shadow-soft">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-ok" />
+        <span className="h-2 w-2 rounded-full bg-ok" />
         {status}
       </div>
       <h1 className="text-balance mb-4 font-heading text-3xl font-bold leading-tight text-text sm:text-4xl">

@@ -10,10 +10,13 @@ import {
   licenseBadge,
   shortenWallet,
 } from "@/lib/format";
+import { verdictColor } from "@/lib/verdict";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetPreview } from "@/components/AssetPreview";
 import { ReportButton } from "@/components/ReportButton";
+import { ShareMenu } from "@/components/ShareMenu";
 import { SpecCell } from "@/components/SpecCell";
+import { VerdictBadge } from "@/components/VerdictBadge";
 
 export default async function AssetDetailPage({
   params,
@@ -25,6 +28,7 @@ export default async function AssetDetailPage({
   const asset = await resolveAssetUrls(rawAsset);
 
   const license = licenseBadge(asset.isOriginal);
+  const vColor = verdictColor(asset.verdictStatus);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
@@ -39,13 +43,48 @@ export default async function AssetDetailPage({
             {asset.title}
           </h1>
 
-          <a
-            href={`/api/assets/${asset.id}/download`}
-            className="gradient-brand mb-6 inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+          <div className="mb-6 flex items-center gap-2">
+            <a
+              href={`/api/assets/${asset.id}/download`}
+              className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+            >
+              <Download size={17} strokeWidth={1.75} />
+              download
+            </a>
+            <ShareMenu assetId={asset.id} title={asset.title} />
+          </div>
+
+          {/* The verdict — the judgment this asset carries, deliberately
+              the most visually prominent block on the page. */}
+          <div
+            className="mb-6 rounded-2xl border-2 bg-panel p-5 shadow-soft-lg"
+            style={{ borderColor: `${vColor}55` }}
           >
-            <Download size={17} strokeWidth={1.75} />
-            download
-          </a>
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-dim">
+                the verdict
+              </span>
+              <VerdictBadge status={asset.verdictStatus} peaked={asset.peaked} size="lg" />
+            </div>
+            <div className="flex flex-col gap-3.5 text-sm">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-dim">
+                  works when
+                </p>
+                <p className="leading-relaxed text-text">
+                  {asset.worksWhen ?? "not judged yet."}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-dim">
+                  avoid when
+                </p>
+                <p className="leading-relaxed text-text">
+                  {asset.avoidWhen ?? "not judged yet."}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="mb-6 grid grid-cols-2 gap-2.5 rounded-2xl border border-line bg-panel p-3 shadow-soft text-sm">
             <SpecCell label="type" value={assetTypeLabel(asset.type)} />
@@ -78,7 +117,7 @@ export default async function AssetDetailPage({
                     key={tag.id}
                     href={`/library?tag=${encodeURIComponent(tag.name)}`}
                     style={{ background: c.bg, color: c.text, borderColor: c.border }}
-                    className="rounded-full border px-3 py-1 text-xs font-medium transition-all duration-250 hover:-translate-y-0.5 hover:shadow-soft"
+                    className="rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
                   >
                     #{tag.name}
                   </Link>

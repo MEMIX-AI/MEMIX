@@ -1,3 +1,4 @@
+import type { AssetType } from "@prisma/client";
 import { prisma } from "./prisma";
 import { publicAssetWhere } from "./asset-visibility";
 
@@ -57,5 +58,32 @@ export async function getAssetById(id: string) {
   return prisma.asset.findFirst({
     where: { id, ...publicAssetWhere },
     include: { tags: true },
+  });
+}
+
+// "Librarian Picks" — real verdict data (only assets an admin has
+// actually judged), not a fabricated curation algorithm. Home page
+// section is labeled "Beta" alongside this — see components/librarian —
+// since the Librarian itself is still keyword-search, not reasoning.
+export async function getLibrarianPicks(limit = 8) {
+  return prisma.asset.findMany({
+    where: { ...publicAssetWhere, verdictStatus: { not: null } },
+    include: { tags: true },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+  });
+}
+
+// Type-filtered "popular" rail (Popular Sounds / Popular Videos on the
+// home page) — real lifetime downloadCount ordering, not the rolling
+// 7-day trending window getTrendingAssets uses. Simpler on purpose: a
+// small catalogue doesn't have enough per-type volume yet to need a
+// rolling window per type.
+export async function getPopularByType(type: AssetType, limit = 8) {
+  return prisma.asset.findMany({
+    where: { ...publicAssetWhere, type },
+    include: { tags: true },
+    orderBy: { downloadCount: "desc" },
+    take: limit,
   });
 }

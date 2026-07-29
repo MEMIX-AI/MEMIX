@@ -1,4 +1,4 @@
-import type { AssetType, Prisma } from "@prisma/client";
+import type { AssetType, Prisma, VerdictStatus } from "@prisma/client";
 import { prisma } from "./prisma";
 import { publicAssetWhere } from "./asset-visibility";
 
@@ -6,8 +6,27 @@ export interface SearchParams {
   q?: string;
   type?: AssetType;
   tag?: string;
+  /** Verdict-status filter (v5 verdict-first category pills) — distinct
+   * from `type`, which filters on AssetType (image/video/sound). */
+  verdictStatus?: VerdictStatus;
+  /** Exact `peaked` string match (e.g. "2025") — peaked is free text, not
+   * a real date field, so this is a plain equality filter, not a range. */
+  peaked?: string;
   page?: number;
   pageSize?: number;
+}
+
+export const VERDICT_STATUSES: VerdictStatus[] = [
+  "EMERGING",
+  "LIVE",
+  "PEAKING",
+  "FADING",
+  "DATED",
+  "DEAD",
+];
+
+export function isVerdictStatus(value: string | undefined): value is VerdictStatus {
+  return !!value && (VERDICT_STATUSES as string[]).includes(value);
 }
 
 export const ASSET_TYPES: AssetType[] = ["IMAGE", "VIDEO", "SOUND"];
@@ -31,6 +50,8 @@ export async function searchAssets({
   q,
   type,
   tag,
+  verdictStatus,
+  peaked,
   page = 1,
   pageSize = 24,
 }: SearchParams) {
@@ -38,6 +59,8 @@ export async function searchAssets({
 
   if (type) conditions.push({ type });
   if (tag) conditions.push({ tags: { some: { name: tag } } });
+  if (verdictStatus) conditions.push({ verdictStatus });
+  if (peaked) conditions.push({ peaked });
   if (q) {
     conditions.push({
       OR: [

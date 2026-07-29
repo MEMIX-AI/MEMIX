@@ -1,49 +1,74 @@
 import Link from "next/link";
-import { ImageIcon, Film, Music2, LayoutGrid, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { isAssetType, searchAssets } from "@/lib/search";
+import { searchAssets } from "@/lib/search";
+import type { AssetType, VerdictStatus } from "@prisma/client";
 import { publicAssetWhere } from "@/lib/asset-visibility";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetCard } from "@/components/AssetCard";
 import { SearchCommandInput } from "@/components/SearchCommandInput";
 
-const TYPE_FILTERS = [
-  { value: undefined, label: "all", icon: LayoutGrid },
-  { value: "IMAGE", label: "images", icon: ImageIcon },
-  { value: "VIDEO", label: "videos", icon: Film },
-  { value: "SOUND", label: "sounds", icon: Music2 },
-] as const;
+// Verdict-first category pills — a flat, mutually-exclusive list mixing
+// three different underlying filters (verdict status, peaked year, asset
+// type), unified behind one `cat` query param so the UI stays a single
+// row of pills instead of three separate filter groups. "gifs" maps to
+// the real IMAGE type — there's no distinct GIF type in the schema (an
+// uploaded GIF is stored as an image), so this is a relabel of a real
+// filter, not a fabricated one.
+const CATEGORY_FILTERS: {
+  key: string;
+  label: string;
+  type?: AssetType;
+  verdictStatus?: VerdictStatus;
+  peaked?: string;
+}[] = [
+  { key: "all", label: "all" },
+  { key: "live", label: "live", verdictStatus: "LIVE" },
+  { key: "dated", label: "dated", verdictStatus: "DATED" },
+  { key: "peaked-2025", label: "peaked 2025", peaked: "2025" },
+  { key: "peaked-2024", label: "peaked 2024", peaked: "2024" },
+  { key: "sounds", label: "sounds", type: "SOUND" },
+  { key: "videos", label: "videos", type: "VIDEO" },
+  { key: "gifs", label: "gifs", type: "IMAGE" },
+];
 
 export default async function LibraryPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string; tag?: string; page?: string };
+  searchParams: { q?: string; cat?: string; tag?: string; page?: string };
 }) {
   const q = searchParams.q?.trim() || undefined;
-  const type = isAssetType(searchParams.type) ? searchParams.type : undefined;
+  const activeCat = CATEGORY_FILTERS.find((c) => c.key === searchParams.cat) ?? CATEGORY_FILTERS[0];
   const tag = searchParams.tag || undefined;
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
 
   const [{ assets: rawAssets, total, totalPages }, tags, libraryTotal] = await Promise.all([
-    searchAssets({ q, type, tag, page }),
+    searchAssets({
+      q,
+      tag,
+      page,
+      type: activeCat.type,
+      verdictStatus: activeCat.verdictStatus,
+      peaked: activeCat.peaked,
+    }),
     prisma.tag.findMany({ orderBy: { name: "asc" } }),
     prisma.asset.count({ where: publicAssetWhere }),
   ]);
   const assets = await resolveAssetUrlsMany(rawAssets);
-  const hasActiveFilter = Boolean(q || type || tag);
+  const hasActiveFilter = Boolean(q || activeCat.key !== "all" || tag);
 
   function hrefWith(overrides: Record<string, string | undefined>): string {
     const merged: Record<string, string | undefined> = {
       q,
-      type,
+      cat: activeCat.key === "all" ? undefined : activeCat.key,
       tag,
       page: undefined,
       ...overrides,
     };
     const usp = new URLSearchParams();
     if (merged.q) usp.set("q", merged.q);
-    if (merged.type) usp.set("type", merged.type);
+    if (merged.cat) usp.set("cat", merged.cat);
     if (merged.tag) usp.set("tag", merged.tag);
     if (merged.page && merged.page !== "1") usp.set("page", merged.page);
     const qs = usp.toString();
@@ -55,26 +80,24 @@ export default async function LibraryPage({
       <h1 className="mb-5 font-heading text-2xl font-bold text-text">library</h1>
 
       <form action="/library" method="GET" className="mb-6 max-w-lg">
-        {type && <input type="hidden" name="type" value={type} />}
+        {activeCat.key !== "all" && <input type="hidden" name="cat" value={activeCat.key} />}
         {tag && <input type="hidden" name="tag" value={tag} />}
-        <SearchCommandInput defaultValue={q} />
+        <SearchCommandInput defaultValue={q} placeholder='Search a meme, sound, or vibe…' />
       </form>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        {TYPE_FILTERS.map((f) => {
-          const Icon = f.icon;
-          const active = type === f.value;
+        {CATEGORY_FILTERS.map((f) => {
+          const active = activeCat.key === f.key;
           return (
             <Link
-              key={f.label}
-              href={hrefWith({ type: f.value })}
-              className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-250 ${
+              key={f.key}
+              href={hrefWith({ cat: f.key === "all" ? undefined : f.key })}
+              className={`rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-md transition-all duration-200 active:scale-95 ${
                 active
                   ? "gradient-brand border-transparent text-white shadow-glow"
-                  : "border-white/60 bg-white/40 text-dim hover:gradient-brand hover:border-transparent hover:text-white hover:shadow-glow"
+                  : "border-white/60 bg-white/40 text-dim hover:border-accent/40 hover:text-accent"
               }`}
             >
-              <Icon size={14} strokeWidth={1.75} />
               {f.label}
             </Link>
           );
@@ -95,7 +118,7 @@ export default async function LibraryPage({
                     ? undefined
                     : { background: c.bg, color: c.text, borderColor: c.border }
                 }
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-250 hover:-translate-y-0.5 hover:shadow-soft ${
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft ${
                   active ? "gradient-brand border-transparent text-white shadow-glow" : ""
                 }`}
               >
@@ -144,7 +167,7 @@ export default async function LibraryPage({
         {page > 1 ? (
           <Link
             href={hrefWith({ page: String(page - 1) })}
-            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
+            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
           >
             <ChevronLeft size={15} /> prev
           </Link>
@@ -157,7 +180,7 @@ export default async function LibraryPage({
         {page < totalPages ? (
           <Link
             href={hrefWith({ page: String(page + 1) })}
-            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg"
+            className="flex items-center gap-1 rounded-full border border-line bg-panel px-4 py-2 font-medium shadow-soft transition-all duration-200 hover:border-accent/40 hover:shadow-soft-lg"
           >
             next <ChevronRight size={15} />
           </Link>

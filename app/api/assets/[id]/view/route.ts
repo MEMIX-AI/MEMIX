@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { publicAssetWhere } from "@/lib/asset-visibility";
+import { assetAccessWhere } from "@/lib/asset-visibility";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
+import { getCurrentUser } from "@/lib/auth";
 
 // Rolling 24h window per (asset, IP) — "rolling" meaning it's measured from
 // this IP's own last counted view, not a fixed calendar/UTC boundary. That's
@@ -13,8 +14,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const viewer = await getCurrentUser();
   const asset = await prisma.asset.findFirst({
-    where: { id: params.id, ...publicAssetWhere },
+    where: { id: params.id, ...assetAccessWhere(viewer?.walletAddress) },
     select: { id: true },
   });
   if (!asset) {

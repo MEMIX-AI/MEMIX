@@ -4,15 +4,19 @@ import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
 import { getAssetById } from "@/lib/assets";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
+import { getCurrentUser } from "@/lib/auth";
 
 // No login, no wallet, no page in between — a plain link straight to this
 // route triggers the browser's native download (see CLAUDE.md KONSEP INTI:
 // "Semua bisa search & download tanpa login, tanpa wallet, tanpa bayar").
+// That still holds for PUBLIC/UNLISTED assets; PRIVATE ones only resolve
+// for the owner's own session (see lib/asset-visibility.ts).
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const asset = await getAssetById(params.id);
+  const viewer = await getCurrentUser();
+  const asset = await getAssetById(params.id, viewer?.walletAddress);
   if (!asset) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }

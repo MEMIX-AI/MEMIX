@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { getAssetById } from "@/lib/assets";
 import { resolveAssetUrls } from "@/lib/asset-urls";
+import { getCurrentUser } from "@/lib/auth";
 import {
   assetTypeLabel,
   formatBytes,
@@ -27,7 +28,8 @@ export default async function AssetDetailPage({
 }: {
   params: { id: string };
 }) {
-  const rawAsset = await getAssetById(params.id);
+  const viewer = await getCurrentUser();
+  const rawAsset = await getAssetById(params.id, viewer?.walletAddress);
   if (!rawAsset) notFound();
   const asset = await resolveAssetUrls(rawAsset);
 

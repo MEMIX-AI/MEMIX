@@ -14,6 +14,7 @@ const STATUS_FILTERS: { value?: AssetStatus; label: string }[] = [
   { value: "ACTIVE", label: "active" },
   { value: "TAKEN_DOWN", label: "taken down" },
   { value: "PENDING_REVIEW", label: "pending" },
+  { value: "DRAFT", label: "draft" },
 ];
 
 export default async function AdminAssetsPage({

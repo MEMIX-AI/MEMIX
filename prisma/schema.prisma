@@ -21,6 +21,23 @@ enum AssetStatus {
   ACTIVE
   TAKEN_DOWN
   PENDING_REVIEW
+  // Creator saved the form but hasn't published — invisible everywhere
+  // (not just "unlisted": it's excluded by the same status:"ACTIVE" check
+  // every public/access query already uses, so it needed no extra
+  // enforcement code, just this value). Only reachable from /my-uploads
+  // by the owner, who flips it to ACTIVE via the publish action.
+  DRAFT
+}
+
+// Public: listed everywhere + reachable by link. Unlisted: never appears
+// in library/search/trending/home, but the direct /asset/:id link still
+// works for anyone who has it (no login needed — same "no login to
+// browse" policy as public assets). Private: only the uploader can reach
+// it at all, even via direct link — see lib/asset-visibility.ts.
+enum AssetVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
 }
 
 // The "verdict" taxonomy from /docs' documented target shape (MV—005) —
@@ -110,6 +127,7 @@ model Asset {
   fileSize      Int
   duration      Int?
   status        AssetStatus @default(ACTIVE)
+  visibility    AssetVisibility @default(PUBLIC)
   isOriginal    Boolean     @default(false)
   featured      Boolean     @default(false)
   downloadCount Int         @default(0)

@@ -12,6 +12,7 @@ import {
   Eye,
   Download as DownloadIcon,
   Share2,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   ALLOWED_MIME_TYPES,
@@ -38,10 +39,16 @@ export function UploadForm({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -50,14 +57,33 @@ export function UploadForm({
   const [isOriginal, setIsOriginal] = useState(false);
   const [ownsRights, setOwnsRights] = useState(false);
   const [agreesToTos, setAgreesToTos] = useState(false);
+  const [visibility, setVisibility] = useState<"PUBLIC" | "UNLISTED" | "PRIVATE">("PUBLIC");
+  // Only meaningful when the real file is an image — lets the user relabel
+  // an image between "GIF" and "Image / Template" (both honest for the
+  // same file), never across a real type boundary. Reset whenever a new
+  // file is picked so it can't stick around describing the wrong file.
+  const [categoryOverride, setCategoryOverride] = useState<"GIF" | "IMAGE_TEMPLATE" | null>(null);
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState<"draft" | "publish" | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const detectedType = file ? detectAssetType(file.type) : null;
 
+  const autoCategory: "SOUND" | "VIDEO" | "GIF" | "IMAGE_TEMPLATE" | null =
+    detectedType === "SOUND"
+      ? "SOUND"
+      : detectedType === "VIDEO"
+        ? "VIDEO"
+        : detectedType === "IMAGE"
+          ? file?.type === "image/gif"
+            ? "GIF"
+            : "IMAGE_TEMPLATE"
+          : null;
+  const category = detectedType === "IMAGE" ? (categoryOverride ?? autoCategory) : autoCategory;
+
   function handleFile(selected: File | null) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setCategoryOverride(null);
 
     if (!selected) {
       setFile(null);
@@ -89,6 +115,35 @@ export function UploadForm({
     );
   }
 
+  function handleThumbnail(selected: File | null) {
+    if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+
+    if (!selected) {
+      setThumbnailFile(null);
+      setThumbnailPreviewUrl(null);
+      setThumbnailError(null);
+      return;
+    }
+
+    if (!ALLOWED_MIME_TYPES.IMAGE.includes(selected.type)) {
+      setThumbnailFile(null);
+      setThumbnailPreviewUrl(null);
+      setThumbnailError(`unsupported thumbnail type: ${selected.type || "unknown"} (use png/jpeg/webp/gif)`);
+      return;
+    }
+    const result = validateUpload("IMAGE", selected.type, selected.size);
+    if (!result.ok) {
+      setThumbnailFile(null);
+      setThumbnailPreviewUrl(null);
+      setThumbnailError(result.error);
+      return;
+    }
+
+    setThumbnailFile(selected);
+    setThumbnailError(null);
+    setThumbnailPreviewUrl(URL.createObjectURL(selected));
+  }
+
   function addTag(raw: string) {
     const name = raw.trim().toLowerCase();
     if (!name || tags.length >= MAX_TAGS || tags.includes(name)) return;
@@ -110,23 +165,26 @@ export function UploadForm({
     : [];
 
   const canSubmit =
-    !!file && title.trim().length > 0 && ownsRights && agreesToTos && !submitting;
+    !!file && title.trim().length > 0 && ownsRights && agreesToTos && !submittingAction;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(action: "draft" | "publish", e?: React.FormEvent) {
+    e?.preventDefault();
     if (!file || !canSubmit) return;
 
-    setSubmitting(true);
+    setSubmittingAction(action);
     setSubmitError(null);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
       formData.append("title", title.trim());
       formData.append("description", description.trim());
       formData.append("isOriginal", String(isOriginal));
       formData.append("ownsRights", String(ownsRights));
       formData.append("agreesToTos", String(agreesToTos));
+      formData.append("visibility", visibility);
+      formData.append("action", action);
       tags.forEach((t) => formData.append("tags", t));
 
       const res = await fetch("/api/upload", {
@@ -138,20 +196,24 @@ export function UploadForm({
 
       if (!res.ok) {
         setSubmitError(data.error ?? "upload failed, try again.");
-        setSubmitting(false);
+        setSubmittingAction(null);
         return;
       }
 
-      router.push(`/asset/${data.id}`);
+      // A draft is invisible everywhere except /my-uploads (see
+      // prisma/schema.prisma's AssetStatus.DRAFT comment) — its own detail
+      // page would 404, so send the creator somewhere that actually shows
+      // it instead.
+      router.push(action === "draft" ? "/my-uploads" : `/asset/${data.id}`);
     } catch {
       setSubmitError("upload failed, try again.");
-      setSubmitting(false);
+      setSubmittingAction(null);
     }
   }
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[22px] border border-line bg-panel p-6 shadow-soft-lg">
+    <form onSubmit={(e) => handleSubmit("publish", e)} className="flex flex-col gap-6 rounded-[22px] border border-line bg-panel p-6 shadow-soft-lg">
       <div>
         <input
           ref={fileInputRef}
@@ -245,6 +307,58 @@ export function UploadForm({
       </div>
 
       <div>
+        <input
+          ref={thumbInputRef}
+          type="file"
+          accept={ALLOWED_MIME_TYPES.IMAGE.join(",")}
+          className="hidden"
+          onChange={(e) => handleThumbnail(e.target.files?.[0] ?? null)}
+        />
+        <div
+          onClick={() => thumbInputRef.current?.click()}
+          className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line bg-panel p-4 transition-colors duration-250 hover:border-accent/50"
+        >
+          {thumbnailPreviewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={thumbnailPreviewUrl}
+              alt="thumbnail preview"
+              className="h-12 w-12 shrink-0 rounded-xl border border-line object-cover"
+            />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg text-dim">
+              <ImageIcon size={16} strokeWidth={1.75} />
+            </span>
+          )}
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-medium text-text">
+              {thumbnailFile ? thumbnailFile.name : "upload thumbnail"}
+              <span className="ml-1.5 font-normal text-dim">(optional)</span>
+            </p>
+            <p className="text-xs text-dim">used as the cover shown in cards — otherwise generated automatically</p>
+          </div>
+          {thumbnailFile && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleThumbnail(null);
+              }}
+              className="shrink-0 rounded-full p-1.5 text-dim transition-colors hover:bg-bg hover:text-warn"
+            >
+              <X size={16} strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
+        {thumbnailError && (
+          <p className="mt-2 flex items-center gap-1.5 text-sm text-warn">
+            <AlertCircle size={14} strokeWidth={1.75} />
+            {thumbnailError}
+          </p>
+        )}
+      </div>
+
+      <div>
         <label htmlFor="upload-title" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
           title
         </label>
@@ -270,6 +384,33 @@ export function UploadForm({
           placeholder="what is this, when would someone use it?"
           className="w-full rounded-2xl border border-line bg-panel px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50"
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label htmlFor="upload-category" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
+          category
+        </label>
+        <select
+          id="upload-category"
+          value={category ?? ""}
+          disabled={!file || detectedType !== "IMAGE"}
+          onChange={(e) => setCategoryOverride(e.target.value as "GIF" | "IMAGE_TEMPLATE")}
+          className="w-full rounded-2xl border border-line bg-panel px-3.5 py-2.5 text-sm text-text shadow-soft outline-none transition-colors focus:border-accent/50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {!category && <option value="">pick a file first</option>}
+          {category === "SOUND" && <option value="SOUND">Sound</option>}
+          {category === "VIDEO" && <option value="VIDEO">Video</option>}
+          {(category === "GIF" || category === "IMAGE_TEMPLATE") && (
+            <>
+              <option value="GIF">GIF</option>
+              <option value="IMAGE_TEMPLATE">Image / Template</option>
+            </>
+          )}
+        </select>
+        <p className="mt-1.5 text-xs text-dim">
+          detected from your file — only relabeling between GIF/Image is allowed.
+        </p>
       </div>
 
       <div>
@@ -326,6 +467,36 @@ export function UploadForm({
           )}
         </div>
       </div>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-dim">
+          visibility
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              { value: "PUBLIC" as const, label: "Public", hint: "anyone can find it" },
+              { value: "UNLISTED" as const, label: "Unlisted", hint: "link only" },
+              { value: "PRIVATE" as const, label: "Private", hint: "just you" },
+            ]
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setVisibility(opt.value)}
+              className={`rounded-xl border px-3 py-2.5 text-center text-[13.5px] font-medium transition-colors duration-150 ${
+                visibility === opt.value
+                  ? "border-accent bg-accent/[0.08] text-accent"
+                  : "border-line bg-panel text-dim hover:border-accent/30"
+              }`}
+            >
+              {opt.label}
+              <span className="mt-0.5 block text-[11px] font-normal text-dim">{opt.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <label className="flex items-start gap-2.5 text-sm text-dim">
         <input
@@ -379,13 +550,23 @@ export function UploadForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className="gradient-brand rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-      >
-        {submitting ? "uploading..." : "upload"}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => handleSubmit("draft")}
+          disabled={!canSubmit}
+          className="rounded-full border border-line bg-panel px-6 py-3 font-semibold text-text shadow-soft transition-all duration-250 hover:shadow-soft-lg disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {submittingAction === "draft" ? "saving..." : "save draft"}
+        </button>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="gradient-brand flex-1 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+        >
+          {submittingAction === "publish" ? "publishing..." : "publish asset"}
+        </button>
+      </div>
     </form>
 
     <aside className="lg:sticky lg:top-24">
@@ -394,7 +575,13 @@ export function UploadForm({
       </p>
       <div className="rounded-[22px] border border-line bg-panel p-3.5 shadow-soft-lg">
         <div className="relative mb-3.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-[18px] border border-line bg-bg">
-          {detectedType === "IMAGE" && previewUrl ? (
+          {thumbnailPreviewUrl ? (
+            // A custom thumbnail always wins server-side too — see
+            // app/api/upload/route.ts — so the preview should show it,
+            // not the raw file, once one's chosen.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={thumbnailPreviewUrl} alt="" className="h-full w-full object-cover" />
+          ) : detectedType === "IMAGE" && previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={previewUrl} alt="" className="h-full w-full object-cover" />
           ) : detectedType === "VIDEO" && previewUrl ? (

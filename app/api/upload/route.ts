@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { AssetStatus, AssetVisibility } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
@@ -13,6 +14,7 @@ import { getClientIp, hashIp } from "@/lib/ip-hash";
 
 const MAX_TAGS = 8;
 const MAX_TITLE_LENGTH = 200;
+const VISIBILITIES: AssetVisibility[] = ["PUBLIC", "UNLISTED", "PRIVATE"];
 
 // The declaration gate (CLAUDE.md POSISI LEGAL #2) is enforced here, not
 // just hidden/disabled in the client UI — a request missing either
@@ -74,6 +76,14 @@ export async function POST(req: NextRequest) {
   }
   const tagNames = Array.from(new Set(rawTags));
 
+  const rawVisibility = String(formData.get("visibility") ?? "PUBLIC");
+  const visibility: AssetVisibility = VISIBILITIES.includes(rawVisibility as AssetVisibility)
+    ? (rawVisibility as AssetVisibility)
+    : "PUBLIC";
+
+  const action = formData.get("action") === "draft" ? "draft" : "publish";
+  const status: AssetStatus = action === "draft" ? "DRAFT" : "ACTIVE";
+
   const type = detectAssetType(file.type);
   if (!type) {
     return NextResponse.json(
@@ -96,7 +106,34 @@ export async function POST(req: NextRequest) {
   });
 
   let thumbnailUrl: string | null = null;
-  if (type === "IMAGE") {
+
+  // A custom thumbnail (optional, any asset type — this is the only way a
+  // SOUND upload gets a real visual instead of no thumbnail at all) always
+  // wins over the auto-generated one when provided.
+  const customThumbnail = formData.get("thumbnail");
+  if (customThumbnail instanceof File && customThumbnail.size > 0) {
+    const thumbValidation = validateUpload("IMAGE", customThumbnail.type, customThumbnail.size);
+    if (!thumbValidation.ok) {
+      await storage.delete(saved.key);
+      return NextResponse.json({ error: `thumbnail: ${thumbValidation.error}` }, { status: 400 });
+    }
+    const customBuffer = Buffer.from(await customThumbnail.arrayBuffer());
+    const thumbBuffer = await generateThumbnail("IMAGE", customBuffer).catch(() => null);
+    if (!thumbBuffer) {
+      await storage.delete(saved.key);
+      return NextResponse.json(
+        { error: "that thumbnail image looks corrupted — try a different file or re-export it" },
+        { status: 400 },
+      );
+    }
+    const savedThumb = await storage.save({
+      buffer: thumbBuffer,
+      originalName: "thumb.webp",
+      mimeType: "image/webp",
+      folder: "thumbnails",
+    });
+    thumbnailUrl = savedThumb.key;
+  } else if (type === "IMAGE") {
     const thumbBuffer = await generateThumbnail(type, buffer).catch(() => null);
     if (!thumbBuffer) {
       // The original was already written to storage above — clean it up
@@ -134,6 +171,8 @@ export async function POST(req: NextRequest) {
       thumbnailUrl,
       fileSize: saved.size,
       isOriginal,
+      visibility,
+      status,
       uploaderWallet: user.walletAddress,
       tags: { connect: tags.map((t) => ({ id: t.id })) },
     },

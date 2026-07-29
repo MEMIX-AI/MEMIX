@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { publicAssetWhere } from "@/lib/asset-visibility";
+import { assetAccessWhere } from "@/lib/asset-visibility";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getCurrentUser } from "@/lib/auth";
 
 // New-like throttle only (not toggling off an existing like) — a basic
 // backstop against one IP spamming fresh AssetLike rows with throwaway
@@ -26,7 +27,10 @@ export async function POST(
     return NextResponse.json({ error: "missing client id" }, { status: 400 });
   }
 
-  const asset = await prisma.asset.findFirst({ where: { id: params.id, ...publicAssetWhere } });
+  const viewer = await getCurrentUser();
+  const asset = await prisma.asset.findFirst({
+    where: { id: params.id, ...assetAccessWhere(viewer?.walletAddress) },
+  });
   if (!asset) {
     return NextResponse.json({ error: "asset not found" }, { status: 404 });
   }

@@ -1,6 +1,6 @@
 import type { AssetType } from "@prisma/client";
 import { prisma } from "./prisma";
-import { publicAssetWhere } from "./asset-visibility";
+import { publicAssetWhere, assetAccessWhere } from "./asset-visibility";
 
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -54,9 +54,14 @@ export async function getFreshAssets(limit = 8) {
   });
 }
 
-export async function getAssetById(id: string) {
+// `viewerWallet` is the direct-link case (asset detail page, download,
+// like, view) — pass the current session's wallet so an owner can reach
+// their own PRIVATE asset; omit it for callers with no wallet context
+// (the v1 API, reports), where PRIVATE correctly stays unreachable and
+// PUBLIC/UNLISTED still resolve by ID same as before.
+export async function getAssetById(id: string, viewerWallet?: string) {
   return prisma.asset.findFirst({
-    where: { id, ...publicAssetWhere },
+    where: { id, ...assetAccessWhere(viewerWallet) },
     include: { tags: true },
   });
 }

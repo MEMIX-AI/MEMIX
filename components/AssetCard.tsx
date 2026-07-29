@@ -12,21 +12,12 @@ type AssetWithTags = Asset & { tags: Tag[] };
 export function AssetCard({
   asset,
   flag,
-  liked = false,
-  signedIn = false,
 }: {
   asset: AssetWithTags;
   /** Contextual "TRENDING"/"NEW" thumbnail flag — only ever set by a
    * parent section that's honestly showing this asset for that reason
    * (the home page's Trending/Fresh Uploads rails), never fabricated. */
   flag?: "TRENDING" | "NEW";
-  /** Whether the currently signed-in wallet has already liked this
-   * asset — computed server-side per page (see lib/likes.ts), not
-   * fetched by this component itself. */
-  liked?: boolean;
-  /** Whether anyone is signed in at all — determines whether clicking
-   * like actually toggles it or just shows a "connect wallet" hint. */
-  signedIn?: boolean;
 }) {
   const ActionIcon = asset.type === "IMAGE" ? Eye : Play;
   const kind = `${assetTypeLabel(asset.type).toUpperCase()}${
@@ -98,12 +89,7 @@ export function AssetCard({
           tracked column (Asset.likeCount/viewCount/downloadCount) —
           never a placeholder. */}
       <div className="mb-3 mt-3 flex items-center gap-3.5 border-b border-line pb-3 text-[12.5px] text-dim">
-        <LikeButton
-          assetId={asset.id}
-          initialLiked={liked}
-          initialCount={asset.likeCount}
-          signedIn={signedIn}
-        />
+        <LikeButton assetId={asset.id} initialCount={asset.likeCount} />
         <span className="flex items-center gap-1.5">
           <Eye size={13} strokeWidth={1.75} />
           {asset.viewCount}

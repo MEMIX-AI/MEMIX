@@ -88,7 +88,6 @@ model User {
   assets       Asset[]
   declarations UploadDeclaration[]
   apiKey       ApiKey?
-  likes        AssetLike[]
 }
 
 model Tag {
@@ -115,10 +114,11 @@ model Asset {
   featured      Boolean     @default(false)
   downloadCount Int         @default(0)
   // Real, tracked counters — viewCount increments on a genuine detail-page
-  // view (deduped per IP per window, see lib/assets.ts#trackView), and
-  // likeCount is maintained in lockstep with AssetLike rows (every write
-  // to either happens in the same transaction — see
-  // app/api/assets/[id]/like/route.ts). Neither is ever hand-set/faked.
+  // view (deduped per browser+IP per rolling 24h window, see
+  // app/api/assets/[id]/view/route.ts + AssetViewer below), and likeCount
+  // is maintained in lockstep with AssetLike rows (every write to either
+  // happens in the same transaction — see app/api/assets/[id]/like/
+  // route.ts). Neither is ever hand-set/faked.
   viewCount     Int         @default(0)
   likeCount     Int         @default(0)
   createdAt     DateTime    @default(now())
@@ -142,6 +142,7 @@ model Asset {
   takedowns      TakedownLog[]
   downloadEvents DownloadEvent[]
   likes          AssetLike[]
+  viewers        AssetViewer[]
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -245,23 +246,47 @@ model DownloadEvent {
   @@index([assetId, createdAt])
 }
 
-// One row per (asset, wallet) — the unique composite key is what
-// actually prevents a double-like, not application-level logic alone.
-// Asset.likeCount is a denormalized counter kept in sync with this
-// table's row count via the same transaction on every like/unlike (see
-// app/api/assets/[id]/like/route.ts) rather than COUNT()'d on every
-// read, since cards/listings need the count cheaply and often.
+// One row per (asset, browser) — no wallet/login required to like. Identity
+// is a random id the browser generates once and keeps in localStorage (see
+// components/LikeButton.tsx), sent as `clientId` on every like/unlike call.
+// This is intentionally a lightweight, spoofable identity (clearing
+// localStorage gets you another like) — the like route also rate-limits
+// new likes per IP as a backstop, matching "dedup ringan + rate-limit per
+// IP" rather than trying to make liking un-gameable. The unique composite
+// key is what actually prevents a double-like from the same browser.
+// Asset.likeCount is a denormalized counter kept in sync with this table's
+// row count via the same transaction on every like/unlike (see
+// app/api/assets/[id]/like/route.ts) rather than COUNT()'d on every read,
+// since cards/listings need the count cheaply and often.
 model AssetLike {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
-  assetId       String
-  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId  String
+  asset    Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
-  walletAddress String
-  wallet        User     @relation(fields: [walletAddress], references: [walletAddress])
+  clientId String
 
-  @@unique([assetId, walletAddress])
+  @@unique([assetId, clientId])
+}
+
+// One row per (asset, IP) ever — NOT one row per view. Tracks only the
+// most recent counted view per pair so the view route can answer "has this
+// IP already counted a view for this asset within the rolling 24h window"
+// with a single row lookup, then upserts `viewedAt` forward when it counts
+// a new one. This is the actual rolling-window enforcement (per CLIENT
+// instruction: "24 jam rolling", not a fixed calendar window) — a
+// client-side localStorage check (components/ViewTracker.tsx) is the fast
+// path that avoids the network round-trip on repeat visits, this table is
+// the source of truth.
+model AssetViewer {
+  assetId  String
+  ipHash   String
+  viewedAt DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, ipHash])
 }
 
 // DB-backed fixed-window rate limiting, shared across instances — replaces

@@ -1,23 +1,29 @@
-import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicAssetWhere } from "@/lib/asset-visibility";
+import { getClientIp, hashIp } from "@/lib/ip-hash";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-// Toggle like/unlike for the signed-in wallet. 1 wallet = 1 like per
-// asset — enforced by AssetLike's real unique(assetId, walletAddress)
-// constraint, not just this route's own logic. likeCount is updated in
-// the same transaction as the AssetLike row so the two can never drift
-// apart, regardless of what else touches this table.
+// New-like throttle only (not toggling off an existing like) — a basic
+// backstop against one IP spamming fresh AssetLike rows with throwaway
+// clientIds, not an attempt to make liking un-gameable.
+const LIKE_CREATE_LIMIT = 20;
+const LIKE_CREATE_WINDOW_MS = 60 * 60 * 1000;
+
+// No wallet/login required — 1 browser = 1 like per asset, identified by a
+// random `clientId` the browser generates once and keeps in localStorage
+// (see components/LikeButton.tsx). Enforced by AssetLike's real
+// unique(assetId, clientId) constraint, not just this route's own logic.
+// likeCount is updated in the same transaction as the AssetLike row so the
+// two can never drift apart, regardless of what else touches this table.
 export async function POST(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "sign in required to like" }, { status: 401 });
-  }
-  if (user.status === "BANNED") {
-    return NextResponse.json({ error: "this account is banned" }, { status: 403 });
+  const body = await req.json().catch(() => null);
+  const clientId = typeof body?.clientId === "string" ? body.clientId.trim() : "";
+  if (!clientId || clientId.length > 100) {
+    return NextResponse.json({ error: "missing client id" }, { status: 400 });
   }
 
   const asset = await prisma.asset.findFirst({ where: { id: params.id, ...publicAssetWhere } });
@@ -26,7 +32,7 @@ export async function POST(
   }
 
   const existing = await prisma.assetLike.findUnique({
-    where: { assetId_walletAddress: { assetId: asset.id, walletAddress: user.walletAddress } },
+    where: { assetId_clientId: { assetId: asset.id, clientId } },
   });
 
   if (existing) {
@@ -40,9 +46,15 @@ export async function POST(
     return NextResponse.json({ liked: false, likeCount: updated.likeCount });
   }
 
+  const ip = getClientIp(req.headers);
+  const { ok } = await checkRateLimit(`like-create:${hashIp(ip)}`, LIKE_CREATE_LIMIT, LIKE_CREATE_WINDOW_MS);
+  if (!ok) {
+    return NextResponse.json({ error: "too many likes from this network, try again later" }, { status: 429 });
+  }
+
   const [, updated] = await prisma.$transaction([
     prisma.assetLike.create({
-      data: { assetId: asset.id, walletAddress: user.walletAddress },
+      data: { assetId: asset.id, clientId },
     }),
     prisma.asset.update({
       where: { id: asset.id },

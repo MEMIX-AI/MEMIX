@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Next 14's client-side Router Cache keeps a dynamic route's RSC payload
+  // around for 30s by default and serves it on repeat <Link>/router.push
+  // navigation to the SAME URL — even though the page itself is
+  // `force-dynamic` on the server. That's exactly why "/" (an unchanging
+  // URL) could show a stale like/view/download count right after visiting
+  // a detail page and clicking back to Home, while /library often looked
+  // fresh (its URL usually changes with the search/filter, which misses
+  // the cache). Setting this to 0 makes every dynamic-route navigation
+  // always refetch, so home/library/detail never lag behind real DB state.
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+    },
+  },
   // Thumbnails/files now come from Supabase Storage signed URLs
   // (lib/storage.ts's SupabaseStorageAdapter) — next/image refuses to
   // optimize an external host unless it's explicitly allow-listed here.

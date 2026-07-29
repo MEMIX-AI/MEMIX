@@ -9,8 +9,6 @@ import {
 } from "@/lib/assets";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { CATEGORY_FILTERS } from "@/lib/search";
-import { getCurrentUser } from "@/lib/auth";
-import { getLikedAssetIds } from "@/lib/likes";
 import { AssetCard } from "@/components/AssetCard";
 import { FeatureStrip } from "@/components/FeatureStrip";
 import { ComingSoonBadge } from "@/components/ComingSoonBadge";
@@ -34,11 +32,6 @@ export default async function Home() {
     resolveAssetUrlsMany(soundsRaw),
     resolveAssetUrlsMany(videosRaw),
   ]);
-
-  const user = await getCurrentUser();
-  const allIds = [...trending, ...fresh, ...picks, ...sounds, ...videos].map((a) => a.id);
-  const likedIds = await getLikedAssetIds(user?.walletAddress, allIds);
-  const signedIn = !!user;
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
@@ -110,12 +103,12 @@ export default async function Home() {
           subtitle="What the catalogue says is worth using right now."
           viewAllHref="/library"
         />
-        <AssetGrid assets={trending} flag="TRENDING" likedIds={likedIds} signedIn={signedIn} />
+        <AssetGrid assets={trending} flag="TRENDING" />
       </section>
 
       <section className="mt-16">
         <SectionHeading emoji="✨" label="Fresh Uploads" subtitle="Just added to the catalogue." viewAllHref="/library" />
-        <AssetGrid assets={fresh} flag="NEW" likedIds={likedIds} signedIn={signedIn} />
+        <AssetGrid assets={fresh} flag="NEW" />
       </section>
 
       <section className="mt-16">
@@ -128,7 +121,7 @@ export default async function Home() {
         {picks.length === 0 ? (
           <p className="text-sm text-dim">nothing verdicted yet.</p>
         ) : (
-          <AssetGrid assets={picks} likedIds={likedIds} signedIn={signedIn} />
+          <AssetGrid assets={picks} />
         )}
       </section>
 
@@ -137,7 +130,7 @@ export default async function Home() {
         {sounds.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
-          <AssetGrid assets={sounds} likedIds={likedIds} signedIn={signedIn} />
+          <AssetGrid assets={sounds} />
         )}
       </section>
 
@@ -146,7 +139,7 @@ export default async function Home() {
         {videos.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
-          <AssetGrid assets={videos} likedIds={likedIds} signedIn={signedIn} />
+          <AssetGrid assets={videos} />
         )}
       </section>
 
@@ -207,13 +200,9 @@ function SectionHeading({
 function AssetGrid({
   assets,
   flag,
-  likedIds,
-  signedIn,
 }: {
   assets: (Asset & { tags: Tag[] })[];
   flag?: "TRENDING" | "NEW";
-  likedIds: Set<string>;
-  signedIn: boolean;
 }) {
   if (assets.length === 0) {
     return <p className="text-sm text-dim">nothing here yet.</p>;
@@ -221,13 +210,7 @@ function AssetGrid({
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {assets.map((asset) => (
-        <AssetCard
-          key={asset.id}
-          asset={asset}
-          flag={flag}
-          liked={likedIds.has(asset.id)}
-          signedIn={signedIn}
-        />
+        <AssetCard key={asset.id} asset={asset} flag={flag} />
       ))}
     </div>
   );

@@ -1,9 +1,6 @@
 import type { AssetType } from "@prisma/client";
-import { headers } from "next/headers";
 import { prisma } from "./prisma";
 import { publicAssetWhere } from "./asset-visibility";
-import { getClientIp, hashIp } from "./ip-hash";
-import { checkRateLimit } from "./rate-limit";
 
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -62,25 +59,6 @@ export async function getAssetById(id: string) {
     where: { id, ...publicAssetWhere },
     include: { tags: true },
   });
-}
-
-const VIEW_DEDUPE_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
-
-// Real view tracking, deduped per (asset, IP) per window — reuses the
-// existing DB-backed rate limiter as a "has this IP already counted a
-// view for this asset in this window" check rather than building a
-// second dedupe mechanism: checkRateLimit(key, limit=1, window) is
-// exactly "true the first time in the window, false after" already.
-// No login/wallet needed, matches "view = just opened the page."
-export async function trackView(assetId: string): Promise<void> {
-  const ip = getClientIp(headers());
-  const key = `view:${assetId}:${hashIp(ip)}`;
-  const { ok } = await checkRateLimit(key, 1, VIEW_DEDUPE_WINDOW_MS);
-  if (!ok) return;
-
-  await prisma.asset
-    .update({ where: { id: assetId }, data: { viewCount: { increment: 1 } } })
-    .catch(() => undefined);
 }
 
 // "Librarian Picks" — real verdict data (only assets an admin has

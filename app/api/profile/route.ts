@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { storage } from "@/lib/storage";
+import { isStorageKey } from "@/lib/asset-urls";
 import { validateUpload } from "@/lib/upload-rules";
 import { generateThumbnail } from "@/lib/thumbnail";
 import { updateProfile, validateProfileUpdate } from "@/lib/profile";
@@ -84,5 +85,14 @@ export async function PATCH(req: NextRequest) {
   }
 
   const updated = await updateProfile(user.walletAddress, update);
-  return NextResponse.json({ ok: true, walletAddress: updated.walletAddress });
+
+  // Resolved so a caller that just uploaded an avatar (see
+  // components/EditProfileModal.tsx's dedicated avatar-only PATCH) can
+  // show the real, persisted image immediately — same resolve-at-read
+  // rule as every asset thumbnail (see lib/asset-urls.ts).
+  const avatarUrl = updated.avatarUrl && isStorageKey(updated.avatarUrl)
+    ? await storage.getUrl(updated.avatarUrl).catch(() => null)
+    : updated.avatarUrl;
+
+  return NextResponse.json({ ok: true, walletAddress: updated.walletAddress, avatarUrl });
 }

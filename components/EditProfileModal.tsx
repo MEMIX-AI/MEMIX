@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Lock, Upload, AlertCircle, Crop } from "lucide-react";
+import { X, Lock, Upload, AlertCircle, Crop, Loader2 } from "lucide-react";
 import { shortenWallet } from "@/lib/format";
 import { PROFILE_UPDATED_EVENT } from "@/lib/hooks/useProfile";
 import { AvatarCropper } from "@/components/AvatarCropper";
@@ -39,11 +39,21 @@ export function EditProfileModal({
 
   // rawFile is the original picked photo, kept around so "adjust crop"
   // can reopen the cropper against the real source image instead of
-  // re-cropping an already-cropped-and-compressed 480×480 JPEG. croppedFile
-  // is the actual small export that gets uploaded.
+  // re-cropping an already-uploaded, already-compressed JPEG.
   const [rawFile, setRawFile] = useState<File | null>(null);
-  const [croppedFile, setCroppedFile] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  // The real, currently-persisted avatar — starts from the server prop,
+  // replaced with the fresh resolved URL the moment an upload actually
+  // succeeds. Confirming a crop now saves immediately (its own PATCH,
+  // right below) instead of waiting for the "Save changes" button:
+  // previously the avatar only became real once that separate button was
+  // clicked, which is exactly the "picked a photo, nothing happened"
+  // gap being fixed here — cropping IS the save action for the avatar.
+  const [persistedAvatarUrl, setPersistedAvatarUrl] = useState(profile.avatarUrl);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
   const [avatarUrlInput, setAvatarUrlInput] = useState(
     // Only prefill the URL field with a pasted external link, never with
     // our own storage-resolved signed URL — that URL expires in ~60s and
@@ -52,52 +62,77 @@ export function EditProfileModal({
     // previewSrc below instead, with the text field left blank.
     profile.avatarUrl && /^https?:\/\//.test(profile.avatarUrl) ? profile.avatarUrl : "",
   );
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [username, setUsername] = useState(profile.username ?? "");
   const [xHandle, setXHandle] = useState(profile.xHandle ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function clearAvatarSelection() {
-    if (localPreview) URL.revokeObjectURL(localPreview);
-    setRawFile(null);
-    setCroppedFile(null);
-    setLocalPreview(null);
-  }
-
   function handleFilePicked(selected: File | null) {
     if (!selected) return;
     if (!AVATAR_MIME_TYPES.includes(selected.type)) {
-      setError(`unsupported image type: ${selected.type || "unknown"} (use png/jpeg/webp/gif)`);
+      setAvatarError(`unsupported image type: ${selected.type || "unknown"} (use png/jpeg/webp/gif)`);
       return;
     }
     if (selected.size > MAX_RAW_SELECT_SIZE) {
-      setError(`image is ${(selected.size / 1024 / 1024).toFixed(1)}MB, over the 20MB limit`);
+      setAvatarError(`image is ${(selected.size / 1024 / 1024).toFixed(1)}MB, over the 20MB limit`);
       return;
     }
-    setError(null);
+    setAvatarError(null);
     setRawFile(selected);
     setShowCropper(true);
   }
 
-  function handleCropConfirm(blob: Blob) {
-    if (localPreview) URL.revokeObjectURL(localPreview);
-    const cropped = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-    setCroppedFile(cropped);
-    setLocalPreview(URL.createObjectURL(blob));
+  async function handleCropConfirm(blob: Blob) {
     setShowCropper(false);
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    const optimisticUrl = URL.createObjectURL(blob);
+    setLocalPreview(optimisticUrl); // instant feedback while the upload below is in flight
+
+    setAvatarUploading(true);
+    setAvatarError(null);
+    try {
+      const cropped = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      const formData = new FormData();
+      formData.append("avatar", cropped);
+
+      const res = await fetch("/api/profile", { method: "PATCH", body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAvatarError(data.error ?? "couldn't upload your photo, try again.");
+        setLocalPreview(null);
+        URL.revokeObjectURL(optimisticUrl);
+        return;
+      }
+
+      setPersistedAvatarUrl(data.avatarUrl ?? null);
+      // localPreview was only ever a stand-in for the brief moment the
+      // upload was in flight — drop it now that persistedAvatarUrl is
+      // the real, current source of truth. Left set, it would outrank
+      // avatarUrlInput in previewSrc's priority forever after, hiding a
+      // URL pasted afterward behind this upload's now-stale blob preview.
+      URL.revokeObjectURL(optimisticUrl);
+      setLocalPreview(null);
+      // A stale pasted-URL value here would otherwise get resent by the
+      // main "Save changes" button below and silently overwrite the
+      // avatar that was just uploaded.
+      setAvatarUrlInput("");
+      window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT));
+      router.refresh();
+    } catch {
+      setAvatarError("couldn't upload your photo, try again.");
+      setLocalPreview(null);
+      URL.revokeObjectURL(optimisticUrl);
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   function handleCropCancel() {
     setShowCropper(false);
-    // Only discard the source photo if nothing was ever confirmed for
-    // it — reopening via "adjust crop" on an already-cropped photo and
-    // then cancelling should keep the existing crop, not clear it.
-    if (!croppedFile) setRawFile(null);
   }
 
-  const previewSrc = localPreview || avatarUrlInput || profile.avatarUrl;
+  const previewSrc = localPreview || avatarUrlInput || persistedAvatarUrl;
   const initial = (username || walletAddress.slice(2)).charAt(0).toUpperCase();
 
   async function handleSave() {
@@ -108,9 +143,11 @@ export function EditProfileModal({
       formData.append("username", username.trim());
       formData.append("xHandle", xHandle.trim());
       formData.append("bio", bio.trim());
-      if (croppedFile) {
-        formData.append("avatar", croppedFile);
-      } else {
+      // Avatar is its own save path now (handleCropConfirm above) — only
+      // touch avatarUrl here if the creator actually typed a pasted link,
+      // never send an empty value that would null out an avatar that was
+      // just uploaded via the cropper.
+      if (avatarUrlInput.trim()) {
         formData.append("avatarUrl", avatarUrlInput.trim());
       }
 
@@ -150,7 +187,7 @@ export function EditProfileModal({
           </button>
         </div>
 
-        <div className="mb-4 flex items-center gap-4">
+        <div className="mb-1 flex items-center gap-4">
           <div className="group relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-accent-2 to-accent-3">
             {previewSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -160,15 +197,21 @@ export function EditProfileModal({
                 {initial}
               </div>
             )}
-            {rawFile && (
-              <button
-                type="button"
-                onClick={() => setShowCropper(true)}
-                title="adjust crop"
-                className="absolute inset-0 flex items-center justify-center bg-[rgba(20,50,60,0.55)] text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <Crop size={20} strokeWidth={1.75} />
-              </button>
+            {avatarUploading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-[rgba(20,50,60,0.55)] text-white">
+                <Loader2 size={20} strokeWidth={2} className="animate-spin" />
+              </div>
+            ) : (
+              rawFile && (
+                <button
+                  type="button"
+                  onClick={() => setShowCropper(true)}
+                  title="adjust crop"
+                  className="absolute inset-0 flex items-center justify-center bg-[rgba(20,50,60,0.55)] text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <Crop size={20} strokeWidth={1.75} />
+                </button>
+              )
             )}
           </div>
           <div className="flex flex-col gap-1.5">
@@ -187,32 +230,36 @@ export function EditProfileModal({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-xl border border-accent/20 bg-accent/[0.08] px-3.5 py-2 text-[13px] font-semibold text-accent"
+              disabled={avatarUploading}
+              className="flex items-center gap-1.5 rounded-xl border border-accent/20 bg-accent/[0.08] px-3.5 py-2 text-[13px] font-semibold text-accent disabled:opacity-60"
             >
               <Upload size={13} strokeWidth={1.75} />
               {rawFile ? "Choose a different photo" : "Upload photo"}
             </button>
             <span className="text-[11.5px] text-dim">
-              {rawFile
-                ? "hover the preview to re-adjust the crop"
-                : "or paste an image URL below · any photo size, you'll crop it to a square next"}
+              {avatarUploading
+                ? "uploading…"
+                : rawFile
+                  ? "hover the preview to re-adjust the crop"
+                  : "or paste an image URL below · any photo size, you'll crop it to a square next"}
             </span>
           </div>
         </div>
 
-        <div className="mb-3.5">
+        {avatarError && (
+          <p className="mb-3 mt-2 flex items-center gap-1.5 text-sm text-warn">
+            <AlertCircle size={14} strokeWidth={1.75} />
+            {avatarError}
+          </p>
+        )}
+
+        <div className="mb-3.5 mt-4">
           <label className="mb-1.5 block font-heading text-[13px] font-semibold text-text">
             Avatar URL <span className="font-sans font-normal text-dim">(optional)</span>
           </label>
           <input
             value={avatarUrlInput}
-            onChange={(e) => {
-              setAvatarUrlInput(e.target.value);
-              // A pasted URL overrides a picked file — flip back to
-              // "text field wins" the moment the creator types here,
-              // rather than silently ignoring it while a crop is queued.
-              if (rawFile || croppedFile) clearAvatarSelection();
-            }}
+            onChange={(e) => setAvatarUrlInput(e.target.value)}
             placeholder="https://…"
             className="w-full rounded-xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
           />

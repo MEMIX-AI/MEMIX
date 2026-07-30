@@ -2,9 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Lock, Upload, AlertCircle } from "lucide-react";
+import { X, Lock, Upload, AlertCircle, Crop } from "lucide-react";
 import { shortenWallet } from "@/lib/format";
 import { PROFILE_UPDATED_EVENT } from "@/lib/hooks/useProfile";
+import { AvatarCropper } from "@/components/AvatarCropper";
 
 export interface EditableProfile {
   username: string | null;
@@ -13,7 +14,15 @@ export interface EditableProfile {
   bio: string | null;
 }
 
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+// Generous — this is just a sanity cap on what we'll try to decode into
+// an <img>/canvas client-side, not the real size limit. The actual
+// uploaded file is always the cropper's fixed 480×480 JPEG export (tens
+// of KB), regardless of how large the source photo was — see
+// components/AvatarCropper.tsx. A hard "your photo must be under 2MB"
+// requirement, which is what this used to enforce directly on the raw
+// picked file, doesn't hold for a typical phone/camera photo (routinely
+// 3–15MB) and was the actual cause of avatar uploads failing.
+const MAX_RAW_SELECT_SIZE = 20 * 1024 * 1024;
 const AVATAR_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export function EditProfileModal({
@@ -28,7 +37,13 @@ export function EditProfileModal({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  // rawFile is the original picked photo, kept around so "adjust crop"
+  // can reopen the cropper against the real source image instead of
+  // re-cropping an already-cropped-and-compressed 480×480 JPEG. croppedFile
+  // is the actual small export that gets uploaded.
+  const [rawFile, setRawFile] = useState<File | null>(null);
+  const [croppedFile, setCroppedFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
   const [avatarUrlInput, setAvatarUrlInput] = useState(
     // Only prefill the URL field with a pasted external link, never with
     // our own storage-resolved signed URL — that URL expires in ~60s and
@@ -44,24 +59,42 @@ export function EditProfileModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleAvatarFile(selected: File | null) {
+  function clearAvatarSelection() {
     if (localPreview) URL.revokeObjectURL(localPreview);
-    if (!selected) {
-      setAvatarFile(null);
-      setLocalPreview(null);
-      return;
-    }
+    setRawFile(null);
+    setCroppedFile(null);
+    setLocalPreview(null);
+  }
+
+  function handleFilePicked(selected: File | null) {
+    if (!selected) return;
     if (!AVATAR_MIME_TYPES.includes(selected.type)) {
       setError(`unsupported image type: ${selected.type || "unknown"} (use png/jpeg/webp/gif)`);
       return;
     }
-    if (selected.size > MAX_AVATAR_SIZE) {
-      setError(`image is ${(selected.size / 1024 / 1024).toFixed(1)}MB, over the 2MB limit`);
+    if (selected.size > MAX_RAW_SELECT_SIZE) {
+      setError(`image is ${(selected.size / 1024 / 1024).toFixed(1)}MB, over the 20MB limit`);
       return;
     }
     setError(null);
-    setAvatarFile(selected);
-    setLocalPreview(URL.createObjectURL(selected));
+    setRawFile(selected);
+    setShowCropper(true);
+  }
+
+  function handleCropConfirm(blob: Blob) {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    const cropped = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+    setCroppedFile(cropped);
+    setLocalPreview(URL.createObjectURL(blob));
+    setShowCropper(false);
+  }
+
+  function handleCropCancel() {
+    setShowCropper(false);
+    // Only discard the source photo if nothing was ever confirmed for
+    // it — reopening via "adjust crop" on an already-cropped photo and
+    // then cancelling should keep the existing crop, not clear it.
+    if (!croppedFile) setRawFile(null);
   }
 
   const previewSrc = localPreview || avatarUrlInput || profile.avatarUrl;
@@ -75,8 +108,8 @@ export function EditProfileModal({
       formData.append("username", username.trim());
       formData.append("xHandle", xHandle.trim());
       formData.append("bio", bio.trim());
-      if (avatarFile) {
-        formData.append("avatar", avatarFile);
+      if (croppedFile) {
+        formData.append("avatar", croppedFile);
       } else {
         formData.append("avatarUrl", avatarUrlInput.trim());
       }
@@ -118,7 +151,7 @@ export function EditProfileModal({
         </div>
 
         <div className="mb-4 flex items-center gap-4">
-          <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-accent-2 to-accent-3">
+          <div className="group relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-accent-2 to-accent-3">
             {previewSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={previewSrc} alt="" className="h-full w-full object-cover" />
@@ -127,6 +160,16 @@ export function EditProfileModal({
                 {initial}
               </div>
             )}
+            {rawFile && (
+              <button
+                type="button"
+                onClick={() => setShowCropper(true)}
+                title="adjust crop"
+                className="absolute inset-0 flex items-center justify-center bg-[rgba(20,50,60,0.55)] text-white opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <Crop size={20} strokeWidth={1.75} />
+              </button>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <input
@@ -134,7 +177,12 @@ export function EditProfileModal({
               type="file"
               accept={AVATAR_MIME_TYPES.join(",")}
               className="hidden"
-              onChange={(e) => handleAvatarFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                handleFilePicked(e.target.files?.[0] ?? null);
+                // Otherwise re-picking the exact same file (e.g. after
+                // cancelling its crop) wouldn't fire onChange again.
+                e.target.value = "";
+              }}
             />
             <button
               type="button"
@@ -142,9 +190,13 @@ export function EditProfileModal({
               className="flex items-center gap-1.5 rounded-xl border border-accent/20 bg-accent/[0.08] px-3.5 py-2 text-[13px] font-semibold text-accent"
             >
               <Upload size={13} strokeWidth={1.75} />
-              Upload photo
+              {rawFile ? "Choose a different photo" : "Upload photo"}
             </button>
-            <span className="text-[11.5px] text-dim">or paste an image URL below · JPG/PNG, max 2MB</span>
+            <span className="text-[11.5px] text-dim">
+              {rawFile
+                ? "hover the preview to re-adjust the crop"
+                : "or paste an image URL below · any photo size, you'll crop it to a square next"}
+            </span>
           </div>
         </div>
 
@@ -158,8 +210,8 @@ export function EditProfileModal({
               setAvatarUrlInput(e.target.value);
               // A pasted URL overrides a picked file — flip back to
               // "text field wins" the moment the creator types here,
-              // rather than silently ignoring it while a file is queued.
-              if (avatarFile) handleAvatarFile(null);
+              // rather than silently ignoring it while a crop is queued.
+              if (rawFile || croppedFile) clearAvatarSelection();
             }}
             placeholder="https://…"
             className="w-full rounded-xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
@@ -232,6 +284,12 @@ export function EditProfileModal({
           </button>
         </div>
       </div>
+
+      {showCropper && rawFile && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <AvatarCropper file={rawFile} onCancel={handleCropCancel} onConfirm={handleCropConfirm} />
+        </div>
+      )}
     </div>
   );
 }

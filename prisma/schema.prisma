@@ -102,6 +102,19 @@ model User {
   status        UserStatus @default(ACTIVE)
   createdAt     DateTime   @default(now())
 
+  // Public profile fields (all nullable) — none of these are identity,
+  // walletAddress stays the only thing that's ever looked up by or
+  // trusted for auth. Every page renders a fallback when null (shortened
+  // wallet in place of username, no bio block, etc.) rather than treating
+  // an unfilled profile as an error state. avatarUrl is either a bare
+  // storage key (uploaded photo — resolve via lib/storage.ts same as
+  // Asset thumbnails) or a raw http(s) URL (pasted link) — see
+  // lib/asset-urls.ts#isStorageKey for the same pattern applied to assets.
+  username  String?
+  avatarUrl String?
+  xHandle   String?
+  bio       String?
+
   assets       Asset[]
   declarations UploadDeclaration[]
   apiKey       ApiKey?

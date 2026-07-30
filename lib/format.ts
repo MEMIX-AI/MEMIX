@@ -34,6 +34,13 @@ export function shortenWallet(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+// "Joined Jul 2026" — real User.createdAt, month-granularity on purpose
+// (a day-level join date isn't meaningfully different information for a
+// profile page, and month grouping reads less like a precise timestamp).
+export function formatJoinDate(date: Date): string {
+  return `Joined ${date.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} b`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} kb`;

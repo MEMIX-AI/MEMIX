@@ -78,6 +78,19 @@ export function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateR
   if (input.bio != null && input.bio.length > MAX_BIO_LENGTH) {
     return { ok: false, error: `bio is too long (max ${MAX_BIO_LENGTH} characters)` };
   }
+  // Only a real external link is accepted from free text. avatarUrl also
+  // holds our OWN storage keys (bare strings like "avatars/<uuid>.webp",
+  // set only by the server-side upload branch in app/api/profile/route.ts)
+  // which lib/asset-urls.ts#isStorageKey resolves into a signed URL on
+  // every read — including from the public GET /api/profile/[wallet]
+  // route. Without this check, pasting any bare string here (e.g. a
+  // storage key copied from a takedown'd or private asset's old signed
+  // URL) would make this endpoint mint a live signed URL for it, bypassing
+  // that asset's real visibility/takedown state entirely. A user-typed
+  // value must never be storage-key-shaped.
+  if (input.avatarUrl && !/^https?:\/\//.test(input.avatarUrl)) {
+    return { ok: false, error: "avatar URL must be a real link starting with http:// or https://" };
+  }
   return { ok: true };
 }
 

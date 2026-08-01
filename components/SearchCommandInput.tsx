@@ -11,7 +11,7 @@ export function SearchCommandInput({
   showCursor?: boolean;
 }) {
   return (
-    <div className="group relative flex items-center gap-2.5 rounded-[20px] border border-white/60 bg-white/55 px-4 py-3 shadow-soft backdrop-blur-xl transition-all duration-250 focus-within:border-accent/50 focus-within:shadow-glow">
+    <div className="group glass relative flex items-center gap-2.5 rounded-[20px] border border-line px-4 py-3 shadow-soft transition-all duration-250 focus-within:border-accent/50 focus-within:shadow-glow">
       <Search size={17} strokeWidth={1.75} className="shrink-0 text-dim transition-colors group-focus-within:text-accent" />
       <input
         type="text"

@@ -7,20 +7,25 @@ import type { VerdictStatus } from "@prisma/client";
 // idea), not an empty/missing value — an asset with no verdict yet
 // still always shows a badge, it just honestly says so.
 //
-// bg/text pairs match the reference mockup's .v-live/.v-dated/.v-dead
-// exactly; EMERGING/PEAKING/FADING (not in the mockup, which only shows
-// three statuses) follow the same "tinted background, darker readable
-// text of the same hue" formula to fit in visually.
-export const VERDICT_STYLES: Record<VerdictStatus, { dot: string; bg: string; text: string }> = {
-  EMERGING: { dot: "#18b8d8", bg: "rgba(24,184,216,.12)", text: "#0e7a94" },
-  LIVE: { dot: "#3ccb7f", bg: "rgba(60,203,127,.12)", text: "#2c9d61" },
-  PEAKING: { dot: "#63d8f2", bg: "rgba(99,216,242,.14)", text: "#1c7c9c" },
-  FADING: { dot: "#f0b94d", bg: "rgba(240,185,77,.14)", text: "#a6791f" },
-  DATED: { dot: "#f5a623", bg: "rgba(245,166,35,.14)", text: "#c47f0e" },
-  DEAD: { dot: "#9aa7ad", bg: "rgba(154,167,173,.18)", text: "#6d7a80" },
+// v6 dark theme: bright saturated text/dot on a low-alpha tint of the
+// same hue, with a slightly-more-visible border ring of that hue — the
+// "glow chip" look from the reference mockup's .v-live/.v-dated/.v-dead
+// (LIVE mint / DATED amber / DEAD dim gray, explicit brief colors).
+// EMERGING/PEAKING share cyan's hue family (two shades) and FADING/DATED
+// share amber's (two shades), same coherent pairing the old light-theme
+// values used — only the exact hexes changed for dark-bg contrast; the
+// old approach (a dark, "readable on a pale background" text color)
+// would be nearly invisible text-on-dark on a near-black page now.
+export const VERDICT_STYLES: Record<VerdictStatus, { dot: string; bg: string; text: string; border: string }> = {
+  EMERGING: { dot: "#4fd8ff", bg: "rgba(79,216,255,.10)", text: "#4fd8ff", border: "rgba(79,216,255,.25)" },
+  LIVE: { dot: "#6df3c4", bg: "rgba(109,243,196,.10)", text: "#6df3c4", border: "rgba(109,243,196,.28)" },
+  PEAKING: { dot: "#7ee8ff", bg: "rgba(126,232,255,.10)", text: "#7ee8ff", border: "rgba(126,232,255,.25)" },
+  FADING: { dot: "#ffcb80", bg: "rgba(255,203,128,.10)", text: "#ffcb80", border: "rgba(255,203,128,.22)" },
+  DATED: { dot: "#ffb84d", bg: "rgba(255,184,77,.10)", text: "#ffb84d", border: "rgba(255,184,77,.24)" },
+  DEAD: { dot: "#7b848e", bg: "rgba(123,132,142,.12)", text: "#9aa2aa", border: "rgba(123,132,142,.24)" },
 };
 
-const UNVERDICTED_STYLE = { dot: "#9aa7ad", bg: "rgba(154,167,173,.14)", text: "#6d7a80" };
+const UNVERDICTED_STYLE = { dot: "#7b848e", bg: "rgba(123,132,142,.10)", text: "#9aa2aa", border: "rgba(123,132,142,.2)" };
 
 export function verdictLabel(status: VerdictStatus | null): string {
   return status ? status.toLowerCase() : "unverdicted";

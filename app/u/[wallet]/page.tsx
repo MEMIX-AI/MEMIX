@@ -44,7 +44,7 @@ export default async function ProfilePage({
       <div className="relative overflow-hidden rounded-[24px] border border-line bg-panel p-6 shadow-soft-lg sm:p-8">
         <div
           className="absolute inset-x-0 top-0 h-20"
-          style={{ background: "linear-gradient(120deg, var(--accent-3), var(--accent-2), #B7C5FF)" }}
+          style={{ background: "linear-gradient(120deg, var(--accent-3), var(--accent-2), var(--blue))" }}
         />
 
         <div className="relative flex flex-col items-start gap-5 pt-12 sm:flex-row sm:items-end sm:pt-14">

@@ -7,7 +7,7 @@ import { ComingSoonBadge } from "@/components/ComingSoonBadge";
 // receipt" rule this redesign is built around.
 export function MarketplaceComingSoonCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-[22px] border border-white/50 bg-[rgba(255,255,255,0.88)] p-4 shadow-soft backdrop-blur-[18px]">
+    <div className="glass flex flex-col gap-3 rounded-[22px] border border-line p-4 shadow-soft">
       <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[18px] border border-line bg-bg text-dim/40 opacity-60 blur-[1px]">
         <ImageOff size={32} strokeWidth={1.5} />
       </div>

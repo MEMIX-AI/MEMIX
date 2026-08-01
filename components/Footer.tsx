@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { SOCIAL_LINKS } from "@/lib/config";
 import { useLibrarianOpen } from "@/components/librarian/LibrarianOpenContext";
 
@@ -35,7 +36,7 @@ function SocialIcon({ href, label }: { href: string; label: string }) {
       target="_blank"
       rel="noopener noreferrer"
       title={label}
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-line bg-[rgba(255,255,255,0.7)] text-[13px] font-semibold text-dim transition-all duration-200 hover:-translate-y-0.5 hover:text-accent"
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-line bg-white/[0.04] text-[13px] font-semibold text-dim transition-all duration-200 hover:-translate-y-0.5 hover:text-accent"
     >
       {label}
     </a>
@@ -51,9 +52,13 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="mb-3 flex items-center gap-2.5 font-heading text-lg font-bold">
-              <span className="gradient-logo flex h-[26px] w-[26px] items-center justify-center rounded-[8px] text-sm font-bold text-white shadow-soft">
-                m
-              </span>
+              <Image
+                src="/logo-memix.png"
+                alt="memix"
+                width={26}
+                height={26}
+                className="h-[26px] w-[26px] shrink-0 rounded-full"
+              />
               <span className="gradient-logo-text">memix</span>
             </Link>
             <p className="max-w-[250px] text-[13.5px] leading-relaxed text-dim">

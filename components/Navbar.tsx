@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Wallet, Menu, X } from "lucide-react";
@@ -64,11 +65,16 @@ export function Navbar() {
 
   return (
     <div className="sticky top-4 z-30 mx-auto w-full max-w-[1192px] px-4 sm:px-6">
-      <header className="glass relative flex h-[72px] items-center gap-1 rounded-[20px] border border-line px-3.5 shadow-[0_8px_30px_rgba(24,184,216,0.10)] sm:px-5">
+      <header className="glass relative flex h-[72px] items-center gap-1 rounded-[20px] border border-line px-3.5 shadow-[0_8px_30px_rgba(79,216,255,0.14)] sm:px-5">
         <Link href="/" className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight">
-          <span className="gradient-logo flex h-[30px] w-[30px] items-center justify-center rounded-[9px] text-base font-bold text-white shadow-glow">
-            m
-          </span>
+          <Image
+            src="/logo-memix.png"
+            alt="memix"
+            width={32}
+            height={32}
+            priority
+            className="h-8 w-8 shrink-0 rounded-full"
+          />
           <span className="gradient-logo-text">memix</span>
         </Link>
 
@@ -111,14 +117,14 @@ export function Navbar() {
           <button
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? "close menu" : "open menu"}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/40 text-text min-[1000px]:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-white/[0.06] text-text min-[1000px]:hidden"
           >
             {mobileOpen ? <X size={18} strokeWidth={1.75} /> : <Menu size={18} strokeWidth={1.75} />}
           </button>
         </div>
 
         {mobileOpen && (
-          <div className="glass absolute left-0 right-0 top-[calc(100%+8px)] flex flex-col gap-1 rounded-[20px] border border-line p-3 shadow-[0_8px_30px_rgba(24,184,216,0.10)] min-[1000px]:hidden">
+          <div className="glass absolute left-0 right-0 top-[calc(100%+8px)] flex flex-col gap-1 rounded-[20px] border border-line p-3 shadow-[0_8px_30px_rgba(79,216,255,0.14)] min-[1000px]:hidden">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}

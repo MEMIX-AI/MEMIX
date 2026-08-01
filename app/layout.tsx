@@ -47,10 +47,15 @@ export default function RootLayout({
     >
       <body className="antialiased">
         {/* Decorative background layer — fixed behind everything, never
-            affects document flow/layout. The gradient wash itself lives
-            on `body` (see globals.css); this is just the fading dot
-            grid on top of it. */}
+            affects document flow/layout. Static aurora blob mesh (v6
+            dark theme) + a thin grain overlay on top; see globals.css
+            for why none of this is animated. */}
         <div aria-hidden className="bg-decoration">
+          <div className="bg-blob bg-blob-cyan" />
+          <div className="bg-blob bg-blob-violet" />
+          <div className="bg-blob bg-blob-mint" />
+          <div className="bg-blob bg-blob-pink" />
+          <div className="bg-blob bg-blob-blue" />
           <div className="bg-dots" />
         </div>
 

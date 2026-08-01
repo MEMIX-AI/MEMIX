@@ -70,7 +70,7 @@ export default async function LibraryPage({
               className={`rounded-full border px-4 py-[9px] text-[13.5px] font-medium transition-all duration-150 active:scale-95 ${
                 active
                   ? "gradient-brand border-transparent text-white shadow-glow"
-                  : "border-line bg-[rgba(255,255,255,0.55)] text-dim hover:scale-[1.04] hover:border-accent/40 hover:text-accent"
+                  : "border-line bg-panel text-dim hover:scale-[1.04] hover:border-accent/40 hover:text-accent"
               }`}
             >
               {f.label}

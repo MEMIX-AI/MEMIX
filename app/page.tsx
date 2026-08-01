@@ -36,16 +36,16 @@ export default async function Home() {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
       <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-        <div className="mb-6 flex items-center gap-2 rounded-full border border-line bg-[rgba(255,255,255,0.7)] px-[15px] py-[7px] text-[13px] font-semibold text-accent shadow-soft">
+        <div className="glass mb-6 flex items-center gap-2 rounded-full border border-line px-[15px] py-[7px] text-[13px] font-semibold text-accent shadow-soft">
           <span
             className="h-[7px] w-[7px] rounded-full bg-ok"
-            style={{ boxShadow: "0 0 0 4px rgba(60,203,127,.18)" }}
+            style={{ boxShadow: "0 0 0 4px rgba(109,243,196,.18)" }}
           />
           Live meme catalogue · free downloads
         </div>
 
         <h1 className="text-balance mb-[22px] font-heading text-[clamp(38px,6vw,66px)] font-bold leading-[1.02] tracking-[-0.035em] text-text">
-          Every meme comes with a <span className="gradient-text">verdict.</span>
+          Every meme comes with a <span className="gradient-spectrum">verdict.</span>
         </h1>
         <p className="mb-8 max-w-[560px] text-lg leading-[1.55] text-dim">
           Other meme APIs return a file. Memix returns a judgment —
@@ -62,7 +62,7 @@ export default async function Home() {
           </Link>
           <Link
             href="/docs"
-            className="flex items-center gap-2 rounded-[13px] border border-line bg-[rgba(255,255,255,0.6)] px-[26px] py-[14px] text-[15px] font-semibold text-text transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white/85"
+            className="glass flex items-center gap-2 rounded-[13px] border border-line px-[26px] py-[14px] text-[15px] font-semibold text-text transition-transform duration-200 hover:-translate-y-0.5 hover:border-accent/40"
           >
             <BookOpen size={16} strokeWidth={1.75} />
             Read the Docs
@@ -75,7 +75,7 @@ export default async function Home() {
             name="q"
             type="text"
             placeholder="Search a meme, sound, or vibe…"
-            className="w-full rounded-full border border-line bg-[rgba(255,255,255,0.8)] py-[18px] pl-[54px] pr-[22px] text-base text-text shadow-soft outline-none transition-all duration-200 focus:shadow-glow"
+            className="glass w-full rounded-full border border-line py-[18px] pl-[54px] pr-[22px] text-base text-text shadow-soft outline-none transition-all duration-200 focus:border-accent/50 focus:shadow-glow"
           />
         </form>
 
@@ -87,7 +87,7 @@ export default async function Home() {
               className={`rounded-full border px-4 py-[9px] text-[13.5px] font-medium transition-all duration-150 hover:scale-[1.04] hover:border-accent/40 hover:text-accent ${
                 i === 0
                   ? "gradient-brand border-transparent text-white shadow-glow"
-                  : "border-line bg-[rgba(255,255,255,0.55)] text-dim"
+                  : "border-line bg-panel text-dim"
               }`}
             >
               {f.label}

@@ -12,16 +12,16 @@ export function VerdictBadge({
   peaked?: string | null;
   size?: "sm" | "lg";
 }) {
-  const { dot, bg, text } = verdictStyle(status);
+  const { dot, bg, text, border } = verdictStyle(status);
   const label = verdictLabel(status);
   const isLg = size === "lg";
 
   return (
     <span
-      className={`inline-flex items-center gap-[7px] rounded-full font-semibold uppercase tracking-wide ${
+      className={`inline-flex items-center gap-[7px] rounded-full border font-semibold uppercase tracking-wide ${
         isLg ? "px-3.5 py-2 text-sm" : "px-[11px] py-[5px] text-[12.5px]"
       }`}
-      style={{ color: text, backgroundColor: bg }}
+      style={{ color: text, backgroundColor: bg, borderColor: border }}
     >
       <span
         className={isLg ? "h-2 w-2 rounded-full" : "h-[7px] w-[7px] rounded-full"}

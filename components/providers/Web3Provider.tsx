@@ -22,19 +22,23 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <SIWEProvider {...siweConfig} signOutOnNetworkChange={false}>
           <ConnectKitProvider
-            theme="soft"
+            // "midnight" (ConnectKit's own dark theme) instead of "soft"
+            // — v6 is a dark app now, and letting ConnectKit's dark base
+            // theme handle the many internal pieces we don't override
+            // below (QR modal, wallet list rows, scan states, etc.) is
+            // far more reliable than hand-guessing every one of their
+            // hex values ourselves the way the old light "soft" theme's
+            // override block did.
+            theme="midnight"
             customTheme={{
               "--ck-font-family":
                 "var(--font-body), ui-sans-serif, system-ui, sans-serif",
               "--ck-border-radius": "20px",
-              "--ck-accent-color": "#12c7d6",
-              "--ck-accent-text-color": "#ffffff",
-              "--ck-body-background": "#fbfffe",
-              "--ck-body-background-secondary": "#ddfcf6",
-              "--ck-body-color": "#12283a",
-              "--ck-body-color-muted": "#4b6478",
-              "--ck-body-divider": "rgba(60, 100, 180, 0.14)",
-              "--ck-focus-color": "#12c7d6",
+              "--ck-accent-color": "#4fd8ff",
+              // Dark text on our bright cyan accent button — matches
+              // every other gradient-brand button's text color app-wide.
+              "--ck-accent-text-color": "#04120e",
+              "--ck-focus-color": "#4fd8ff",
               "--ck-primary-button-border-radius": "9999px",
             }}
           >

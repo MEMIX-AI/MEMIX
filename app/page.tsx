@@ -25,13 +25,28 @@ export default async function Home() {
     getPopularByType("SOUND", 8),
     getPopularByType("VIDEO", 8),
   ]);
-  const [trending, fresh, picks, sounds, videos] = await Promise.all([
-    resolveAssetUrlsMany(trendingRaw),
-    resolveAssetUrlsMany(freshRaw),
-    resolveAssetUrlsMany(picksRaw),
-    resolveAssetUrlsMany(soundsRaw),
-    resolveAssetUrlsMany(videosRaw),
-  ]);
+
+  // One resolveAssetUrlsMany call for all five rails combined, not five
+  // separate ones — the same asset routinely appears in more than one
+  // rail (e.g. something both Trending and Fresh), and each call is a
+  // real network round trip to Supabase Storage's signing API. Five
+  // parallel calls still cost five round trips; this is one, however
+  // much the rails overlap. resolveAssetUrlsMany preserves order and
+  // length 1:1, so slicing the combined result back apart by each raw
+  // list's original length is exact, not approximate.
+  const combinedRaw = [...trendingRaw, ...freshRaw, ...picksRaw, ...soundsRaw, ...videosRaw];
+  const combinedResolved = await resolveAssetUrlsMany(combinedRaw);
+  let cursor = 0;
+  function take<T>(list: T[]): T[] {
+    const slice = combinedResolved.slice(cursor, cursor + list.length) as unknown as T[];
+    cursor += list.length;
+    return slice;
+  }
+  const trending = take(trendingRaw);
+  const fresh = take(freshRaw);
+  const picks = take(picksRaw);
+  const sounds = take(soundsRaw);
+  const videos = take(videosRaw);
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">

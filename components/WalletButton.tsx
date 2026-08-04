@@ -7,6 +7,7 @@ import { ConnectKitButton, useModal, useSIWE } from "connectkit";
 import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, UserCircle } from "lucide-react";
 import { useAccountRole } from "@/lib/hooks/useAccountRole";
 import { useProfile } from "@/lib/hooks/useProfile";
+import { WALLET_RETURNING_KEY } from "@/lib/wallet-returning";
 
 // The actual wagmi/connectkit-dependent connect/sign-in/account-menu
 // button. Split out of Navbar so the wagmi/viem/connectkit bundle (large
@@ -15,12 +16,13 @@ import { useProfile } from "@/lib/hooks/useProfile";
 // of shipping in the main app bundle every single visitor downloads even
 // if they never touch a wallet.
 //
-// `autoShow`: Navbar only mounts this component (triggering the dynamic
-// import) after the user's first click on the static placeholder button —
-// that click is "lost" (it landed on the placeholder, not the real
-// ConnectKitButton), so this replays it once the real button is ready by
-// calling `show()` itself on mount. Only fires when nothing else has
-// already changed the connect state in the meantime.
+// `autoShow`: Navbar mounts this component either after an explicit
+// click on the static placeholder button (that click is "lost" — it
+// landed on the placeholder, not the real ConnectKitButton) or silently
+// for a returning signed-in browser (see Navbar.tsx) — only the click
+// case passes autoShow=true, to replay opening the modal once the real
+// button is ready. See the retry loop below for why this isn't a single
+// setOpen(true) call on mount.
 export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   const { address, isConnected } = useAccount();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
@@ -28,7 +30,14 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   const { username, avatarUrl } = useProfile(isSignedIn ? address : undefined);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { setOpen } = useModal();
+  const { open, setOpen } = useModal();
+  // Read inside the retry interval below via a ref, not the `open`
+  // value closed over at mount — that interval is created once (empty
+  // dep array) and would otherwise only ever see whatever `open` was on
+  // the very first render, never the updated value once the modal
+  // actually opens.
+  const openRef = useRef(open);
+  openRef.current = open;
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -41,13 +50,44 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (autoShow && !isConnected) setOpen(true);
+    if (!autoShow || isConnected) return;
+
+    // setOpen(true) called on the very first render tick here reliably
+    // did nothing — verified live: ConnectKitProvider hasn't finished its
+    // own internal mount (the modal portal isn't ready to respond yet),
+    // so the call was a silent no-op and the button just sat there
+    // looking unclicked. That's the actual "takes two clicks" bug: the
+    // *second* click worked because by then the button had swapped to
+    // the real, fully-mounted ConnectKitButton whose own `show` handler
+    // doesn't have this race. Retrying setOpen(true) for a bit and
+    // bailing out the moment `open` actually flips true (checked against
+    // ConnectKit's own state, not a guessed delay) reproduces that same
+    // "wait until it's actually ready" outcome on the first click too.
+    let attempts = 0;
+    const id = setInterval(() => {
+      attempts += 1;
+      if (openRef.current || attempts > 20) {
+        clearInterval(id);
+        return;
+      }
+      setOpen(true);
+    }, 50);
+    return () => clearInterval(id);
     // Only ever replay the click that triggered loading this component in
     // the first place — deliberately not reactive to isConnected/setOpen
     // changing afterward, this is a one-shot "continue what the user
     // already asked for" on mount, not an ongoing sync.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Marks this browser as "has signed in before" so Navbar knows to
+  // eager-mount this whole component next visit (silently, no modal —
+  // see Navbar.tsx) instead of waiting for a click, which is what let
+  // wagmi's reconnect actually restore the connection without the user
+  // redoing the connect+sign flow on every fresh page load.
+  useEffect(() => {
+    if (isSignedIn) localStorage.setItem(WALLET_RETURNING_KEY, "1");
+  }, [isSignedIn]);
 
   return (
     <ConnectKitButton.Custom>
@@ -153,6 +193,7 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
                   className="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-left text-dim transition-colors hover:bg-bg hover:text-text"
                   onClick={() => {
                     setMenuOpen(false);
+                    localStorage.removeItem(WALLET_RETURNING_KEY);
                     signOut();
                   }}
                 >

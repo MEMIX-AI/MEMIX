@@ -1,22 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { Wallet, Menu, X } from "lucide-react";
+import { Wallet, Menu, X, Loader2 } from "lucide-react";
 import { useLibrarianOpen } from "./librarian/LibrarianOpenContext";
+import { WALLET_RETURNING_KEY } from "@/lib/wallet-returning";
 
 // wagmi/viem/connectkit (~1.2MB uncompressed) only exist for this one
-// button — code-split so that JS is never even requested until someone
-// actually goes to connect a wallet, per the "wallet must init lazily"
-// requirement. The static placeholder below is pixel-identical to
-// WalletButton's real disconnected state, so there's no visible
-// difference before vs. after the click — clicking it just starts the
-// dynamic import and flips to the real, wagmi-backed button, which
-// replays the click (see WalletButton's `autoShow`) so the connect modal
-// still opens on the very first click, not the second.
+// button — code-split so it's never requested for the (majority)
+// visitor who never touches a wallet at all. Two ways this mounts:
+//  1. An explicit click — mounts with autoShow, popping the connect
+//     modal once the chunk is ready (see WalletButton's `autoShow`).
+//  2. Silently, on page load, for a browser that's signed in before
+//     (WALLET_RETURNING_KEY set by WalletButton) — no modal, just lets
+//     wagmi's own reconnect restore the connection in the background.
+//     Without this, a returning user always looked disconnected until
+//     they clicked Connect Wallet again, on every single page load.
+// The loading fallback shows a spinner in both cases — "checking your
+// wallet" is an honest thing to show either way, not just for a click.
 const WalletWidget = dynamic(
   () => import("./providers/WalletWidget").then((m) => m.WalletWidget),
   {
@@ -26,8 +30,8 @@ const WalletWidget = dynamic(
         className="gradient-brand flex items-center gap-2 rounded-xl px-[18px] py-[11px] text-sm font-semibold text-white shadow-glow transition-transform duration-200"
         disabled
       >
-        <Wallet size={15} strokeWidth={1.75} />
-        Connect Wallet
+        <Loader2 size={15} strokeWidth={1.75} className="animate-spin" />
+        <span className="hidden sm:inline">Connect Wallet</span>
       </button>
     ),
   },
@@ -48,8 +52,19 @@ const CATALOG_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const [walletRequested, setWalletRequested] = useState(false);
+  // Separate from walletRequested: true only for an explicit click, so
+  // the silent returning-user mount below never pops the connect modal
+  // on its own — it should just quietly restore, or fall back to the
+  // idle "Connect Wallet" state if reconnecting doesn't succeed.
+  const [autoShowWallet, setAutoShowWallet] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { open: librarianOpen, setOpen: setLibrarianOpen } = useLibrarianOpen();
+
+  useEffect(() => {
+    if (localStorage.getItem(WALLET_RETURNING_KEY) === "1") {
+      setWalletRequested(true);
+    }
+  }, []);
 
   function isActive(href: string, exact?: boolean) {
     return exact ? pathname === href : pathname === href || pathname?.startsWith(href + "/");
@@ -103,10 +118,13 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-2.5">
           {walletRequested ? (
-            <WalletWidget autoShow />
+            <WalletWidget autoShow={autoShowWallet} />
           ) : (
             <button
-              onClick={() => setWalletRequested(true)}
+              onClick={() => {
+                setWalletRequested(true);
+                setAutoShowWallet(true);
+              }}
               className="gradient-brand flex items-center gap-2 rounded-xl px-[18px] py-[11px] text-sm font-semibold text-white shadow-glow transition-transform duration-200 hover:-translate-y-0.5"
             >
               <Wallet size={15} strokeWidth={1.75} />

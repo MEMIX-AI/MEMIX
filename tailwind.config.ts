@@ -12,6 +12,7 @@ const config: Config = {
         bg: "var(--bg)",
         "bg-2": "var(--bg-2)",
         panel: "var(--panel)",
+        "panel-solid": "var(--panel-solid)",
         line: "var(--line)",
         text: "var(--text)",
         dim: "var(--dim)",

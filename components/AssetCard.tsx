@@ -28,7 +28,7 @@ export function AssetCard({
   }`;
 
   return (
-    <div className="card-lift card-glow-border relative flex flex-col rounded-[22px] border border-line bg-panel p-3.5 shadow-soft backdrop-blur-[8px]">
+    <div className="card-lift card-glow-border relative flex flex-col rounded-[22px] border border-line bg-panel-solid p-3.5 shadow-soft">
       <Link href={`/asset/${asset.id}`} className="group flex flex-col">
         <div className="relative mb-3.5 aspect-square w-full overflow-hidden rounded-[18px] border border-line bg-bg">
           {flag && (

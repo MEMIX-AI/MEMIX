@@ -13,6 +13,14 @@
   --bg: #07080b;
   --bg-2: #0b0d11;
   --panel: rgba(20, 23, 29, 0.55);
+  /* Near-opaque stand-in for --panel on elements that repeat many times
+     per page (AssetCard grids) — --panel's 55% alpha only reads as
+     "frosted glass" because backdrop-filter smears whatever's behind it;
+     without blur, that same alpha shows the aurora blobs' sharp raw edges
+     through the card instead. This is opaque enough to look like a solid
+     dark card on its own, no blur required, while staying close enough to
+     --panel's hue that it's visually near-identical at a glance. */
+  --panel-solid: rgba(17, 20, 26, 0.94);
   --line: rgba(255, 255, 255, 0.1);
   --text: #f1f5f8;
   --dim: #98a2ad;

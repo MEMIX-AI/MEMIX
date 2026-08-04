@@ -28,8 +28,22 @@ export default async function AssetDetailPage({
 }: {
   params: { id: string };
 }) {
-  const viewer = await getCurrentUser();
-  const rawAsset = await getAssetById(params.id, viewer?.walletAddress);
+  // getCurrentUser() (session cookie verify + a User lookup) and
+  // getAssetById() were previously run strictly sequentially even though
+  // they don't actually depend on each other for the vast majority of
+  // assets — PUBLIC/UNLISTED visibility never looks at the viewer wallet
+  // at all (see assetAccessWhere). So: fetch the asset as PUBLIC/UNLISTED
+  // and resolve the viewer session in parallel; only PRIVATE assets ever
+  // need a second, viewer-scoped query, and only after we know who's
+  // asking. This turns the common case from 3 serial round trips into 2
+  // parallel ones + 1 (URL signing, which genuinely needs the asset
+  // first).
+  const [publicAsset, viewer] = await Promise.all([
+    getAssetById(params.id),
+    getCurrentUser(),
+  ]);
+  const rawAsset =
+    publicAsset ?? (viewer ? await getAssetById(params.id, viewer.walletAddress) : null);
   if (!rawAsset) notFound();
   const asset = await resolveAssetUrls(rawAsset);
 

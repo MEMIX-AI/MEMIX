@@ -1,8 +1,5 @@
 import { ImageResponse } from "next/og";
 import { getShareAsset } from "@/lib/asset-share";
-import { isStorageKey } from "@/lib/asset-urls";
-import { storage } from "@/lib/storage";
-import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "@/lib/thumbnail";
 import { assetTypeLabel } from "@/lib/format";
 import { verdictLabel, verdictStyle } from "@/lib/verdict";
 
@@ -85,43 +82,6 @@ function AuroraBg() {
   );
 }
 
-// Generated "cover art" for assets with no real thumbnail (SOUND has none
-// at all; VIDEO's generic placeholder SVG is treated the same way) — an
-// equalizer-bar mark echoing AudioPlayer.tsx's real waveform styling,
-// plain divs only, no text glyphs involved.
-function GeneratedCover() {
-  const bars = [38, 62, 46, 80, 54, 70, 42, 58, 34, 66];
-  return (
-    <div
-      style={{
-        width: 420,
-        height: 420,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 28,
-        border: "2px solid rgba(255,255,255,0.12)",
-        background: "linear-gradient(135deg, #4fd8ff 0%, #6df3c4 100%)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-end", height: 140 }}>
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            style={{
-              width: 16,
-              height: h * 1.5,
-              marginLeft: i === 0 ? 0 : 8,
-              borderRadius: 8,
-              background: "rgba(7,8,11,0.55)",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // A crawler hitting this URL and getting a hard 500 is worse than getting
 // a generic-but-valid card, so every real failure mode below (DB down,
 // Supabase signing failing, a Satori quirk we haven't hit yet) falls back
@@ -179,16 +139,6 @@ async function renderCard(assetId: string) {
     );
   }
 
-  const hasRealThumbnail = Boolean(
-    asset.thumbnailUrl && asset.thumbnailUrl !== VIDEO_PLACEHOLDER_THUMBNAIL_URL,
-  );
-  const thumbnailSrc = hasRealThumbnail
-    ? await (isStorageKey(asset.thumbnailUrl!)
-        ? storage.getUrl(asset.thumbnailUrl!)
-        : Promise.resolve(asset.thumbnailUrl!)
-      ).catch(() => null)
-    : null;
-
   const vStyle = verdictStyle(asset.verdictStatus);
   const verdict = verdictLabel(asset.verdictStatus);
   const vibe = asset.tags[0]?.name ?? assetTypeLabel(asset.type);
@@ -211,27 +161,7 @@ async function renderCard(assetId: string) {
             generated brand-gradient "poster" card so sounds/videos
             without a real thumbnail still get a real cover, not a blank
             square. */}
-        {thumbnailSrc ? (
-          // next/image can't run inside next/og's Satori renderer — this
-          // JSX never touches a real DOM/browser, it's compiled straight
-          // to the output PNG, so a plain <img> is the only option here.
-          // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-          <img
-            src={thumbnailSrc}
-            alt=""
-            width={420}
-            height={420}
-            style={{
-              width: 420,
-              height: 420,
-              objectFit: "cover",
-              borderRadius: 28,
-              border: "2px solid rgba(255,255,255,0.12)",
-            }}
-          />
-        ) : (
-          <GeneratedCover />
-        )}
+        <div style={{ width: 420, height: 420, display: "flex", background: "#4fd8ff", borderRadius: 28 }} />
 
         {/* Copy block */}
         <div style={{ display: "flex", flexDirection: "column", marginLeft: 56, width: 610 }}>

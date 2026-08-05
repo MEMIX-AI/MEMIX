@@ -26,7 +26,22 @@ import { SPACE_GROTESK_BOLD_BASE64 } from "./space-grotesk-bold-font";
 // space-grotesk-bold-font.ts) sidesteps every bundler/runtime-specific
 // asset-resolution path entirely — it's just a JS string constant,
 // identical in any environment.
-const brandFont = Promise.resolve(Buffer.from(SPACE_GROTESK_BOLD_BASE64, "base64"));
+//
+// Live evidence narrowed the remaining crash down to this exact line: the
+// no-custom-font fallback path (PlainCard, below) has been serving 200s
+// in production the whole time — proving @vercel/og's own default
+// rendering, including ITS default font, works fine on Vercel. The only
+// thing that changes once a custom `fonts` array is involved is this
+// Buffer. ImageResponse's documented examples always hand it a real
+// ArrayBuffer (from fetch().arrayBuffer()); a Node Buffer merely *looks*
+// like one (shares TypedArray methods) but isn't one, and Buffer.buffer
+// alone isn't safe to hand over as-is — Node may return a pooled,
+// oversized underlying ArrayBuffer, so this slices out exactly this
+// Buffer's own bytes.
+const brandFont = Promise.resolve(SPACE_GROTESK_BOLD_BASE64).then((b64) => {
+  const buf = Buffer.from(b64, "base64");
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+});
 
 // Next.js wires this file's output into og:image/twitter:image
 // automatically for every /asset/[id] page — no manual metadata.openGraph

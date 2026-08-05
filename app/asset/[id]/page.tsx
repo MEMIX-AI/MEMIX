@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { getAssetById } from "@/lib/assets";
+import { getShareAsset } from "@/lib/asset-share";
 import { resolveAssetUrls } from "@/lib/asset-urls";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -11,7 +13,7 @@ import {
   licenseBadge,
   shortenWallet,
 } from "@/lib/format";
-import { verdictStyle } from "@/lib/verdict";
+import { verdictLabel, verdictStyle } from "@/lib/verdict";
 import { tagColor } from "@/lib/tag-colors";
 import { AssetPreview } from "@/components/AssetPreview";
 import { ReportButton } from "@/components/ReportButton";
@@ -22,6 +24,45 @@ import { LikeButton } from "@/components/LikeButton";
 import { ViewTracker } from "@/components/ViewTracker";
 import { DownloadLink } from "@/components/DownloadLink";
 import { DownloadSpecValue } from "@/components/DownloadSpecValue";
+
+// Link-preview metadata (X/Discord/Telegram/etc) — always the PUBLIC/
+// UNLISTED view via getShareAsset, same as opengraph-image.tsx, never
+// viewer-scoped (crawlers have no session, and a share card must look the
+// same to everyone). og:image itself isn't set here — the sibling
+// opengraph-image.tsx file convention wires that in automatically, at its
+// own stable, always-fetchable-without-login URL.
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const asset = await getShareAsset(params.id);
+  if (!asset) {
+    return { title: "asset not found — memix" };
+  }
+
+  const vibe = asset.tags[0]?.name ?? assetTypeLabel(asset.type);
+  const verdict = verdictLabel(asset.verdictStatus);
+  const description = `Vibe: ${vibe} · ${verdict.charAt(0).toUpperCase() + verdict.slice(1)}`;
+  const url = `https://memixmeme.xyz/asset/${asset.id}`;
+
+  return {
+    title: `${asset.title} — memix`,
+    description,
+    openGraph: {
+      title: asset.title,
+      description,
+      url,
+      siteName: "memix",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: asset.title,
+      description,
+    },
+  };
+}
 
 export default async function AssetDetailPage({
   params,
@@ -37,9 +78,11 @@ export default async function AssetDetailPage({
   // need a second, viewer-scoped query, and only after we know who's
   // asking. This turns the common case from 3 serial round trips into 2
   // parallel ones + 1 (URL signing, which genuinely needs the asset
-  // first).
+  // first). getShareAsset (React cache()) means this is the same
+  // underlying query generateMetadata already ran for this request — not
+  // a second round trip.
   const [publicAsset, viewer] = await Promise.all([
-    getAssetById(params.id),
+    getShareAsset(params.id),
     getCurrentUser(),
   ]);
   const rawAsset =

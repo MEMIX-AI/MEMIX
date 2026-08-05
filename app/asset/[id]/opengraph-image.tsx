@@ -5,21 +5,28 @@ import { storage } from "@/lib/storage";
 import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "@/lib/thumbnail";
 import { assetTypeLabel } from "@/lib/format";
 import { verdictLabel, verdictStyle } from "@/lib/verdict";
+import { SPACE_GROTESK_BOLD_BASE64 } from "./space-grotesk-bold-font";
 
 // Our own copy of the site's real heading font (same face as next/font/
 // google's Space Grotesk in app/layout.tsx) — next/og needs an explicit
-// font for any text it draws. Loaded via fetch(new URL(..., import.meta
-// .url)) rather than fs.readFile(process.cwd() + "public/...") on
-// purpose: Vercel's serverless bundler traces and bundles files reached
-// through that exact pattern, but does NOT include arbitrary files under
-// public/ in a function's own filesystem at runtime (public/ is served
-// straight from the CDN, not readable via fs from inside the lambda) —
-// confirmed live, the fs.readFile version 500'd in production despite
-// working fine locally. Colocating the .ttf next to this route file is
-// what makes the relative import.meta.url resolution work.
-const brandFont = fetch(new URL("./space-grotesk-bold.ttf", import.meta.url)).then((res) =>
-  res.arrayBuffer(),
-);
+// font for any text it draws.
+//
+// Every filesystem/URL-based way of reaching this file 500'd in
+// production despite working in a local build: fs.readFile(process.cwd()
+// + "public/...") — public/ isn't in the serverless function's own
+// bundled filesystem, it's served straight from Vercel's CDN.
+// fetch(new URL(..., import.meta.url)) — Next's own documented pattern —
+// is written for the Edge runtime's fetch, which special-cases bundled-
+// asset URLs; this route can't use Edge (Prisma, via getShareAsset, needs
+// Node.js). fileURLToPath(new URL(..., import.meta.url)) then failed
+// differently: webpack's asset-modules handling rewrites that `new URL()`
+// expression into its own bundler-internal URL-like value at build time,
+// which isn't a real `instanceof URL` as far as Node's fileURLToPath is
+// concerned. A base64 string baked directly into a plain .ts module (see
+// space-grotesk-bold-font.ts) sidesteps every bundler/runtime-specific
+// asset-resolution path entirely — it's just a JS string constant,
+// identical in any environment.
+const brandFont = Promise.resolve(Buffer.from(SPACE_GROTESK_BOLD_BASE64, "base64"));
 
 // Next.js wires this file's output into og:image/twitter:image
 // automatically for every /asset/[id] page — no manual metadata.openGraph

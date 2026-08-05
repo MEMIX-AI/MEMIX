@@ -105,11 +105,42 @@ function GeneratedCover() {
   );
 }
 
+// A crawler hitting this URL and getting a hard 500 is worse than getting
+// a generic-but-valid card, so every real failure mode below (DB down,
+// Supabase signing failing, a font/Satori quirk we haven't hit yet) falls
+// back to this bare-minimum render — no custom font, no remote image,
+// nothing that could itself fail — instead of bubbling up as an error.
+function PlainCard() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#07080b",
+        color: "#f1f5f8",
+        fontSize: 64,
+        fontWeight: 700,
+      }}
+    >
+      memix
+    </div>
+  );
+}
+
 export default async function OpengraphImage({ params }: { params: { id: string } }) {
-  const [asset, fontData] = await Promise.all([
-    getShareAsset(params.id).catch(() => null),
-    brandFont,
-  ]);
+  try {
+    return await renderCard(params.id);
+  } catch (err) {
+    console.error(`opengraph-image render failed for asset ${params.id}:`, err);
+    return new ImageResponse(<PlainCard />, size);
+  }
+}
+
+async function renderCard(assetId: string) {
+  const [asset, fontData] = await Promise.all([getShareAsset(assetId), brandFont]);
   const fonts = [{ name: "Space Grotesk", data: fontData, style: "normal" as const, weight: 700 as const }];
 
   if (!asset) {
@@ -247,9 +278,7 @@ export default async function OpengraphImage({ params }: { params: { id: string 
               marginTop: 60,
               fontSize: 30,
               fontWeight: 700,
-              backgroundImage: "linear-gradient(135deg, #4fd8ff 0%, #6df3c4 100%)",
-              backgroundClip: "text",
-              color: "transparent",
+              color: "#4fd8ff",
             }}
           >
             memix

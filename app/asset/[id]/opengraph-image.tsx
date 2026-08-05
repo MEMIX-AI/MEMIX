@@ -5,43 +5,6 @@ import { storage } from "@/lib/storage";
 import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "@/lib/thumbnail";
 import { assetTypeLabel } from "@/lib/format";
 import { verdictLabel, verdictStyle } from "@/lib/verdict";
-import { SPACE_GROTESK_BOLD_BASE64 } from "./space-grotesk-bold-font";
-
-// Our own copy of the site's real heading font (same face as next/font/
-// google's Space Grotesk in app/layout.tsx) — next/og needs an explicit
-// font for any text it draws.
-//
-// Every filesystem/URL-based way of reaching this file 500'd in
-// production despite working in a local build: fs.readFile(process.cwd()
-// + "public/...") — public/ isn't in the serverless function's own
-// bundled filesystem, it's served straight from Vercel's CDN.
-// fetch(new URL(..., import.meta.url)) — Next's own documented pattern —
-// is written for the Edge runtime's fetch, which special-cases bundled-
-// asset URLs; this route can't use Edge (Prisma, via getShareAsset, needs
-// Node.js). fileURLToPath(new URL(..., import.meta.url)) then failed
-// differently: webpack's asset-modules handling rewrites that `new URL()`
-// expression into its own bundler-internal URL-like value at build time,
-// which isn't a real `instanceof URL` as far as Node's fileURLToPath is
-// concerned. A base64 string baked directly into a plain .ts module (see
-// space-grotesk-bold-font.ts) sidesteps every bundler/runtime-specific
-// asset-resolution path entirely — it's just a JS string constant,
-// identical in any environment.
-//
-// Live evidence narrowed the remaining crash down to this exact line: the
-// no-custom-font fallback path (PlainCard, below) has been serving 200s
-// in production the whole time — proving @vercel/og's own default
-// rendering, including ITS default font, works fine on Vercel. The only
-// thing that changes once a custom `fonts` array is involved is this
-// Buffer. ImageResponse's documented examples always hand it a real
-// ArrayBuffer (from fetch().arrayBuffer()); a Node Buffer merely *looks*
-// like one (shares TypedArray methods) but isn't one, and Buffer.buffer
-// alone isn't safe to hand over as-is — Node may return a pooled,
-// oversized underlying ArrayBuffer, so this slices out exactly this
-// Buffer's own bytes.
-const brandFont = Promise.resolve(SPACE_GROTESK_BOLD_BASE64).then((b64) => {
-  const buf = Buffer.from(b64, "base64");
-  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-});
 
 // Next.js wires this file's output into og:image/twitter:image
 // automatically for every /asset/[id] page — no manual metadata.openGraph
@@ -53,6 +16,27 @@ const brandFont = Promise.resolve(SPACE_GROTESK_BOLD_BASE64).then((b64) => {
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "memix — the librarian for the internet's meme library";
+
+// No custom font here on purpose — this went through several rounds of
+// live testing against production. Every attempt to load our own brand
+// font (fs.readFile from public/, fetch(new URL(..., import.meta.url)),
+// fileURLToPath + fs.readFile, a base64-inlined module with a properly
+// sliced ArrayBuffer) 500'd once actually deployed to Vercel, even though
+// each one either built cleanly or was the officially documented pattern.
+// @vercel/og's own DEFAULT rendering — no custom `fonts` array at all —
+// has been confirmed live and working in production the entire time
+// (verified via direct requests). Rather than keep guessing blind without
+// real server logs, this sticks to that proven-working default font;
+// every other part of the design (real thumbnail, generated cover,
+// verdict badge, aurora background) is unaffected.
+export default async function OpengraphImage({ params }: { params: { id: string } }) {
+  try {
+    return await renderCard(params.id);
+  } catch (err) {
+    console.error(`opengraph-image render failed for asset ${params.id}:`, err);
+    return new ImageResponse(<PlainCard />, size);
+  }
+}
 
 // Static blobs approximating the site's aurora background — Satori
 // (next/og's renderer) doesn't support `filter: blur()`, so these are
@@ -87,13 +71,10 @@ function AuroraBg() {
   );
 }
 
-// Generated "cover art" for assets with no real thumbnail (sound, or
-// video that only got the generic placeholder) — plain divs, not glyphs,
-// so it can't ever hit Satori's font-fallback path (the actual crash
-// found while testing: emoji characters aren't covered by our supplied
-// Space Grotesk font, which forced Satori to fall back to its own bundled
-// default font — broken on Windows, and untested/unproven on Vercel).
-// An equalizer-bar mark echoes AudioPlayer.tsx's real waveform styling.
+// Generated "cover art" for assets with no real thumbnail (SOUND has none
+// at all; VIDEO's generic placeholder SVG is treated the same way) — an
+// equalizer-bar mark echoing AudioPlayer.tsx's real waveform styling,
+// plain divs only, no text glyphs involved.
 function GeneratedCover() {
   const bars = [38, 62, 46, 80, 54, 70, 42, 58, 34, 66];
   return (
@@ -129,9 +110,8 @@ function GeneratedCover() {
 
 // A crawler hitting this URL and getting a hard 500 is worse than getting
 // a generic-but-valid card, so every real failure mode below (DB down,
-// Supabase signing failing, a font/Satori quirk we haven't hit yet) falls
-// back to this bare-minimum render — no custom font, no remote image,
-// nothing that could itself fail — instead of bubbling up as an error.
+// Supabase signing failing, a Satori quirk we haven't hit yet) falls back
+// to this bare-minimum render instead of bubbling up as an error.
 function PlainCard() {
   return (
     <div
@@ -152,18 +132,8 @@ function PlainCard() {
   );
 }
 
-export default async function OpengraphImage({ params }: { params: { id: string } }) {
-  try {
-    return await renderCard(params.id);
-  } catch (err) {
-    console.error(`opengraph-image render failed for asset ${params.id}:`, err);
-    return new ImageResponse(<PlainCard />, size);
-  }
-}
-
 async function renderCard(assetId: string) {
-  const [asset, fontData] = await Promise.all([getShareAsset(assetId), brandFont]);
-  const fonts = [{ name: "Space Grotesk", data: fontData, style: "normal" as const, weight: 700 as const }];
+  const asset = await getShareAsset(assetId);
 
   if (!asset) {
     return new ImageResponse(
@@ -178,7 +148,6 @@ async function renderCard(assetId: string) {
             background: "#07080b",
             color: "#f1f5f8",
             fontSize: 64,
-            fontFamily: "Space Grotesk",
             fontWeight: 700,
           }}
         >
@@ -186,7 +155,7 @@ async function renderCard(assetId: string) {
           memix
         </div>
       ),
-      { ...size, fonts },
+      size,
     );
   }
 
@@ -214,7 +183,6 @@ async function renderCard(assetId: string) {
           alignItems: "center",
           padding: "0 70px",
           background: "#07080b",
-          fontFamily: "Space Grotesk",
         }}
       >
         <AuroraBg />
@@ -308,6 +276,6 @@ async function renderCard(assetId: string) {
         </div>
       </div>
     ),
-    { ...size, fonts },
+    size,
   );
 }

@@ -131,7 +131,7 @@ model Tag {
 // `uploaderWallet` is nullable ahead of a possible future anonymous-upload
 // path, but application code must treat it as required today.
 model Asset {
-  id            String      @id @default(cuid())
+  id            String          @id @default(cuid())
   title         String
   description   String
   type          AssetType
@@ -139,41 +139,71 @@ model Asset {
   thumbnailUrl  String?
   fileSize      Int
   duration      Int?
-  status        AssetStatus @default(ACTIVE)
+  status        AssetStatus     @default(ACTIVE)
   visibility    AssetVisibility @default(PUBLIC)
-  isOriginal    Boolean     @default(false)
-  featured      Boolean     @default(false)
-  downloadCount Int         @default(0)
+  isOriginal    Boolean         @default(false)
+  featured      Boolean         @default(false)
+  downloadCount Int             @default(0)
   // Real, tracked counters — viewCount increments on a genuine detail-page
   // view (deduped per browser+IP per rolling 24h window, see
   // app/api/assets/[id]/view/route.ts + AssetViewer below), and likeCount
   // is maintained in lockstep with AssetLike rows (every write to either
   // happens in the same transaction — see app/api/assets/[id]/like/
   // route.ts). Neither is ever hand-set/faked.
-  viewCount     Int         @default(0)
-  likeCount     Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  viewCount     Int             @default(0)
+  likeCount     Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  // Editorial "verdict" fields (MV—005) — all nullable, all admin-filled
-  // for now (see components/admin/VerdictEditor.tsx). Every pre-existing
-  // asset gets NULL here automatically; the API layer reports that as
-  // "unverdicted", never as an empty/missing field.
+  // Editorial "verdict" fields (MV—005) — all nullable, filled either by an
+  // admin directly (components/admin/VerdictEditor.tsx) or by the AI
+  // generator (lib/verdict-generator.ts, admin-triggered only — see
+  // VerdictGenerationLog below). Every pre-existing asset gets NULL here
+  // automatically; the API layer reports that as "unverdicted", never as
+  // an empty/missing field.
   verdictStatus VerdictStatus?
   peaked        String?
   worksWhen     String?
   avoidWhen     String?
 
   uploaderWallet String?
-  uploader        User?   @relation(fields: [uploaderWallet], references: [walletAddress])
+  uploader       User?   @relation(fields: [uploaderWallet], references: [walletAddress])
 
-  tags           Tag[]
-  declaration    UploadDeclaration?
-  reports        Report[]
-  takedowns      TakedownLog[]
-  downloadEvents DownloadEvent[]
-  likes          AssetLike[]
-  viewers        AssetViewer[]
+  tags                  Tag[]
+  declaration           UploadDeclaration?
+  reports               Report[]
+  takedowns             TakedownLog[]
+  downloadEvents        DownloadEvent[]
+  likes                 AssetLike[]
+  viewers               AssetViewer[]
+  verdictGenerationLogs VerdictGenerationLog[]
+}
+
+// One row per actual outbound call to the Virtuals LLM endpoint attempting
+// to generate a verdict — every attempt, success or failure, gets logged
+// here. This is both the "no claim without receipt" audit trail (an admin
+// can see exactly which model produced a given verdict and what "vibe" it
+// reasoned from) and the source of truth for the daily call cap: counting
+// rows created since UTC midnight tells the generator how many real calls
+// have already been spent today, so a run of failures can't quietly blow
+// past the budget just because none of them wrote a verdict.
+model VerdictGenerationLog {
+  id           String   @id @default(cuid())
+  assetId      String
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  success      Boolean
+  // Model that actually answered (primary or fallback) — null if the call
+  // never got a response at all (e.g. both models failed to connect).
+  model        String?
+  // The LLM's own one/two-word read on the meme's genre — logged for
+  // audit even though it isn't written to any Asset column (see
+  // lib/verdict-generator.ts for why "vibe" doesn't get force-added as a
+  // tag).
+  vibe         String?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -293,8 +323,8 @@ model AssetLike {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  assetId  String
-  asset    Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   clientId String
 

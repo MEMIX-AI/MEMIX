@@ -8,6 +8,8 @@ import { resolveAssetUrlsMany } from "@/lib/asset-urls";
 import { ReasonActionButton } from "@/components/admin/ReasonActionButton";
 import { FeatureToggleButton } from "@/components/admin/FeatureToggleButton";
 import { VerdictEditor } from "@/components/admin/VerdictEditor";
+import { GenerateVerdictButton } from "@/components/admin/GenerateVerdictButton";
+import { GenerateVerdictsBatchButton } from "@/components/admin/GenerateVerdictsBatchButton";
 
 const STATUS_FILTERS: { value?: AssetStatus; label: string }[] = [
   { value: undefined, label: "all" },
@@ -34,7 +36,10 @@ export default async function AdminAssetsPage({
 
   return (
     <div>
-      <h1 className="mb-5 font-heading text-2xl font-bold text-text">asset management</h1>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-heading text-2xl font-bold text-text">asset management</h1>
+        <GenerateVerdictsBatchButton />
+      </div>
 
       <div className="mb-5 flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => (
@@ -128,6 +133,7 @@ export default async function AdminAssetsPage({
                   worksWhen={asset.worksWhen}
                   avoidWhen={asset.avoidWhen}
                 />
+                {!asset.verdictStatus && <GenerateVerdictButton assetId={asset.id} />}
               </div>
             </div>
           ))}

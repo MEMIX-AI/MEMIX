@@ -1,5 +1,3 @@
-import { readFile } from "fs/promises";
-import path from "path";
 import { ImageResponse } from "next/og";
 import { getShareAsset } from "@/lib/asset-share";
 import { isStorageKey } from "@/lib/asset-urls";
@@ -8,16 +6,19 @@ import { VIDEO_PLACEHOLDER_THUMBNAIL_URL } from "@/lib/thumbnail";
 import { assetTypeLabel } from "@/lib/format";
 import { verdictLabel, verdictStyle } from "@/lib/verdict";
 
-// next/og's ImageResponse tries to load its own bundled default font via
-// an internal file:// URL that's built with the wrong path separators on
-// Windows (throws ERR_INVALID_URL, verified locally) — so ANY text
-// without an explicitly supplied font falls through to that broken path
-// on this OS. Reading our own copy of the brand heading font (already
-// used site-wide, see app/layout.tsx's next/font/google Space Grotesk)
-// with a normal fs.readFile + path.join sidesteps that internal loader
-// entirely, and works identically on Vercel's Linux runtime.
-const brandFont = readFile(
-  path.join(process.cwd(), "public/fonts/space-grotesk-bold.ttf"),
+// Our own copy of the site's real heading font (same face as next/font/
+// google's Space Grotesk in app/layout.tsx) — next/og needs an explicit
+// font for any text it draws. Loaded via fetch(new URL(..., import.meta
+// .url)) rather than fs.readFile(process.cwd() + "public/...") on
+// purpose: Vercel's serverless bundler traces and bundles files reached
+// through that exact pattern, but does NOT include arbitrary files under
+// public/ in a function's own filesystem at runtime (public/ is served
+// straight from the CDN, not readable via fs from inside the lambda) —
+// confirmed live, the fs.readFile version 500'd in production despite
+// working fine locally. Colocating the .ttf next to this route file is
+// what makes the relative import.meta.url resolution work.
+const brandFont = fetch(new URL("./space-grotesk-bold.ttf", import.meta.url)).then((res) =>
+  res.arrayBuffer(),
 );
 
 // Next.js wires this file's output into og:image/twitter:image

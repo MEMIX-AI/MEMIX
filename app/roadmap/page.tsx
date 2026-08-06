@@ -26,9 +26,9 @@ const ITEMS: {
     body: "Programmatic access for agents and bots, gated by API key. Humans stay free; machines are billed per call.",
   },
   {
-    status: "planned",
+    status: "in progress",
     title: "Agent skills",
-    body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call.",
+    body: "The catalogue exposed as skills other AI agents can hire, reached through agent-to-agent rails instead of a raw API call. First skill live on Virtuals: meme_verdict — more on the way.",
   },
   {
     status: "shipped",
@@ -37,6 +37,11 @@ const ITEMS: {
   },
   {
     status: "planned",
+    title: "Community",
+    body: "Building a community around Memix — Discord, events, and more.",
+  },
+  {
+    status: "in progress",
     title: "Creator",
     body: "Creators with genuinely original work get their own public profile. Anyone can browse a directory of creators, open a profile, and see what they've made. Sales are settled in $MEMIX, with a stablecoin option alongside it so creators aren't fully exposed to token volatility.",
   },

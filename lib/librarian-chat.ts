@@ -94,7 +94,12 @@ export async function askLibrarian(
     ...trimmedHistory.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  const { content, model } = await callVirtualsChat(messages);
+  // A conversational reply runs longer than the admin verdict generator's
+  // tight structured JSON (lib/verdict-generator.ts, which is fine on
+  // callVirtualsChat's own default) — 1000 tokens of headroom on top of
+  // disabling "thinking" mode (see lib/virtuals.ts) so a real answer
+  // never gets cut off mid-sentence.
+  const { content, model } = await callVirtualsChat(messages, { maxTokens: 1000 });
 
   // Only attach asset cards the reply actually name-checks — avoids
   // showing candidates the model looked at but didn't end up

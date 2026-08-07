@@ -21,7 +21,13 @@ export interface VirtualsChatResult {
   model: string;
 }
 
-async function callModelOnce(model: string, messages: ChatMessage[]): Promise<VirtualsChatResult> {
+const DEFAULT_MAX_TOKENS = 800;
+
+async function callModelOnce(
+  model: string,
+  messages: ChatMessage[],
+  maxTokens: number,
+): Promise<VirtualsChatResult> {
   const apiKey = process.env.VIRTUALS_API_KEY;
   if (!apiKey) {
     throw new Error("VIRTUALS_API_KEY is not set");
@@ -37,11 +43,26 @@ async function callModelOnce(model: string, messages: ChatMessage[]): Promise<Vi
       model,
       messages,
       temperature: 0.4,
-      max_tokens: 600,
+      max_tokens: maxTokens,
+      // At least one model behind this endpoint (Kimi-style) runs an
+      // internal "thinking" pass before producing the visible answer —
+      // seen live: a real request came back with "response was
+      // truncated before the model finished its internal reasoning...
+      // disable thinking (chat_template_kwargs.enable_thinking=false)".
+      // None of our 3 functions (educate/verdict/recommend) need
+      // multi-step chain-of-thought, so this is a straight win on both
+      // reliability and credit cost. Included unconditionally for every
+      // call/every model: a server that doesn't recognize this field
+      // just ignores the extra JSON key (standard OpenAI-compatible
+      // behavior) rather than erroring, so there's nothing to special-
+      // case for "model doesn't support it" — and the existing primary
+      // -> fallback retry below is still there as a second safety net
+      // for whatever we haven't seen yet.
+      chat_template_kwargs: { enable_thinking: false },
     }),
     // This has no business hanging for minutes — the caller (an admin
-    // clicking a button) needs a real answer within one request/response
-    // cycle, not eventually.
+    // clicking a button, or a chat reply a visitor is waiting on) needs a
+    // real answer within one request/response cycle, not eventually.
     signal: AbortSignal.timeout(20_000),
   });
 
@@ -64,19 +85,23 @@ async function callModelOnce(model: string, messages: ChatMessage[]): Promise<Vi
 // empty content) — matches "Model: claude-opus-4-7-fast (fallback
 // moonshotai-kimi-k3)" from the brief. Both are env-configurable so a
 // model rename/deprecation on Virtuals' side doesn't need a code change.
-export async function callVirtualsChat(messages: ChatMessage[]): Promise<VirtualsChatResult> {
+export async function callVirtualsChat(
+  messages: ChatMessage[],
+  options?: { maxTokens?: number },
+): Promise<VirtualsChatResult> {
   const primary = process.env.VIRTUALS_MODEL || DEFAULT_MODEL;
   const fallback = process.env.VIRTUALS_MODEL_FALLBACK || DEFAULT_FALLBACK_MODEL;
+  const maxTokens = options?.maxTokens ?? DEFAULT_MAX_TOKENS;
 
   try {
-    return await callModelOnce(primary, messages);
+    return await callModelOnce(primary, messages, maxTokens);
   } catch (primaryErr) {
     const primaryMessage = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
     if (!fallback || fallback === primary) {
       throw new Error(primaryMessage);
     }
     try {
-      return await callModelOnce(fallback, messages);
+      return await callModelOnce(fallback, messages, maxTokens);
     } catch (fallbackErr) {
       const fallbackMessage = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
       throw new Error(

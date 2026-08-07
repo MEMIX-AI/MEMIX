@@ -15,10 +15,13 @@ type ChatMessage = {
 
 // Floating chat button + panel, present on every public page (hidden on
 // /admin — that's an internal tool surface, not the public-facing
-// library). Fully read-only against the library — see
-// app/api/librarian/route.ts. Free keyword-search version: no LLM, no
-// ANTHROPIC_API_KEY dependency, so this is always live — no "coming
-// soon" gate needed anymore.
+// library). Real LLM reasoning now (lib/librarian-chat.ts, Virtuals
+// compute credit) — see app/api/librarian/route.ts, which token-gates
+// every call the same way the public verdict endpoint does (wallet
+// required, LIBRARIAN_PUBLIC_ENABLED must be on). This component itself
+// doesn't change behavior based on that gate; it just surfaces whatever
+// error message the API returns (e.g. "connect your wallet…") the same
+// way it already surfaces any other error.
 export function LibrarianWidget() {
   const pathname = usePathname();
   const { open, setOpen } = useLibrarianOpen();
@@ -96,8 +99,8 @@ export function LibrarianWidget() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 text-sm">
             {messages.length === 0 && (
               <p className="text-dim">
-                hey. ask me to find a sound, a reaction template, whatever
-                — or ask what&apos;s trending.
+                hey. ask me to explain a meme, give you a verdict on one,
+                or recommend something for the mood you&apos;re in.
               </p>
             )}
 
@@ -135,7 +138,7 @@ export function LibrarianWidget() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") send();
               }}
-              placeholder="find a fail sound effect"
+              placeholder="what's the verdict on this meme?"
               disabled={sending}
               className="flex-1 rounded-full border border-line bg-panel px-4 py-2 text-sm text-text outline-none transition-colors placeholder:text-dim focus:border-accent/50"
             />

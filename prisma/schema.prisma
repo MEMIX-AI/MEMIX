@@ -206,6 +206,48 @@ model VerdictGenerationLog {
   @@index([createdAt])
 }
 
+// TTL cache for on-chain $MIX balance reads (lib/mix-token.ts) — a fresh
+// balanceOf call hits ROBINHOOD_RPC_URL, which is real network I/O with
+// real (if small) cost and latency; caching per wallet for a few minutes
+// (MIX_BALANCE_CACHE_TTL_SECONDS) means a wallet clicking around the site
+// doesn't trigger a fresh RPC call on every single request. Not a
+// rate-limit table — see LibrarianPublicUsageLog for that.
+model MixBalanceCache {
+  walletAddress String   @id
+  // Human-readable token count (already divided by the token's real
+  // on-chain decimals() — never assumed to be 18), not raw base units.
+  balance       Float
+  checkedAt     DateTime @default(now())
+}
+
+// One row per actual attempted public Librarian verdict call (see
+// app/api/librarian/verdict/[assetId]/route.ts) — deliberately only
+// written when a real LLM call was spent (success or failure), never for
+// a cache-hit (asset already verdicted), a not-found asset, or a request
+// blocked by the admin feature's own shared VERDICT_DAILY_CAP — none of
+// those cost any credit, so none of them should burn a wallet's daily
+// quota. This table is the source of truth for both FREE_DAILY_QUOTA/
+// HOLDER_DAILY_QUOTA (per wallet) and GLOBAL_DAILY_CAP (everyone
+// combined), both counted from real rows since UTC midnight, never
+// assumed. assetId is a plain field, not a hard relation — this is an
+// audit/rate-limit log that should outlive the asset it referenced, not
+// cascade-delete with it.
+model LibrarianPublicUsageLog {
+  id            String   @id @default(cuid())
+  walletAddress String
+  // "FREE" | "HOLDER" at the moment of this call — plain string (not a
+  // Prisma enum) since the tier model itself is env-config-driven
+  // (MIN_MIX_HOLD), not a fixed domain concept.
+  tier          String
+  assetId       String?
+  success       Boolean
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+
+  @@index([walletAddress, createdAt])
+  @@index([createdAt])
+}
+
 // Paper trail proving the uploader agreed to the rights declaration + ToS
 // at upload time (WAJIB — see CLAUDE.md POSISI LEGAL #2). Never mutated.
 model UploadDeclaration {

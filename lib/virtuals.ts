@@ -8,7 +8,11 @@ const DEFAULT_MODEL = "claude-opus-4-7-fast";
 const DEFAULT_FALLBACK_MODEL = "moonshotai-kimi-k3";
 
 export interface ChatMessage {
-  role: "system" | "user";
+  // "assistant" exists for multi-turn callers (lib/librarian-chat.ts) that
+  // need to hand back the model's own prior replies as conversation
+  // history — lib/verdict-generator.ts's single-turn system+user use
+  // never needed it, which is the only reason this was narrower before.
+  role: "system" | "user" | "assistant";
   content: string;
 }
 

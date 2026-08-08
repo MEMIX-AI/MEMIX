@@ -15,10 +15,11 @@ import { WALLET_RETURNING_KEY } from "@/lib/wallet-returning";
 //  1. An explicit click — mounts with autoShow, popping the connect
 //     modal once the chunk is ready (see WalletButton's `autoShow`).
 //  2. Silently, on page load, for a browser that's signed in before
-//     (WALLET_RETURNING_KEY set by WalletButton) — no modal, just lets
-//     wagmi's own reconnect restore the connection in the background.
-//     Without this, a returning user always looked disconnected until
-//     they clicked Connect Wallet again, on every single page load.
+//     (WALLET_RETURNING_KEY set by WalletButton) — no modal, no
+//     auto-connect (reconnectOnMount is false — see Web3Provider.tsx),
+//     purely a head start on downloading the JS chunk so the picker
+//     modal opens instantly, with no loading flicker, the moment a
+//     returning visitor does click Connect Wallet.
 // The loading fallback shows a spinner in both cases — "checking your
 // wallet" is an honest thing to show either way, not just for a click.
 const WalletWidget = dynamic(

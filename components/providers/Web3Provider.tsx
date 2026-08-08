@@ -11,19 +11,29 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    // reconnectOnMount defaults to true — wagmi silently restores the
-    // last-used connector (if the wallet extension still has it granted)
-    // instead of forcing a full reconnect+re-sign every time. An earlier
-    // version of this set reconnectOnMount=false on purpose, but in real
-    // usage that meant every fresh page load — including landing on
-    // Docs/Creators/My Profile, or right after finishing an upload —
-    // showed "Connect Wallet" again from scratch, even though the real
-    // mv_session cookie (server-side, 7 days) was still perfectly valid.
-    // See components/Navbar.tsx for the other half of this fix: the
-    // wallet bundle now eager-mounts (without popping the modal) for a
-    // browser that's signed in before, so this restore actually gets a
-    // chance to run without requiring a click first.
-    <WagmiProvider config={wagmiConfig}>
+    // reconnectOnMount explicitly false — wagmi must NEVER silently
+    // restore a previous wallet connection without the user clicking
+    // through the picker first. An earlier version of this relied on the
+    // default (true) specifically so a returning visitor didn't see
+    // "Connect Wallet" again on every fresh page load — but the real-world
+    // cost of that turned out to be worse: clicking "Connect Wallet"
+    // could silently reuse the cached MetaMask connection and jump
+    // straight into a signature prompt, with the wallet-picker modal
+    // never shown at all (reported live: "connects directly to MetaMask
+    // without giving a choice"). Consent to which wallet to use every
+    // time now wins over that convenience.
+    //
+    // This does NOT mean returning visitors re-sign every page load: the
+    // real mv_session cookie (server-side, 7 days) is still what
+    // getSession() in lib/siwe-config.ts checks, so once a visitor picks
+    // their wallet again (an explicit click, silent/instant if the
+    // extension already has this site authorized — no extra signature),
+    // ConnectKit sees the still-valid session and skips straight past
+    // the sign step. The eager wallet-bundle preload in Navbar.tsx for
+    // returning visitors is kept — it's a pure JS-download optimization
+    // (so the picker opens instantly on click, no chunk-loading flicker),
+    // it does not auto-connect or auto-show anything on its own.
+    <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
       <QueryClientProvider client={queryClient}>
         <SIWEProvider {...siweConfig} signOutOnNetworkChange={false}>
           <ConnectKitProvider

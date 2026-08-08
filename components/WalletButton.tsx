@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { ConnectKitButton, useModal, useSIWE } from "connectkit";
-import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, UserCircle } from "lucide-react";
+import { ChevronDown, Wallet, ShieldCheck, User, KeyRound, LogOut, UserCircle, Repeat } from "lucide-react";
 import { useAccountRole } from "@/lib/hooks/useAccountRole";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { WALLET_RETURNING_KEY } from "@/lib/wallet-returning";
@@ -25,6 +25,7 @@ import { WALLET_RETURNING_KEY } from "@/lib/wallet-returning";
 // setOpen(true) call on mount.
 export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const { isSignedIn, signIn, signOut, isLoading } = useSIWE();
   const { isAdmin } = useAccountRole(isSignedIn ? address : undefined);
   const { username, avatarUrl } = useProfile(isSignedIn ? address : undefined);
@@ -49,20 +50,20 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!autoShow || isConnected) return;
-
-    // setOpen(true) called on the very first render tick here reliably
-    // did nothing — verified live: ConnectKitProvider hasn't finished its
-    // own internal mount (the modal portal isn't ready to respond yet),
-    // so the call was a silent no-op and the button just sat there
-    // looking unclicked. That's the actual "takes two clicks" bug: the
-    // *second* click worked because by then the button had swapped to
-    // the real, fully-mounted ConnectKitButton whose own `show` handler
-    // doesn't have this race. Retrying setOpen(true) for a bit and
-    // bailing out the moment `open` actually flips true (checked against
-    // ConnectKit's own state, not a guessed delay) reproduces that same
-    // "wait until it's actually ready" outcome on the first click too.
+  // setOpen(true) called on the very first render tick here reliably did
+  // nothing — verified live: ConnectKitProvider hasn't finished its own
+  // internal mount (the modal portal isn't ready to respond yet), so the
+  // call was a silent no-op and the button just sat there looking
+  // unclicked. That's the actual "takes two clicks" bug: the *second*
+  // click worked because by then the button had swapped to the real,
+  // fully-mounted ConnectKitButton whose own `show` handler doesn't have
+  // this race. Retrying setOpen(true) for a bit and bailing out the
+  // moment `open` actually flips true (checked against ConnectKit's own
+  // state, not a guessed delay) reproduces that same "wait until it's
+  // actually ready" outcome. Shared by the autoShow-on-mount effect below
+  // AND switchWallet() — reopening the picker right after disconnect()
+  // hits the same "portal/internal state not caught up yet" race.
+  function openModalWhenReady() {
     let attempts = 0;
     const id = setInterval(() => {
       attempts += 1;
@@ -73,6 +74,11 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
       setOpen(true);
     }, 50);
     return () => clearInterval(id);
+  }
+
+  useEffect(() => {
+    if (!autoShow || isConnected) return;
+    return openModalWhenReady();
     // Only ever replay the click that triggered loading this component in
     // the first place — deliberately not reactive to isConnected/setOpen
     // changing afterward, this is a one-shot "continue what the user
@@ -81,13 +87,36 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
   }, []);
 
   // Marks this browser as "has signed in before" so Navbar knows to
-  // eager-mount this whole component next visit (silently, no modal —
-  // see Navbar.tsx) instead of waiting for a click, which is what let
-  // wagmi's reconnect actually restore the connection without the user
-  // redoing the connect+sign flow on every fresh page load.
+  // eager-mount this whole component next visit (silently, no modal, no
+  // auto-connect — see Navbar.tsx) so the wallet JS chunk is already
+  // downloaded by the time a returning visitor clicks Connect Wallet.
   useEffect(() => {
     if (isSignedIn) localStorage.setItem(WALLET_RETURNING_KEY, "1");
   }, [isSignedIn]);
+
+  // The full, real end-of-session: clears our own server-side mv_session
+  // (signOut, from siweConfig — just an API call, does not touch the
+  // wallet connection at all) AND wagmi's own connector state
+  // (disconnect) AND the "has signed in before" flag. All three, always
+  // together — signOut() alone previously left wagmi still connected to
+  // the same wallet behind the scenes, which is exactly why there was no
+  // real way to switch wallets before: the account menu's old
+  // "disconnect" button dropped back to the plain "sign in" state (still
+  // the same wallet), never back to "Connect Wallet" with a fresh
+  // picker.
+  function endSession() {
+    localStorage.removeItem(WALLET_RETURNING_KEY);
+    signOut();
+    disconnect();
+  }
+
+  // "switch wallet" — end the current session, then reopen the picker
+  // immediately instead of dropping back to the idle button and making
+  // the user click Connect Wallet a second time.
+  function switchWallet() {
+    endSession();
+    openModalWhenReady();
+  }
 
   return (
     <ConnectKitButton.Custom>
@@ -106,14 +135,29 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
 
         if (!isSignedIn) {
           return (
-            <button
-              onClick={() => signIn()}
-              className="ml-1 flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
-              disabled={isLoading}
-            >
-              <Wallet size={15} strokeWidth={1.75} />
-              {isLoading ? "signing…" : "sign in"}
-            </button>
+            <div className="ml-1 flex items-center gap-1.5">
+              <button
+                onClick={() => signIn()}
+                className="flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text shadow-soft transition-all duration-250 hover:border-accent/40 hover:shadow-soft-lg disabled:opacity-60"
+                disabled={isLoading}
+              >
+                <Wallet size={15} strokeWidth={1.75} />
+                {isLoading ? "signing…" : "sign in"}
+              </button>
+              {/* Escape hatch for "wrong wallet connected" without a full
+                  disconnect-then-reconnect round trip — connected but not
+                  yet signed in is exactly the moment someone notices the
+                  picker grabbed the wrong account. */}
+              <button
+                onClick={switchWallet}
+                aria-label="switch wallet"
+                title="switch wallet"
+                disabled={isLoading}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-dim transition-all duration-250 hover:border-accent/40 hover:text-text disabled:opacity-60"
+              >
+                <Repeat size={14} strokeWidth={1.75} />
+              </button>
+            </div>
           );
         }
 
@@ -193,8 +237,17 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
                   className="flex w-full items-center gap-2 border-t border-line px-4 py-2.5 text-left text-dim transition-colors hover:bg-bg hover:text-text"
                   onClick={() => {
                     setMenuOpen(false);
-                    localStorage.removeItem(WALLET_RETURNING_KEY);
-                    signOut();
+                    switchWallet();
+                  }}
+                >
+                  <Repeat size={14} />
+                  switch wallet
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-dim transition-colors hover:bg-bg hover:text-text"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    endSession();
                   }}
                 >
                   <LogOut size={14} />

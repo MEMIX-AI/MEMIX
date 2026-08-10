@@ -1,11 +1,19 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Tag as TagIcon } from "lucide-react";
 import { getAssetById } from "@/lib/assets";
 import { getShareAsset } from "@/lib/asset-share";
 import { resolveAssetUrls } from "@/lib/asset-urls";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import {
+  isMarketplaceEnabled,
+  platformFeePercent,
+  platformTreasuryWallet,
+  computeSplit,
+  getMixDecimals,
+} from "@/lib/marketplace";
 import {
   assetTypeLabel,
   formatBytes,
@@ -24,6 +32,7 @@ import { LikeButton } from "@/components/LikeButton";
 import { ViewTracker } from "@/components/ViewTracker";
 import { DownloadLink } from "@/components/DownloadLink";
 import { DownloadSpecValue } from "@/components/DownloadSpecValue";
+import { BuyButton } from "@/components/marketplace/BuyButtonLoader";
 
 // Link-preview metadata (X/Discord/Telegram/etc) — always the PUBLIC/
 // UNLISTED view via getShareAsset, same as opengraph-image.tsx, never
@@ -93,6 +102,46 @@ export default async function AssetDetailPage({
   const license = licenseBadge(asset.isOriginal);
   const vStyle = verdictStyle(asset.verdictStatus);
 
+  // Marketplace gate — completely skipped (marketplaceGate stays null)
+  // while MARKETPLACE_ENABLED is off, so this page's default rendering
+  // path is byte-for-byte what it always was. See app/api/assets/[id]/
+  // download/route.ts for the same gate enforced server-side on the
+  // actual download — this block only decides what UI to show, never
+  // grants access on its own.
+  type BuyInfo = { sellerWallet: string; treasuryWallet: string; sellerRaw: string; feeRaw: string };
+  let marketplaceGate: { priceMix: number; canDownloadFree: boolean; buy: BuyInfo | null } | null = null;
+
+  if (isMarketplaceEnabled()) {
+    const listing = await prisma.marketplaceListing.findUnique({ where: { assetId: asset.id } });
+    if (listing?.active) {
+      const isOwnerOrAdmin = !!viewer && (viewer.walletAddress === asset.uploaderWallet || viewer.isAdmin);
+      const hasPurchased =
+        !isOwnerOrAdmin && !!viewer
+          ? await prisma.marketplacePurchase.findFirst({
+              where: { assetId: asset.id, buyerWallet: viewer.walletAddress, status: "CONFIRMED" },
+            })
+          : null;
+      const canDownloadFree = isOwnerOrAdmin || !!hasPurchased;
+
+      let buy: BuyInfo | null = null;
+      if (!canDownloadFree) {
+        const treasury = platformTreasuryWallet();
+        const decimals = treasury ? await getMixDecimals().catch(() => null) : null;
+        if (treasury && decimals !== null) {
+          const { feeRaw, sellerRaw } = computeSplit(listing.priceMix, decimals, platformFeePercent());
+          buy = {
+            sellerWallet: listing.sellerWallet,
+            treasuryWallet: treasury,
+            sellerRaw: sellerRaw.toString(),
+            feeRaw: feeRaw.toString(),
+          };
+        }
+      }
+
+      marketplaceGate = { priceMix: listing.priceMix, canDownloadFree, buy };
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
       <div className="grid gap-10 md:grid-cols-2">
@@ -106,16 +155,41 @@ export default async function AssetDetailPage({
             {asset.title}
           </h1>
 
-          <div className="mb-6 flex items-center gap-2">
-            <DownloadLink
-              assetId={asset.id}
-              className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
-            >
-              <Download size={17} strokeWidth={1.75} />
-              download
-            </DownloadLink>
+          <div className={`flex items-center gap-2 ${marketplaceGate ? "mb-2.5" : "mb-6"}`}>
+            {marketplaceGate && !marketplaceGate.canDownloadFree ? (
+              marketplaceGate.buy ? (
+                <BuyButton
+                  assetId={asset.id}
+                  priceMix={marketplaceGate.priceMix}
+                  sellerWallet={marketplaceGate.buy.sellerWallet}
+                  treasuryWallet={marketplaceGate.buy.treasuryWallet}
+                  sellerRaw={marketplaceGate.buy.sellerRaw}
+                  feeRaw={marketplaceGate.buy.feeRaw}
+                />
+              ) : (
+                <div className="rounded-2xl border border-line bg-panel px-5 py-4 text-sm text-warn shadow-soft">
+                  this meme is for sale, but purchases are paused right now — try again later.
+                </div>
+              )
+            ) : (
+              <DownloadLink
+                assetId={asset.id}
+                className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
+              >
+                <Download size={17} strokeWidth={1.75} />
+                download
+              </DownloadLink>
+            )}
             <ShareMenu assetId={asset.id} title={asset.title} />
           </div>
+
+          {marketplaceGate && (
+            <p className="mb-6 flex items-center gap-1.5 text-xs text-dim">
+              <TagIcon size={12} strokeWidth={1.75} />
+              listed for {marketplaceGate.priceMix.toLocaleString()} $MIX
+              {marketplaceGate.canDownloadFree && " — you have access"}
+            </p>
+          )}
 
           <div className="mb-6 flex items-center gap-4 text-sm text-dim">
             <LikeButton assetId={asset.id} initialCount={asset.likeCount} size="lg" />

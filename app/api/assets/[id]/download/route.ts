@@ -5,12 +5,18 @@ import { storage } from "@/lib/storage";
 import { getAssetById } from "@/lib/assets";
 import { getClientIp, hashIp } from "@/lib/ip-hash";
 import { getCurrentUser } from "@/lib/auth";
+import { isMarketplaceEnabled } from "@/lib/marketplace";
 
 // No login, no wallet, no page in between — a plain link straight to this
 // route triggers the browser's native download (see CLAUDE.md KONSEP INTI:
 // "Semua bisa search & download tanpa login, tanpa wallet, tanpa bayar").
 // That still holds for PUBLIC/UNLISTED assets; PRIVATE ones only resolve
-// for the owner's own session (see lib/asset-visibility.ts).
+// for the owner's own session (see lib/asset-visibility.ts). The one
+// exception: an asset the creator has actively listed for sale (see
+// lib/marketplace.ts) requires either being the owner/an admin, or a
+// real CONFIRMED MarketplacePurchase — and even that exception only
+// exists while MARKETPLACE_ENABLED is true, so this route's behavior is
+// completely unchanged while the feature is off (the default).
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } },
@@ -19,6 +25,31 @@ export async function GET(
   const asset = await getAssetById(params.id, viewer?.walletAddress);
   if (!asset) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  if (isMarketplaceEnabled()) {
+    const listing = await prisma.marketplaceListing.findUnique({
+      where: { assetId: asset.id },
+    });
+    if (listing?.active) {
+      const isOwnerOrAdmin =
+        !!viewer && (viewer.walletAddress === asset.uploaderWallet || viewer.isAdmin);
+      const hasPurchased =
+        !isOwnerOrAdmin && !!viewer
+          ? await prisma.marketplacePurchase.findFirst({
+              where: { assetId: asset.id, buyerWallet: viewer.walletAddress, status: "CONFIRMED" },
+            })
+          : null;
+      if (!isOwnerOrAdmin && !hasPurchased) {
+        return NextResponse.json(
+          {
+            error: "this meme is for sale — buy it on its marketplace listing to download",
+            priceMix: listing.priceMix,
+          },
+          { status: 402 },
+        );
+      }
+    }
   }
 
   // Count the request, not confirmed delivery of every byte — a fine

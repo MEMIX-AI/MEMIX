@@ -1,27 +1,12 @@
 import { createPublicClient, http, getAddress, formatUnits } from "viem";
 import { prisma } from "./prisma";
+import { MIX_TOKEN_ADDRESS, ERC20_ABI } from "./erc20";
 
-// Fixed by the brief — the real $MIX contract on Robinhood Chain, not
-// something that should ever come from a request or env var (unlike the
-// RPC endpoint, which genuinely varies by provider/deployment).
-const MIX_TOKEN_ADDRESS = "0xB9e6319feAb4284BBcB1cD361387F550cbDe16a5";
-
-const ERC20_ABI = [
-  {
-    type: "function",
-    name: "balanceOf",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "decimals",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint8" }],
-  },
-] as const;
+// Re-exported for existing callers (lib/marketplace.ts) — the constants
+// themselves now live in lib/erc20.ts, a dependency-free module safe to
+// import from client components too. This file stays server-only (it
+// imports prisma for the balance cache below).
+export { MIX_TOKEN_ADDRESS, ERC20_ABI };
 
 function cacheTtlMs(): number {
   const seconds = Number(process.env.MIX_BALANCE_CACHE_TTL_SECONDS);

@@ -177,6 +177,7 @@ model Asset {
   likes                 AssetLike[]
   viewers               AssetViewer[]
   verdictGenerationLogs VerdictGenerationLog[]
+  marketplaceListing    MarketplaceListing?
 }
 
 // One row per actual outbound call to the Virtuals LLM endpoint attempting
@@ -246,6 +247,82 @@ model LibrarianPublicUsageLog {
 
   @@index([walletAddress, createdAt])
   @@index([createdAt])
+}
+
+// One asset can be listed for sale at a time (assetId is unique) — the
+// creator sets a price in $MIX and toggles it active/inactive; the
+// underlying Asset can be sold to any number of buyers over time (this is
+// "pay to download the original," not a one-of-a-kind ownership
+// transfer/NFT — every confirmed purchase is its own MarketplacePurchase
+// row against the same listing). Listing creation itself is gated in
+// app/api/marketplace/listings/[assetId]/route.ts: owner-only,
+// asset.isOriginal must be true (the uploader's own "I made this"
+// declaration — see UploadDeclaration below), status ACTIVE, visibility
+// PUBLIC. sellerWallet is snapshotted at listing time rather than always
+// read live off asset.uploaderWallet, so a completed purchase's payout
+// destination is never ambiguous even in some future world where asset
+// ownership could change hands.
+model MarketplaceListing {
+  id           String   @id @default(cuid())
+  assetId      String   @unique
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  sellerWallet String
+  // Human-readable $MIX (already decimals-adjusted), never raw base
+  // units — same convention as MixBalanceCache.balance.
+  priceMix     Float
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  purchases MarketplacePurchase[]
+
+  @@index([active])
+}
+
+enum PurchaseStatus {
+  CONFIRMED
+  // Only ever written for a transaction that was actually mined and
+  // definitively reverted — a real, permanent on-chain outcome, worth a
+  // row for admin visibility. A transaction that's simply not mined yet
+  // is NOT persisted here at all (the purchase route returns a plain
+  // "not confirmed yet, try again" response instead) — that keeps the
+  // sellerTxHash/treasuryTxHash uniqueness below meaningful: it only ever
+  // protects hashes that were real, checked outcomes, not ones still in
+  // flight.
+  FAILED
+}
+
+// One row per completed purchase attempt — the actual money-moved
+// record, and the anti-replay backstop app/api/marketplace/purchases/
+// [assetId]/route.ts depends on. sellerTxHash and treasuryTxHash are
+// both @unique: once a transaction hash has been used to complete (or
+// definitively fail) one purchase, the database itself refuses to let it
+// be attached to a second one, regardless of what the application code
+// does or doesn't check first. price/fee/seller amounts are snapshotted
+// at purchase time (computed server-side from the listing's price and
+// PLATFORM_FEE_PERCENT at the moment of verification — never taken from
+// the buyer's request body), so a later price change on the listing
+// never rewrites the history of what an already-completed sale actually
+// cost.
+model MarketplacePurchase {
+  id              String             @id @default(cuid())
+  listingId       String
+  listing         MarketplaceListing @relation(fields: [listingId], references: [id])
+  assetId         String
+  buyerWallet     String
+  sellerWallet    String
+  priceMix        Float
+  platformFeeMix  Float
+  sellerAmountMix Float
+  sellerTxHash    String?            @unique
+  treasuryTxHash  String?            @unique
+  status          PurchaseStatus
+  failureReason   String?
+  createdAt       DateTime           @default(now())
+  confirmedAt     DateTime?
+
+  @@index([buyerWallet])
+  @@index([assetId])
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS

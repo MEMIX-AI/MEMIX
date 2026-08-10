@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Ban } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isMarketplaceEnabled } from "@/lib/marketplace";
 import { MyUploadCard } from "@/components/MyUploadCard";
 
 // Requires a connected + signed-in wallet — visitors without a wallet
@@ -13,9 +14,12 @@ export default async function MyUploadsPage() {
     redirect("/");
   }
 
+  const marketplaceEnabled = isMarketplaceEnabled();
+
   const assets = await prisma.asset.findMany({
     where: { uploaderWallet: user.walletAddress },
     orderBy: { createdAt: "desc" },
+    include: { marketplaceListing: marketplaceEnabled },
   });
 
   return (
@@ -47,7 +51,7 @@ export default async function MyUploadsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {assets.map((asset) => (
-            <MyUploadCard key={asset.id} asset={asset} />
+            <MyUploadCard key={asset.id} asset={asset} marketplaceEnabled={marketplaceEnabled} />
           ))}
         </div>
       )}

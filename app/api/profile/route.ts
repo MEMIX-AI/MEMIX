@@ -29,12 +29,16 @@ export async function PATCH(req: NextRequest) {
 
   const usernameRaw = formData.get("username");
   const xHandleRaw = formData.get("xHandle");
+  const discordHandleRaw = formData.get("discordHandle");
+  const websiteUrlRaw = formData.get("websiteUrl");
   const bioRaw = formData.get("bio");
   const avatarUrlRaw = formData.get("avatarUrl");
 
   const update = {
     username: usernameRaw != null ? String(usernameRaw).trim() : undefined,
     xHandle: xHandleRaw != null ? String(xHandleRaw) : undefined,
+    discordHandle: discordHandleRaw != null ? String(discordHandleRaw).trim() : undefined,
+    websiteUrl: websiteUrlRaw != null ? String(websiteUrlRaw).trim() : undefined,
     bio: bioRaw != null ? String(bioRaw).trim() : undefined,
     avatarUrl: avatarUrlRaw != null ? String(avatarUrlRaw).trim() : undefined,
   };

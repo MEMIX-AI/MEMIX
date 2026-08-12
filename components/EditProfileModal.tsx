@@ -11,6 +11,8 @@ export interface EditableProfile {
   username: string | null;
   avatarUrl: string | null;
   xHandle: string | null;
+  discordHandle: string | null;
+  websiteUrl: string | null;
   bio: string | null;
 }
 
@@ -64,6 +66,8 @@ export function EditProfileModal({
   );
   const [username, setUsername] = useState(profile.username ?? "");
   const [xHandle, setXHandle] = useState(profile.xHandle ?? "");
+  const [discordHandle, setDiscordHandle] = useState(profile.discordHandle ?? "");
+  const [websiteUrl, setWebsiteUrl] = useState(profile.websiteUrl ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +146,8 @@ export function EditProfileModal({
       const formData = new FormData();
       formData.append("username", username.trim());
       formData.append("xHandle", xHandle.trim());
+      formData.append("discordHandle", discordHandle.trim());
+      formData.append("websiteUrl", websiteUrl.trim());
       formData.append("bio", bio.trim());
       // Avatar is its own save path now (handleCropConfirm above) — only
       // touch avatarUrl here if the creator actually typed a pasted link,
@@ -288,6 +294,29 @@ export function EditProfileModal({
               className="min-w-0 flex-1 bg-transparent py-2.5 pr-3.5 text-sm text-text outline-none"
             />
           </div>
+        </div>
+
+        <div className="mb-3.5">
+          <label className="mb-1.5 block font-heading text-[13px] font-semibold text-text">Discord</label>
+          <input
+            value={discordHandle}
+            onChange={(e) => setDiscordHandle(e.target.value)}
+            placeholder="username"
+            maxLength={40}
+            className="w-full rounded-xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
+          />
+        </div>
+
+        <div className="mb-3.5">
+          <label className="mb-1.5 block font-heading text-[13px] font-semibold text-text">
+            Website <span className="font-sans font-normal text-dim">(optional)</span>
+          </label>
+          <input
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="https://…"
+            className="w-full rounded-xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
+          />
         </div>
 
         <div className="mb-4">

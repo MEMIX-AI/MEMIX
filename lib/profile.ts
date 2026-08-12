@@ -3,6 +3,7 @@ import { publicAssetWhere } from "./asset-visibility";
 
 const MAX_USERNAME_LENGTH = 40;
 const MAX_X_HANDLE_LENGTH = 30;
+const MAX_DISCORD_HANDLE_LENGTH = 40;
 const MAX_BIO_LENGTH = 280;
 
 export async function getProfile(walletAddress: string) {
@@ -57,6 +58,8 @@ export interface ProfileUpdateInput {
   username?: string | null;
   avatarUrl?: string | null;
   xHandle?: string | null;
+  discordHandle?: string | null;
+  websiteUrl?: string | null;
   bio?: string | null;
 }
 
@@ -74,6 +77,12 @@ export function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateR
   }
   if (input.xHandle != null && input.xHandle.length > MAX_X_HANDLE_LENGTH) {
     return { ok: false, error: `X handle is too long (max ${MAX_X_HANDLE_LENGTH} characters)` };
+  }
+  if (input.discordHandle != null && input.discordHandle.length > MAX_DISCORD_HANDLE_LENGTH) {
+    return { ok: false, error: `Discord handle is too long (max ${MAX_DISCORD_HANDLE_LENGTH} characters)` };
+  }
+  if (input.websiteUrl && !/^https?:\/\//.test(input.websiteUrl)) {
+    return { ok: false, error: "website must be a real link starting with http:// or https://" };
   }
   if (input.bio != null && input.bio.length > MAX_BIO_LENGTH) {
     return { ok: false, error: `bio is too long (max ${MAX_BIO_LENGTH} characters)` };
@@ -111,7 +120,39 @@ export async function updateProfile(walletAddress: string, input: ProfileUpdateI
       ...(input.username !== undefined && { username: input.username?.trim() || null }),
       ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl || null }),
       ...(input.xHandle !== undefined && { xHandle: normalizeXHandle(input.xHandle) }),
+      ...(input.discordHandle !== undefined && { discordHandle: input.discordHandle?.trim() || null }),
+      ...(input.websiteUrl !== undefined && { websiteUrl: input.websiteUrl?.trim() || null }),
       ...(input.bio !== undefined && { bio: input.bio?.trim() || null }),
     },
   });
+}
+
+// Single-wallet version of lib/creators.ts's aggregate — same real
+// sources (works from Asset, sales/earnings from CONFIRMED
+// MarketplacePurchase, followers from Follow), just scoped to the one
+// profile being rendered instead of the whole directory.
+export interface CreatorStats {
+  works: number;
+  followers: number;
+  sales: number;
+  earnedMix: number;
+}
+
+export async function getCreatorStats(walletAddress: string): Promise<CreatorStats> {
+  const wallet = walletAddress.toLowerCase();
+  const [works, followers, salesAgg] = await Promise.all([
+    prisma.asset.count({ where: { uploaderWallet: wallet, ...publicAssetWhere } }),
+    prisma.follow.count({ where: { followingWallet: wallet } }),
+    prisma.marketplacePurchase.aggregate({
+      where: { sellerWallet: wallet, status: "CONFIRMED" },
+      _count: { _all: true },
+      _sum: { sellerAmountMix: true },
+    }),
+  ]);
+  return {
+    works,
+    followers,
+    sales: salesAgg._count._all,
+    earnedMix: salesAgg._sum.sellerAmountMix ?? 0,
+  };
 }

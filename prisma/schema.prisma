@@ -110,10 +110,12 @@ model User {
   // storage key (uploaded photo — resolve via lib/storage.ts same as
   // Asset thumbnails) or a raw http(s) URL (pasted link) — see
   // lib/asset-urls.ts#isStorageKey for the same pattern applied to assets.
-  username  String?
-  avatarUrl String?
-  xHandle   String?
-  bio       String?
+  username      String?
+  avatarUrl     String?
+  xHandle       String?
+  discordHandle String?
+  websiteUrl    String?
+  bio           String?
 
   assets       Asset[]
   declarations UploadDeclaration[]
@@ -310,16 +312,25 @@ enum PurchaseStatus {
 
 // One row per completed purchase attempt — the actual money-moved
 // record, and the anti-replay backstop app/api/marketplace/purchases/
-// [assetId]/route.ts depends on. sellerTxHash and treasuryTxHash are
-// both @unique: once a transaction hash has been used to complete (or
-// definitively fail) one purchase, the database itself refuses to let it
-// be attached to a second one, regardless of what the application code
-// does or doesn't check first. price/fee/seller amounts are snapshotted
-// at purchase time (computed server-side from the listing's price and
+// [assetId]/route.ts depends on. paymentTxHash is @unique: once a
+// transaction hash has been used to complete (or definitively fail) one
+// purchase, the database itself refuses to let it be attached to a
+// second one, regardless of what the application code does or doesn't
+// check first. price/fee/seller amounts are snapshotted at purchase time
+// (computed server-side from the listing's price and
 // PLATFORM_FEE_PERCENT at the moment of verification — never taken from
 // the buyer's request body), so a later price change on the listing
 // never rewrites the history of what an already-completed sale actually
 // cost.
+//
+// Custodial model (revised — see Withdrawal below): the buyer sends the
+// FULL priceMix in one transfer straight to the treasury wallet
+// (paymentTxHash), not split two ways. sellerAmountMix is the amount
+// CREDITED to the seller's real ledger balance (sum of sellerAmountMix
+// across CONFIRMED purchases, minus sum of CONFIRMED Withdrawal.amountMix
+// — see lib/treasury.ts) — it does not mean that $MIX already left the
+// treasury. The seller only actually receives it on-chain once they
+// withdraw.
 model MarketplacePurchase {
   id              String             @id @default(cuid())
   listingId       String
@@ -330,8 +341,7 @@ model MarketplacePurchase {
   priceMix        Float
   platformFeeMix  Float
   sellerAmountMix Float
-  sellerTxHash    String?            @unique
-  treasuryTxHash  String?            @unique
+  paymentTxHash   String?            @unique
   status          PurchaseStatus
   failureReason   String?
   createdAt       DateTime           @default(now())
@@ -339,6 +349,40 @@ model MarketplacePurchase {
 
   @@index([buyerWallet])
   @@index([assetId])
+}
+
+// PENDING exists only for Withdrawal, not PurchaseStatus above — a
+// withdrawal is server-signed (lib/treasury.ts), so unlike a purchase
+// (buyer-signed, freely retryable with the same hash) it needs a real
+// reservation row the instant the amount is committed to, before the
+// on-chain send even happens, so a second concurrent withdraw request
+// can't compute the same "available" balance and double-spend the
+// treasury. See executeWithdrawal for the full reserve-then-send flow.
+enum WithdrawalStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// One row per real treasury-signed payout to a creator — the actual
+// on-chain send, not a request/intent (see lib/treasury.ts#executeWithdrawal,
+// the only writer). txHash is @unique for the same anti-replay reason as
+// MarketplacePurchase.paymentTxHash. A creator's available balance is
+// always computed fresh (sum of MarketplacePurchase.sellerAmountMix for
+// CONFIRMED sales, minus sum of this table's amountMix for CONFIRMED
+// *and* PENDING withdrawals) — never cached on User, so it can never
+// drift from the transactions that actually back it.
+model Withdrawal {
+  id            String           @id @default(cuid())
+  creatorWallet String
+  amountMix     Float
+  txHash        String?          @unique
+  status        WithdrawalStatus @default(PENDING)
+  failureReason String?
+  createdAt     DateTime         @default(now())
+  confirmedAt   DateTime?
+
+  @@index([creatorWallet])
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS

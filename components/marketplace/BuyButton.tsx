@@ -6,33 +6,30 @@ import { getAddress } from "viem";
 import { ShoppingCart, Download, Loader2 } from "lucide-react";
 import { MIX_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/erc20";
 
-type Step = "idle" | "paying-seller" | "paying-treasury" | "verifying" | "done" | "error";
+type Step = "idle" | "paying" | "verifying" | "done" | "error";
 
-// Option A from the brief: two plain ERC-20 transfers sent directly by
-// the buyer's own wallet (95% to the creator, 5% to the treasury), no
-// splitter contract. Whatever this component believes about "success" is
-// never trusted on its own — every hash gets independently re-verified
+// Custodial model: one plain ERC-20 transfer of the FULL price, sent
+// directly by the buyer's own wallet to the treasury. The seller's 95%
+// share becomes a real ledger credit (redeemable later via their own
+// Withdraw button — see lib/treasury.ts), not a wallet-to-wallet payment
+// at purchase time. Whatever this component believes about "success" is
+// never trusted on its own — the hash gets independently re-verified
 // server-side (app/api/marketplace/purchases/[assetId]/route.ts, via
 // lib/marketplace.ts reading ROBINHOOD_RPC_URL directly) before any
-// download URL is handed back. sellerRaw/feeRaw arrive as strings (a
-// server component can't hand a client component a real bigint) computed
+// download URL is handed back. totalRaw arrives as a string (a server
+// component can't hand a client component a real bigint) computed
 // server-side from the listing's real price — this component never
-// recomputes the split itself, only relays those exact amounts into the
-// two transactions.
+// recomputes it, only relays that exact amount into the transaction.
 export function BuyButton({
   assetId,
   priceMix,
-  sellerWallet,
   treasuryWallet,
-  sellerRaw,
-  feeRaw,
+  totalRaw,
 }: {
   assetId: string;
   priceMix: number;
-  sellerWallet: string;
   treasuryWallet: string;
-  sellerRaw: string;
-  feeRaw: string;
+  totalRaw: string;
 }) {
   const { address, isConnected } = useAccount();
   const { writeContractAsync } = useWriteContract();
@@ -41,27 +38,27 @@ export function BuyButton({
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [pendingHashes, setPendingHashes] = useState<{ seller: string; treasury: string } | null>(null);
+  const [pendingHash, setPendingHash] = useState<string | null>(null);
 
-  async function submitForVerification(sellerTxHash: string, treasuryTxHash: string) {
+  async function submitForVerification(paymentTxHash: string) {
     setStep("verifying");
     const res = await fetch(`/api/marketplace/purchases/${assetId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sellerTxHash, treasuryTxHash }),
+      body: JSON.stringify({ paymentTxHash }),
     });
     const data = await res.json().catch(() => null);
 
     if (res.ok && data?.ok) {
       setDownloadUrl(data.downloadUrl);
-      setPendingHashes(null);
+      setPendingHash(null);
       setStep("done");
       return;
     }
     if (res.status === 202 && data?.pending) {
       // Mined-but-not-confirmed-enough, or genuinely not mined yet — the
-      // exact same two hashes are still good, no need to pay twice.
-      setPendingHashes({ seller: sellerTxHash, treasury: treasuryTxHash });
+      // exact same hash is still good, no need to pay twice.
+      setPendingHash(paymentTxHash);
       setError(data.error ?? "still confirming on-chain — try again in a moment");
       setStep("error");
       return;
@@ -74,25 +71,16 @@ export function BuyButton({
     if (!address) return;
     setError(null);
     try {
-      setStep("paying-seller");
-      const sellerTxHash = await writeContractAsync({
+      setStep("paying");
+      const txHash = await writeContractAsync({
         address: getAddress(MIX_TOKEN_ADDRESS),
         abi: ERC20_ABI,
         functionName: "transfer",
-        args: [getAddress(sellerWallet), BigInt(sellerRaw)],
+        args: [getAddress(treasuryWallet), BigInt(totalRaw)],
       });
-      await publicClient?.waitForTransactionReceipt({ hash: sellerTxHash });
+      await publicClient?.waitForTransactionReceipt({ hash: txHash });
 
-      setStep("paying-treasury");
-      const treasuryTxHash = await writeContractAsync({
-        address: getAddress(MIX_TOKEN_ADDRESS),
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [getAddress(treasuryWallet), BigInt(feeRaw)],
-      });
-      await publicClient?.waitForTransactionReceipt({ hash: treasuryTxHash });
-
-      await submitForVerification(sellerTxHash, treasuryTxHash);
+      await submitForVerification(txHash);
     } catch (err) {
       setError(err instanceof Error ? err.message : "the purchase didn't go through");
       setStep("error");
@@ -100,12 +88,12 @@ export function BuyButton({
   }
 
   function retry() {
-    if (!pendingHashes) {
+    if (!pendingHash) {
       setStep("idle");
       setError(null);
       return;
     }
-    void submitForVerification(pendingHashes.seller, pendingHashes.treasury);
+    void submitForVerification(pendingHash);
   }
 
   if (step === "done" && downloadUrl) {
@@ -128,12 +116,12 @@ export function BuyButton({
     );
   }
 
-  const busy = step === "paying-seller" || step === "paying-treasury" || step === "verifying";
+  const busy = step === "paying" || step === "verifying";
 
   return (
     <div className="flex flex-col gap-2.5">
       <button
-        onClick={pendingHashes ? retry : buy}
+        onClick={pendingHash ? retry : buy}
         disabled={busy}
         className="gradient-brand flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow disabled:opacity-60"
       >
@@ -142,15 +130,13 @@ export function BuyButton({
         ) : (
           <ShoppingCart size={17} strokeWidth={1.75} />
         )}
-        {step === "paying-seller" && "confirm payment to creator…"}
-        {step === "paying-treasury" && "confirm platform fee…"}
+        {step === "paying" && "confirm payment…"}
         {step === "verifying" && "verifying on-chain…"}
-        {!busy && pendingHashes && "check payment status"}
-        {!busy && !pendingHashes && `buy for ${priceMix.toLocaleString()} $MIX`}
+        {!busy && pendingHash && "check payment status"}
+        {!busy && !pendingHash && `buy for ${priceMix.toLocaleString()} $MIX`}
       </button>
       <p className="text-xs text-dim">
-        two transactions: {priceMix.toLocaleString()} $MIX splits into a direct payment to the
-        creator and a platform fee, sent as two separate transfers from your wallet.
+        one transaction: {priceMix.toLocaleString()} $MIX, sent straight from your wallet.
       </p>
       {error && <p className="text-xs text-warn">{error}</p>}
     </div>

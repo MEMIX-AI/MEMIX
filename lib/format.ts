@@ -34,6 +34,15 @@ export function shortenWallet(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+// "1.2K" / "384" — real counts only get compacted for display past 4
+// digits; small real numbers (the common case for a young marketplace)
+// are shown exactly, not rounded into something vaguer than they need to
+// be.
+export function formatCompactNumber(n: number): string {
+  if (n < 1000) return n.toLocaleString();
+  return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+}
+
 // "Joined Jul 2026" — real User.createdAt, month-granularity on purpose
 // (a day-level join date isn't meaningfully different information for a
 // profile page, and month grouping reads less like a precise timestamp).

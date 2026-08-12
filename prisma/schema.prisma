@@ -120,6 +120,22 @@ model User {
   apiKey       ApiKey?
 }
 
+// One row per real follow — exists purely so a creator's "Followers"
+// count (app/creators/page.tsx, lib/creators.ts) is a genuine database
+// count rather than a made-up number. No follow/unfollow UI ships in
+// this change (that belongs with the /u/[wallet] profile work); until
+// that exists, this table stays empty and every creator's Followers
+// count is honestly 0 — not a placeholder, just real data with nothing
+// in it yet.
+model Follow {
+  followerWallet  String
+  followingWallet String
+  createdAt       DateTime @default(now())
+
+  @@id([followerWallet, followingWallet])
+  @@index([followingWallet])
+}
+
 model Tag {
   id     String  @id @default(cuid())
   name   String  @unique

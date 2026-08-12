@@ -3,10 +3,11 @@ import Link from "next/link";
 import { ImageOff, Tag as TagIcon } from "lucide-react";
 import { shortenWallet } from "@/lib/format";
 
-// Real listing card for the storefront (app/creators/page.tsx, when
-// MARKETPLACE_ENABLED) — everything here is a real MarketplaceListing +
-// Asset row, never a mockup (see components/MarketplaceComingSoonCard.tsx
-// for the placeholder version shown while the feature is off).
+// Real listing card — one MarketplaceListing + its Asset, never a
+// mockup. Not currently wired into any page (app/creators/page.tsx is
+// now the creator directory/leaderboard, not a flat listing grid); kept
+// for the per-creator "Originals for sale" section a future /u/[wallet]
+// redesign will need.
 export function ListingCard({
   assetId,
   title,

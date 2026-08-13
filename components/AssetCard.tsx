@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Asset, Tag } from "@prisma/client";
-import { Play, Eye, Download as DownloadIcon, ImageOff } from "lucide-react";
+import { Play, Eye, Download as DownloadIcon, ImageOff, Tag as TagIcon } from "lucide-react";
 import { assetTypeLabel, formatDuration, formatRelativeTime, shortenWallet } from "@/lib/format";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { ShareMenu } from "@/components/ShareMenu";
@@ -15,12 +15,20 @@ type AssetWithTags = Asset & { tags: Tag[] };
 export function AssetCard({
   asset,
   flag,
+  listing,
 }: {
   asset: AssetWithTags;
   /** Contextual "TRENDING"/"NEW" thumbnail flag — only ever set by a
    * parent section that's honestly showing this asset for that reason
    * (the home page's Trending/Fresh Uploads rails), never fabricated. */
   flag?: "TRENDING" | "NEW";
+  /** Real active MarketplaceListing for this asset, or omitted/null when
+   * there isn't one — see lib/marketplace.ts#getActiveListingsByAssetIds.
+   * Never assumed; a parent only passes this when it actually queried
+   * for it. When present, this card can't grant a free download at all
+   * (see below) — the real gate lives server-side either way (app/api/
+   * assets/[id]/download/route.ts), this is just honest surface UI. */
+  listing?: { priceMix: number } | null;
 }) {
   const ActionIcon = asset.type === "IMAGE" ? Eye : Play;
   const kind = `${assetTypeLabel(asset.type).toUpperCase()}${
@@ -34,6 +42,12 @@ export function AssetCard({
           {flag && (
             <span className="absolute left-2.5 top-2.5 z-10 rounded-lg bg-gradient-to-br from-[#FF8A3D] to-[#FF5E5E] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-white">
               {flag}
+            </span>
+          )}
+          {listing && (
+            <span className="gradient-brand absolute right-2.5 top-2.5 z-10 flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-white">
+              <TagIcon size={10} strokeWidth={2.5} />
+              {listing.priceMix.toLocaleString()} $MIX
             </span>
           )}
 
@@ -98,13 +112,23 @@ export function AssetCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <DownloadLink
-          assetId={asset.id}
-          className="gradient-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-[11px] text-[13.5px] font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          <DownloadIcon size={14} strokeWidth={1.75} />
-          Download
-        </DownloadLink>
+        {listing ? (
+          <Link
+            href={`/asset/${asset.id}`}
+            className="gradient-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-[11px] text-[13.5px] font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <TagIcon size={14} strokeWidth={1.75} />
+            Buy for {listing.priceMix.toLocaleString()} $MIX
+          </Link>
+        ) : (
+          <DownloadLink
+            assetId={asset.id}
+            className="gradient-brand flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-[11px] text-[13.5px] font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <DownloadIcon size={14} strokeWidth={1.75} />
+            Download
+          </DownloadLink>
+        )}
         <ShareMenu assetId={asset.id} title={asset.title} />
       </div>
     </div>

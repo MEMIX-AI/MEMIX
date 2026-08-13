@@ -44,6 +44,22 @@ function minConfirmations(): bigint {
   return BigInt(Math.max(0, Math.floor(numberEnv("MARKETPLACE_MIN_CONFIRMATIONS"))));
 }
 
+// One batched query for however many asset ids a grid is about to render
+// (Home's five rails, Library's page of results, etc.) — not one query
+// per card. Returns an empty map immediately while the feature is off,
+// so every existing caller of AssetCard stays byte-for-byte unchanged
+// without needing its own isMarketplaceEnabled() check.
+export async function getActiveListingsByAssetIds(
+  assetIds: string[],
+): Promise<Map<string, { priceMix: number }>> {
+  if (!isMarketplaceEnabled() || assetIds.length === 0) return new Map();
+  const listings = await prisma.marketplaceListing.findMany({
+    where: { assetId: { in: assetIds }, active: true },
+    select: { assetId: true, priceMix: true },
+  });
+  return new Map(listings.map((l) => [l.assetId, { priceMix: l.priceMix }]));
+}
+
 function getPublicClient() {
   const rpcUrl = process.env.ROBINHOOD_RPC_URL;
   if (!rpcUrl) throw new Error("ROBINHOOD_RPC_URL is not set");

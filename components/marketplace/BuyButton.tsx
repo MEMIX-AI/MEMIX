@@ -5,6 +5,7 @@ import { useAccount, useWriteContract, usePublicClient } from "wagmi";
 import { getAddress } from "viem";
 import { ShoppingCart, Download, Loader2 } from "lucide-react";
 import { MIX_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/erc20";
+import { robinhoodChain } from "@/lib/wagmi-config";
 
 type Step = "idle" | "paying-seller" | "paying-treasury" | "verifying" | "done" | "error";
 
@@ -37,7 +38,11 @@ export function BuyButton({
 }) {
   const { address, isConnected } = useAccount();
   const { writeContractAsync } = useWriteContract();
-  const publicClient = usePublicClient();
+  // Explicit chainId — wagmi's default publicClient follows whatever
+  // chain the wallet is CURRENTLY connected to, which is almost never
+  // Robinhood Chain unless the buyer already switched manually. This is
+  // what waitForTransactionReceipt below actually needs to be reachable.
+  const publicClient = usePublicClient({ chainId: robinhoodChain.id });
 
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +86,7 @@ export function BuyButton({
         abi: ERC20_ABI,
         functionName: "transfer",
         args: [getAddress(sellerWallet), BigInt(sellerRaw)],
+        chainId: robinhoodChain.id,
       });
       await publicClient?.waitForTransactionReceipt({ hash: sellerTxHash });
 
@@ -90,6 +96,7 @@ export function BuyButton({
         abi: ERC20_ABI,
         functionName: "transfer",
         args: [getAddress(treasuryWallet), BigInt(feeRaw)],
+        chainId: robinhoodChain.id,
       });
       await publicClient?.waitForTransactionReceipt({ hash: treasuryTxHash });
 

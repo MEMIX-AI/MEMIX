@@ -8,6 +8,7 @@ import {
   getTrendingAssets,
 } from "@/lib/assets";
 import { resolveAssetUrlsMany } from "@/lib/asset-urls";
+import { getActiveListingsByAssetIds } from "@/lib/marketplace";
 import { CATEGORY_FILTERS } from "@/lib/search";
 import { AssetCard } from "@/components/AssetCard";
 import { FeatureStrip } from "@/components/FeatureStrip";
@@ -35,7 +36,10 @@ export default async function Home() {
   // length 1:1, so slicing the combined result back apart by each raw
   // list's original length is exact, not approximate.
   const combinedRaw = [...trendingRaw, ...freshRaw, ...picksRaw, ...soundsRaw, ...videosRaw];
-  const combinedResolved = await resolveAssetUrlsMany(combinedRaw);
+  const [combinedResolved, listingsByAssetId] = await Promise.all([
+    resolveAssetUrlsMany(combinedRaw),
+    getActiveListingsByAssetIds(combinedRaw.map((a) => a.id)),
+  ]);
   let cursor = 0;
   function take<T>(list: T[]): T[] {
     const slice = combinedResolved.slice(cursor, cursor + list.length) as unknown as T[];
@@ -118,12 +122,12 @@ export default async function Home() {
           subtitle="What the catalogue says is worth using right now."
           viewAllHref="/library"
         />
-        <AssetGrid assets={trending} flag="TRENDING" />
+        <AssetGrid assets={trending} flag="TRENDING" listingsByAssetId={listingsByAssetId} />
       </section>
 
       <section className="mt-16">
         <SectionHeading emoji="✨" label="Fresh Uploads" subtitle="Just added to the catalogue." viewAllHref="/library" />
-        <AssetGrid assets={fresh} flag="NEW" />
+        <AssetGrid assets={fresh} flag="NEW" listingsByAssetId={listingsByAssetId} />
       </section>
 
       <section className="mt-16">
@@ -136,7 +140,7 @@ export default async function Home() {
         {picks.length === 0 ? (
           <p className="text-sm text-dim">nothing verdicted yet.</p>
         ) : (
-          <AssetGrid assets={picks} />
+          <AssetGrid assets={picks} listingsByAssetId={listingsByAssetId} />
         )}
       </section>
 
@@ -145,7 +149,7 @@ export default async function Home() {
         {sounds.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
-          <AssetGrid assets={sounds} />
+          <AssetGrid assets={sounds} listingsByAssetId={listingsByAssetId} />
         )}
       </section>
 
@@ -154,17 +158,16 @@ export default async function Home() {
         {videos.length === 0 ? (
           <p className="text-sm text-dim">nothing here yet.</p>
         ) : (
-          <AssetGrid assets={videos} />
+          <AssetGrid assets={videos} listingsByAssetId={listingsByAssetId} />
         )}
       </section>
 
       <section className="mt-16">
-        <SectionHeading emoji="👥" label="Top Creators" subtitle="The creator directory — not live yet." badge="Soon" />
+        <SectionHeading emoji="👥" label="Creator Hub" subtitle="Real creators, real originals, paid in $MIX." />
         <div className="rounded-2xl border border-line bg-panel px-6 py-10 text-center text-sm text-dim shadow-soft">
-          The creator directory isn&apos;t live yet — no profiles, earnings,
-          or follower counts exist to show.{" "}
+          Browse the creator directory and leaderboard.{" "}
           <Link href="/creators" className="font-medium text-accent hover:underline">
-            Read more
+            Visit the Creator Hub
           </Link>
           .
         </div>
@@ -215,9 +218,11 @@ function SectionHeading({
 function AssetGrid({
   assets,
   flag,
+  listingsByAssetId,
 }: {
   assets: (Asset & { tags: Tag[] })[];
   flag?: "TRENDING" | "NEW";
+  listingsByAssetId: Map<string, { priceMix: number }>;
 }) {
   if (assets.length === 0) {
     return <p className="text-sm text-dim">nothing here yet.</p>;
@@ -225,7 +230,7 @@ function AssetGrid({
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {assets.map((asset) => (
-        <AssetCard key={asset.id} asset={asset} flag={flag} />
+        <AssetCard key={asset.id} asset={asset} flag={flag} listing={listingsByAssetId.get(asset.id)} />
       ))}
     </div>
   );

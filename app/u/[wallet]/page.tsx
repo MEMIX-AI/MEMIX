@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { X as XIcon, MessageCircle, Globe, UploadCloud, Sparkles, ShoppingBag } from "lucide-react";
+import { X as XIcon, MessageCircle, Globe, UploadCloud, Sparkles, ShoppingBag, Wallet as WalletIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getProfile, getProfileAssets, getCreatorStats } from "@/lib/profile";
 import { resolveAssetUrlsMany, isStorageKey } from "@/lib/asset-urls";
@@ -14,7 +14,6 @@ import { ProfileEditButton } from "@/components/ProfileEditButton";
 import { FollowButton } from "@/components/FollowButton";
 import { ProfileShareMenu } from "@/components/ProfileShareMenu";
 import { CreatorOriginalsGrid, type CreatorOriginalItem } from "@/components/CreatorOriginalsGrid";
-import { EarningsCard } from "@/components/EarningsCard";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -201,9 +200,28 @@ export default async function ProfilePage({
         </div>
       </div>
 
-      {isOwner && marketplaceOn && (
-        <div className="mt-8">
-          <EarningsCard walletAddress={wallet} />
+      {/* Total earned — read-only. Non-custodial by design (see
+          lib/marketplace.ts): every sale already pays the creator's
+          wallet directly, in the same transaction the buyer signs, so
+          there's no platform-held balance and nothing to withdraw. This
+          just surfaces the real, already-confirmed total. */}
+      {isOwner && marketplaceOn && stats.sales > 0 && (
+        <div className="glass relative mt-8 overflow-hidden rounded-[24px] border border-line p-6 shadow-soft-lg sm:p-7">
+          <div
+            className="absolute inset-x-0 top-0 h-16 opacity-60"
+            style={{ background: "linear-gradient(120deg, var(--accent-3), var(--accent))" }}
+          />
+          <div className="relative flex items-center gap-2 text-sm font-semibold text-text">
+            <WalletIcon size={16} strokeWidth={1.75} className="text-accent" />
+            Total Earned
+          </div>
+          <p className="relative mt-4 font-heading text-3xl font-bold text-accent-2">
+            {formatCompactNumber(stats.earnedMix)} <span className="text-lg text-dim">$MIX</span>
+          </p>
+          <p className="relative mt-2 text-[13px] text-dim">
+            from {stats.sales} confirmed sale{stats.sales === 1 ? "" : "s"} — paid straight to your wallet
+            the moment each one confirmed. No separate withdraw step: memix never holds your $MIX.
+          </p>
         </div>
       )}
 

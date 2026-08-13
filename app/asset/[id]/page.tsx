@@ -108,7 +108,7 @@ export default async function AssetDetailPage({
   // download/route.ts for the same gate enforced server-side on the
   // actual download — this block only decides what UI to show, never
   // grants access on its own.
-  type BuyInfo = { treasuryWallet: string; totalRaw: string };
+  type BuyInfo = { sellerWallet: string; treasuryWallet: string; sellerRaw: string; feeRaw: string };
   let marketplaceGate: { priceMix: number; canDownloadFree: boolean; buy: BuyInfo | null } | null = null;
 
   if (isMarketplaceEnabled()) {
@@ -128,10 +128,12 @@ export default async function AssetDetailPage({
         const treasury = platformTreasuryWallet();
         const decimals = treasury ? await getMixDecimals().catch(() => null) : null;
         if (treasury && decimals !== null) {
-          const { totalRaw } = computeSplit(listing.priceMix, decimals, platformFeePercent());
+          const { feeRaw, sellerRaw } = computeSplit(listing.priceMix, decimals, platformFeePercent());
           buy = {
+            sellerWallet: listing.sellerWallet,
             treasuryWallet: treasury,
-            totalRaw: totalRaw.toString(),
+            sellerRaw: sellerRaw.toString(),
+            feeRaw: feeRaw.toString(),
           };
         }
       }
@@ -159,8 +161,10 @@ export default async function AssetDetailPage({
                 <BuyButton
                   assetId={asset.id}
                   priceMix={marketplaceGate.priceMix}
+                  sellerWallet={marketplaceGate.buy.sellerWallet}
                   treasuryWallet={marketplaceGate.buy.treasuryWallet}
-                  totalRaw={marketplaceGate.buy.totalRaw}
+                  sellerRaw={marketplaceGate.buy.sellerRaw}
+                  feeRaw={marketplaceGate.buy.feeRaw}
                 />
               ) : (
                 <div className="rounded-2xl border border-line bg-panel px-5 py-4 text-sm text-warn shadow-soft">

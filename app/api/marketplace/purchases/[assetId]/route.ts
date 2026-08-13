@@ -29,10 +29,11 @@ export async function POST(
   }
 
   const body = await req.json().catch(() => null);
-  const paymentTxHash = String(body?.paymentTxHash ?? "");
-  if (!TX_HASH_RE.test(paymentTxHash)) {
+  const sellerTxHash = String(body?.sellerTxHash ?? "");
+  const treasuryTxHash = String(body?.treasuryTxHash ?? "");
+  if (!TX_HASH_RE.test(sellerTxHash) || !TX_HASH_RE.test(treasuryTxHash)) {
     return NextResponse.json(
-      { error: "paymentTxHash must be a real transaction hash" },
+      { error: "sellerTxHash and treasuryTxHash must both be real transaction hashes" },
       { status: 400 },
     );
   }
@@ -50,7 +51,8 @@ export async function POST(
     result = await verifyAndRecordPurchase({
       assetId: params.assetId,
       buyerWallet: user.walletAddress,
-      paymentTxHash: paymentTxHash as Hash,
+      sellerTxHash: sellerTxHash as Hash,
+      treasuryTxHash: treasuryTxHash as Hash,
     });
   } catch (err) {
     console.error(`marketplace purchase verification crashed for asset ${params.assetId}:`, err);
@@ -92,17 +94,23 @@ export async function POST(
         { ok: false, error: "the marketplace's treasury wallet isn't configured — purchases are paused" },
         { status: 503 },
       );
+    case "same_hash_twice":
+      return NextResponse.json(
+        { ok: false, error: "sellerTxHash and treasuryTxHash must be two different transactions" },
+        { status: 400 },
+      );
     case "hash_already_used":
       return NextResponse.json(
-        { ok: false, error: "this transaction hash has already been used for a purchase" },
+        { ok: false, error: "one of these transaction hashes has already been used for a purchase" },
         { status: 409 },
       );
     case "pending":
       return NextResponse.json(
         {
           ok: false,
-          error: "the payment isn't confirmed on-chain yet — wait a moment and try again",
+          error: `the ${result.leg} payment isn't confirmed on-chain yet — wait a moment and try again`,
           pending: true,
+          leg: result.leg,
         },
         { status: 202 },
       );
@@ -110,7 +118,7 @@ export async function POST(
       return NextResponse.json(
         {
           ok: false,
-          error: `the payment didn't verify (${humanizeReason(result.detail)}) — no access has been granted`,
+          error: `the ${result.leg} payment didn't verify (${humanizeReason(result.detail)}) — no access has been granted`,
         },
         { status: 402 },
       );

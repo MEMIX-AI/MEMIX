@@ -157,26 +157,30 @@ export type PurchaseResult =
   | { ok: true; purchase: MarketplacePurchase }
   | { ok: false; reason: "not_listed" }
   | { ok: false; reason: "treasury_not_configured" }
+  | { ok: false; reason: "same_hash_twice" }
   | { ok: false; reason: "hash_already_used" }
-  | { ok: false; reason: "pending" }
-  | { ok: false; reason: "verification_failed"; detail: string }
+  | { ok: false; reason: "pending"; leg: "seller" | "treasury" }
+  | { ok: false; reason: "verification_failed"; leg: "seller" | "treasury"; detail: string }
   | { ok: false; reason: "rpc_unavailable"; detail: string };
 
-// Orchestrates a full purchase verification for the custodial model — one
-// plain ERC-20 transfer of the FULL price from the buyer straight to the
-// treasury wallet (see the schema comment on MarketplacePurchase for why
-// this replaced the earlier two-leg split: a creator's sellerAmountMix
-// share is now a real ledger credit, redeemable on-chain later via
-// lib/treasury.ts#executeWithdrawal, not sent to their wallet at
-// purchase time). Only a definitively reverted transfer gets written as
-// FAILED; everything else that isn't a clean success returns without
-// touching the database at all.
+// Orchestrates a full purchase verification for Option A (two plain
+// ERC-20 transfers from the buyer, no splitter contract, no custody —
+// see the schema comment on MarketplacePurchase for why: a solo-founder
+// platform deliberately never holds creator funds or a server-side
+// signing key). Only a definitively reverted leg gets written as FAILED;
+// everything else that isn't a clean success returns without touching
+// the database at all.
 export async function verifyAndRecordPurchase(params: {
   assetId: string;
   buyerWallet: string;
-  paymentTxHash: Hash;
+  sellerTxHash: Hash;
+  treasuryTxHash: Hash;
 }): Promise<PurchaseResult> {
-  const { assetId, buyerWallet, paymentTxHash } = params;
+  const { assetId, buyerWallet, sellerTxHash, treasuryTxHash } = params;
+
+  if (sellerTxHash.toLowerCase() === treasuryTxHash.toLowerCase()) {
+    return { ok: false, reason: "same_hash_twice" };
+  }
 
   const listing = await prisma.marketplaceListing.findUnique({
     where: { assetId },
@@ -192,7 +196,12 @@ export async function verifyAndRecordPurchase(params: {
   }
 
   const existing = await prisma.marketplacePurchase.findFirst({
-    where: { paymentTxHash },
+    where: {
+      OR: [
+        { sellerTxHash: { in: [sellerTxHash, treasuryTxHash] } },
+        { treasuryTxHash: { in: [sellerTxHash, treasuryTxHash] } },
+      ],
+    },
   });
   if (existing) {
     return { ok: false, reason: "hash_already_used" };
@@ -208,29 +217,50 @@ export async function verifyAndRecordPurchase(params: {
       detail: err instanceof Error ? err.message : String(err),
     };
   }
-  const { totalRaw, feeRaw, sellerRaw } = computeSplit(listing.priceMix, decimals, platformFeePercent());
+  const { feeRaw, sellerRaw } = computeSplit(listing.priceMix, decimals, platformFeePercent());
   const buyer = getAddress(buyerWallet);
   const seller = getAddress(listing.sellerWallet);
 
-  let leg: VerifyResult;
+  let sellerLeg: VerifyResult;
+  let treasuryLeg: VerifyResult;
   try {
-    leg = await verifyMixTransfer({
-      txHash: paymentTxHash,
+    sellerLeg = await verifyMixTransfer({
+      txHash: sellerTxHash,
       expectedFrom: buyer,
-      expectedTo: treasuryWallet,
-      expectedRawAmount: totalRaw,
+      expectedTo: seller,
+      expectedRawAmount: sellerRaw,
     });
   } catch (err) {
     return { ok: false, reason: "rpc_unavailable", detail: err instanceof Error ? err.message : String(err) };
   }
-  if (!leg.ok) {
-    if (leg.reason === "not_mined" || leg.reason === "not_enough_confirmations") {
-      return { ok: false, reason: "pending" };
+  if (!sellerLeg.ok) {
+    if (sellerLeg.reason === "not_mined" || sellerLeg.reason === "not_enough_confirmations") {
+      return { ok: false, reason: "pending", leg: "seller" };
     }
-    if (leg.reason === "reverted") {
-      await recordFailure({ listing, assetId, buyerWallet: buyer, seller, paymentTxHash, reason: "payment reverted" });
+    if (sellerLeg.reason === "reverted") {
+      await recordFailure({ listing, assetId, buyerWallet: buyer, seller, sellerTxHash, treasuryTxHash: null, feeRaw, sellerRaw, reason: "seller leg reverted" });
     }
-    return { ok: false, reason: "verification_failed", detail: leg.reason };
+    return { ok: false, reason: "verification_failed", leg: "seller", detail: sellerLeg.reason };
+  }
+
+  try {
+    treasuryLeg = await verifyMixTransfer({
+      txHash: treasuryTxHash,
+      expectedFrom: buyer,
+      expectedTo: treasuryWallet,
+      expectedRawAmount: feeRaw,
+    });
+  } catch (err) {
+    return { ok: false, reason: "rpc_unavailable", detail: err instanceof Error ? err.message : String(err) };
+  }
+  if (!treasuryLeg.ok) {
+    if (treasuryLeg.reason === "not_mined" || treasuryLeg.reason === "not_enough_confirmations") {
+      return { ok: false, reason: "pending", leg: "treasury" };
+    }
+    if (treasuryLeg.reason === "reverted") {
+      await recordFailure({ listing, assetId, buyerWallet: buyer, seller, sellerTxHash, treasuryTxHash, feeRaw, sellerRaw, reason: "treasury leg reverted" });
+    }
+    return { ok: false, reason: "verification_failed", leg: "treasury", detail: treasuryLeg.reason };
   }
 
   try {
@@ -243,16 +273,18 @@ export async function verifyAndRecordPurchase(params: {
         priceMix: listing.priceMix,
         platformFeeMix: Number(formatUnits(feeRaw, decimals)),
         sellerAmountMix: Number(formatUnits(sellerRaw, decimals)),
-        paymentTxHash,
+        sellerTxHash,
+        treasuryTxHash,
         status: "CONFIRMED",
         confirmedAt: new Date(),
       },
     });
     return { ok: true, purchase };
   } catch (err) {
-    // Unique constraint on paymentTxHash — the DB-level backstop catching
-    // a race the pre-check above didn't (two concurrent requests reaching
-    // this point with the same hash at nearly the same moment).
+    // Unique constraint on sellerTxHash/treasuryTxHash — the DB-level
+    // backstop catching a race the pre-check above didn't (two concurrent
+    // requests reaching this point with the same hash at nearly the same
+    // moment).
     if (isUniqueConstraintError(err)) {
       return { ok: false, reason: "hash_already_used" };
     }
@@ -265,7 +297,10 @@ async function recordFailure(params: {
   assetId: string;
   buyerWallet: Address;
   seller: Address;
-  paymentTxHash: string;
+  sellerTxHash: string | null;
+  treasuryTxHash: string | null;
+  feeRaw: bigint;
+  sellerRaw: bigint;
   reason: string;
 }): Promise<void> {
   await prisma.marketplacePurchase
@@ -278,7 +313,8 @@ async function recordFailure(params: {
         priceMix: 0,
         platformFeeMix: 0,
         sellerAmountMix: 0,
-        paymentTxHash: params.paymentTxHash,
+        sellerTxHash: params.sellerTxHash,
+        treasuryTxHash: params.treasuryTxHash,
         status: "FAILED",
         failureReason: params.reason,
       },

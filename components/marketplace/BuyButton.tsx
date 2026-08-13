@@ -21,6 +21,15 @@ type Step = "idle" | "paying-seller" | "paying-treasury" | "verifying" | "done" 
 // hand a client component a real bigint) computed server-side from the
 // listing's real price — this component never recomputes the split
 // itself, only relays those exact amounts into the two transactions.
+export interface BuyButtonProps {
+  assetId: string;
+  priceMix: number;
+  sellerWallet: string;
+  treasuryWallet: string;
+  sellerRaw: string;
+  feeRaw: string;
+}
+
 export function BuyButton({
   assetId,
   priceMix,
@@ -28,14 +37,7 @@ export function BuyButton({
   treasuryWallet,
   sellerRaw,
   feeRaw,
-}: {
-  assetId: string;
-  priceMix: number;
-  sellerWallet: string;
-  treasuryWallet: string;
-  sellerRaw: string;
-  feeRaw: string;
-}) {
+}: BuyButtonProps) {
   const { address, isConnected } = useAccount();
   const { writeContractAsync } = useWriteContract();
   // Explicit chainId — wagmi's default publicClient follows whatever

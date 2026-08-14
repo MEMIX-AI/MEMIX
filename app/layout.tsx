@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { LibrarianWidget } from "@/components/librarian/LibrarianWidget";
 import { LibrarianOpenProvider } from "@/components/librarian/LibrarianOpenContext";
+import { AppWalletShell } from "@/components/providers/AppWalletShell";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -59,14 +60,16 @@ export default function RootLayout({
           <div className="bg-dots" />
         </div>
 
-        <LibrarianOpenProvider>
-          <div className="page-enter relative flex min-h-screen flex-col">
-            <Navbar />
-            <div className="flex flex-1 flex-col">{children}</div>
-            <Footer />
-          </div>
-          <LibrarianWidget />
-        </LibrarianOpenProvider>
+        <AppWalletShell>
+          <LibrarianOpenProvider>
+            <div className="page-enter relative flex min-h-screen flex-col">
+              <Navbar />
+              <div className="flex flex-1 flex-col">{children}</div>
+              <Footer />
+            </div>
+            <LibrarianWidget />
+          </LibrarianOpenProvider>
+        </AppWalletShell>
       </body>
     </html>
   );

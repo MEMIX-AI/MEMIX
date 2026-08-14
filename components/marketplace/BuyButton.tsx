@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useWriteContract, usePublicClient } from "wagmi";
+import { useAccount, useWriteContract, usePublicClient, useSwitchChain } from "wagmi";
 import { getAddress } from "viem";
 import { ShoppingCart, Download, Loader2 } from "lucide-react";
 import { MIX_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/erc20";
 import { robinhoodChain } from "@/lib/wagmi-config";
 
-type Step = "idle" | "paying-seller" | "paying-treasury" | "verifying" | "done" | "error";
+type Step = "idle" | "switching" | "paying-seller" | "paying-treasury" | "verifying" | "done" | "error";
 
 // Option A (non-custodial by design — see the schema comment on
 // MarketplacePurchase for why): two plain ERC-20 transfers sent directly
@@ -38,8 +38,9 @@ export function BuyButton({
   sellerRaw,
   feeRaw,
 }: BuyButtonProps) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const { switchChainAsync } = useSwitchChain();
   // Explicit chainId — wagmi's default publicClient follows whatever
   // chain the wallet is CURRENTLY connected to, which is almost never
   // Robinhood Chain unless the buyer already switched manually. This is
@@ -82,6 +83,17 @@ export function BuyButton({
     if (!address) return;
     setError(null);
     try {
+      // Explicit, visible switch step — most wallets default to a chain
+      // that isn't Robinhood Chain (an unfamiliar custom chain to most
+      // of them), and leaving this implicit inside writeContractAsync's
+      // own chainId targeting is exactly what silently failed before:
+      // no UI ever showed the request was happening, so a stuck/rejected
+      // switch just looked like "clicked Buy, nothing happened."
+      if (chainId !== robinhoodChain.id) {
+        setStep("switching");
+        await switchChainAsync({ chainId: robinhoodChain.id });
+      }
+
       setStep("paying-seller");
       const sellerTxHash = await writeContractAsync({
         address: getAddress(MIX_TOKEN_ADDRESS),
@@ -138,7 +150,8 @@ export function BuyButton({
     );
   }
 
-  const busy = step === "paying-seller" || step === "paying-treasury" || step === "verifying";
+  const busy =
+    step === "switching" || step === "paying-seller" || step === "paying-treasury" || step === "verifying";
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -152,6 +165,7 @@ export function BuyButton({
         ) : (
           <ShoppingCart size={17} strokeWidth={1.75} />
         )}
+        {step === "switching" && "switch to Robinhood Chain in your wallet…"}
         {step === "paying-seller" && "confirm payment to creator…"}
         {step === "paying-treasury" && "confirm platform fee…"}
         {step === "verifying" && "verifying on-chain…"}

@@ -26,34 +26,6 @@ export async function getProfileAssets(walletAddress: string) {
   });
 }
 
-export interface ProfileStats {
-  uploadCount: number;
-  totalDownloads: number;
-  totalLikes: number;
-}
-
-// A single aggregate query, not a COUNT() plus a fetch-everything-and-sum
-// — this scales with catalogue size the same way lib/assets.ts's other
-// aggregate reads do (see app/admin/page.tsx's downloadCount aggregate
-// for the same pattern).
-export async function getProfileStats(walletAddress: string): Promise<ProfileStats> {
-  const [uploadCount, agg] = await Promise.all([
-    prisma.asset.count({
-      where: { uploaderWallet: walletAddress.toLowerCase(), ...publicAssetWhere },
-    }),
-    prisma.asset.aggregate({
-      where: { uploaderWallet: walletAddress.toLowerCase(), ...publicAssetWhere },
-      _sum: { downloadCount: true, likeCount: true },
-    }),
-  ]);
-
-  return {
-    uploadCount,
-    totalDownloads: agg._sum.downloadCount ?? 0,
-    totalLikes: agg._sum.likeCount ?? 0,
-  };
-}
-
 export interface ProfileUpdateInput {
   username?: string | null;
   avatarUrl?: string | null;
@@ -128,11 +100,17 @@ export async function updateProfile(walletAddress: string, input: ProfileUpdateI
 }
 
 // Single-wallet version of lib/creators.ts's aggregate — same real
-// sources (works from Asset, sales/earnings from CONFIRMED
-// MarketplacePurchase, followers from Follow), just scoped to the one
-// profile being rendered instead of the whole directory.
+// sources (works/downloads/views/likes from Asset, sales/earnings from
+// CONFIRMED MarketplacePurchase, followers from Follow), just scoped to
+// the one profile being rendered instead of the whole directory. This is
+// the one stats source for /u/[wallet]'s 6-tile header bar — it used to
+// be split across this function and the now-deleted getProfileStats()
+// (unused, its two numbers are the downloads/likes sums below).
 export interface CreatorStats {
   works: number;
+  downloads: number;
+  views: number;
+  likes: number;
   followers: number;
   sales: number;
   earnedMix: number;
@@ -140,8 +118,12 @@ export interface CreatorStats {
 
 export async function getCreatorStats(walletAddress: string): Promise<CreatorStats> {
   const wallet = walletAddress.toLowerCase();
-  const [works, followers, salesAgg] = await Promise.all([
-    prisma.asset.count({ where: { uploaderWallet: wallet, ...publicAssetWhere } }),
+  const [assetAgg, followers, salesAgg] = await Promise.all([
+    prisma.asset.aggregate({
+      where: { uploaderWallet: wallet, ...publicAssetWhere },
+      _count: { _all: true },
+      _sum: { downloadCount: true, viewCount: true, likeCount: true },
+    }),
     prisma.follow.count({ where: { followingWallet: wallet } }),
     prisma.marketplacePurchase.aggregate({
       where: { sellerWallet: wallet, status: "CONFIRMED" },
@@ -150,9 +132,41 @@ export async function getCreatorStats(walletAddress: string): Promise<CreatorSta
     }),
   ]);
   return {
-    works,
+    works: assetAgg._count._all,
+    downloads: assetAgg._sum.downloadCount ?? 0,
+    views: assetAgg._sum.viewCount ?? 0,
+    likes: assetAgg._sum.likeCount ?? 0,
     followers,
     sales: salesAgg._count._all,
     earnedMix: salesAgg._sum.sellerAmountMix ?? 0,
   };
+}
+
+// Real per-type breakdown of a creator's own public works, as percentages
+// of their total — the sidebar's "Top Categories" card. Only IMAGE/VIDEO/
+// SOUND exist as real Asset types (see prisma/schema.prisma's AssetType);
+// no fabricated GIF/Other slice the way a "meme culture" mock might show
+// one — same reasoning already applied to /creators's category tiles.
+// Omits any type with zero of this creator's works instead of padding a
+// 0% row, and returns [] entirely for a creator with no public works yet
+// (the sidebar hides the card rather than rendering an empty chart).
+export interface CategoryBreakdownEntry {
+  type: "IMAGE" | "VIDEO" | "SOUND";
+  count: number;
+  percent: number;
+}
+
+export async function getCreatorCategoryBreakdown(walletAddress: string): Promise<CategoryBreakdownEntry[]> {
+  const wallet = walletAddress.toLowerCase();
+  const byType = await prisma.asset.groupBy({
+    by: ["type"],
+    where: { uploaderWallet: wallet, ...publicAssetWhere },
+    _count: { _all: true },
+  });
+  const total = byType.reduce((sum, t) => sum + t._count._all, 0);
+  if (total === 0) return [];
+
+  return byType
+    .map((t) => ({ type: t.type, count: t._count._all, percent: Math.round((t._count._all / total) * 100) }))
+    .sort((a, b) => b.count - a.count);
 }

@@ -494,26 +494,28 @@ export default async function ProfilePage({
             </div>
           </div>
 
-          {isOwner && (
-            <div className="rounded-[22px] border border-line bg-panel p-6 shadow-soft">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-heading text-base font-bold text-text">Creator Analytics</h2>
-                <span className="text-[11px] text-faint">Last 30 days</span>
-              </div>
-              <div className="flex flex-col gap-5">
-                <AnalyticsRow label="Views" color="var(--accent)" series={analytics.views} formatValue={formatCompactNumber} />
-                <AnalyticsRow label="Downloads" color="var(--accent-3)" series={analytics.downloads} formatValue={formatCompactNumber} />
-                {marketplaceOn && (
-                  <AnalyticsRow
-                    label="Earnings"
-                    color="var(--accent-2)"
-                    series={analytics.earnings}
-                    formatValue={(v) => `${formatCompactNumber(v)} $MIX`}
-                  />
-                )}
-              </div>
+          {/* Public — unlike "Total Earned" above, every visitor sees this,
+              not just the owner. analytics itself is already fetched
+              unconditionally regardless of viewer, so this is purely a
+              render-gate change. */}
+          <div className="rounded-[22px] border border-line bg-panel p-6 shadow-soft">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-heading text-base font-bold text-text">Creator Analytics</h2>
+              <span className="text-[11px] text-faint">Last 30 days</span>
             </div>
-          )}
+            <div className="flex flex-col gap-5">
+              <AnalyticsRow label="Views" color="var(--accent)" series={analytics.views} formatValue={formatCompactNumber} />
+              <AnalyticsRow label="Downloads" color="var(--accent-3)" series={analytics.downloads} formatValue={formatCompactNumber} />
+              {marketplaceOn && (
+                <AnalyticsRow
+                  label="Earnings"
+                  color="var(--accent-2)"
+                  series={analytics.earnings}
+                  formatValue={(v) => `${formatCompactNumber(v)} $MIX`}
+                />
+              )}
+            </div>
+          </div>
 
           {categories.length > 0 && (
             <div className="rounded-[22px] border border-line bg-panel p-6 shadow-soft">

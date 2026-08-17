@@ -170,3 +170,122 @@ export async function getCreatorCategoryBreakdown(walletAddress: string): Promis
     .map((t) => ({ type: t.type, count: t._count._all, percent: Math.round((t._count._all / total) * 100) }))
     .sort((a, b) => b.count - a.count);
 }
+
+// Creator Analytics (app/u/[wallet]/page.tsx sidebar) — real daily Views/
+// Downloads/Earnings history, computed live from event tables at read time
+// (no snapshot/cron job). Downloads (DownloadEvent) and Earnings
+// (MarketplacePurchase) already had real per-event history before this
+// existed; Views needed a new append-only table (AssetViewEvent, written
+// alongside the existing dedupe upsert in app/api/assets/[id]/view/
+// route.ts) since AssetViewer only ever keeps the latest view per (asset,
+// IP) and can't answer "how many on day N".
+const ANALYTICS_WINDOW_DAYS = 30;
+// A 2-3 day comparison isn't a "trend" — require at least this many real
+// days of history (so each half of the split has >= 7) before showing a
+// percentage at all.
+const MIN_DAYS_FOR_TREND = 14;
+
+export interface DailyPoint {
+  date: string; // YYYY-MM-DD, UTC
+  value: number;
+}
+
+export interface DailyMetricSeries {
+  points: DailyPoint[];
+  total: number;
+  changePercent: number | null;
+  earliestDate: string | null;
+}
+
+export interface CreatorAnalytics {
+  views: DailyMetricSeries;
+  downloads: DailyMetricSeries;
+  earnings: DailyMetricSeries;
+}
+
+function toUtcDateString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+// Plots only from the earliest REAL row found through today — never padded
+// backward before that (a day with no rows before tracking existed is
+// "unknown", not "zero"). Once there's at least one real row, every day
+// after it genuinely was being logged, so a quiet day in that range is a
+// real, honest zero, not a gap — see prisma/schema.prisma's AssetViewEvent
+// doc comment for why this distinction matters.
+function bucketDaily(rows: { day: string; value: number }[]): DailyMetricSeries {
+  if (rows.length === 0) {
+    return { points: [], total: 0, changePercent: null, earliestDate: null };
+  }
+
+  const sums = new Map<string, number>();
+  for (const r of rows) sums.set(r.day, (sums.get(r.day) ?? 0) + r.value);
+
+  const earliestDate = rows.reduce((min, r) => (r.day < min ? r.day : min), rows[0].day);
+  const today = toUtcDateString(new Date());
+
+  const points: DailyPoint[] = [];
+  for (
+    let cursor = new Date(`${earliestDate}T00:00:00.000Z`);
+    cursor <= new Date(`${today}T00:00:00.000Z`);
+    cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)
+  ) {
+    const day = toUtcDateString(cursor);
+    points.push({ date: day, value: sums.get(day) ?? 0 });
+  }
+
+  const total = points.reduce((sum, p) => sum + p.value, 0);
+
+  let changePercent: number | null = null;
+  if (points.length >= MIN_DAYS_FOR_TREND) {
+    const mid = Math.floor(points.length / 2);
+    const earlierSum = points.slice(0, mid).reduce((s, p) => s + p.value, 0);
+    const laterSum = points.slice(mid).reduce((s, p) => s + p.value, 0);
+    if (earlierSum > 0) {
+      changePercent = Math.round(((laterSum - earlierSum) / earlierSum) * 100);
+    }
+  }
+
+  return { points, total, changePercent, earliestDate };
+}
+
+export async function getCreatorDailyAnalytics(
+  walletAddress: string,
+  days: number = ANALYTICS_WINDOW_DAYS,
+): Promise<CreatorAnalytics> {
+  const wallet = walletAddress.toLowerCase();
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const assets = await prisma.asset.findMany({
+    where: { uploaderWallet: wallet, ...publicAssetWhere },
+    select: { id: true },
+  });
+  const assetIds = assets.map((a) => a.id);
+
+  const [viewRows, downloadRows, purchaseRows] = await Promise.all([
+    assetIds.length > 0
+      ? prisma.assetViewEvent.findMany({
+          where: { assetId: { in: assetIds }, createdAt: { gte: cutoff } },
+          select: { createdAt: true },
+        })
+      : [],
+    assetIds.length > 0
+      ? prisma.downloadEvent.findMany({
+          where: { assetId: { in: assetIds }, createdAt: { gte: cutoff } },
+          select: { createdAt: true },
+        })
+      : [],
+    prisma.marketplacePurchase.findMany({
+      where: { sellerWallet: wallet, status: "CONFIRMED", confirmedAt: { gte: cutoff } },
+      select: { confirmedAt: true, sellerAmountMix: true },
+    }),
+  ]);
+
+  return {
+    views: bucketDaily(viewRows.map((r) => ({ day: toUtcDateString(r.createdAt), value: 1 }))),
+    downloads: bucketDaily(downloadRows.map((r) => ({ day: toUtcDateString(r.createdAt), value: 1 }))),
+    earnings: bucketDaily(
+      purchaseRows.map((r) => ({ day: toUtcDateString(r.confirmedAt!), value: r.sellerAmountMix })),
+    ),
+  };
+}

@@ -14,7 +14,15 @@ import {
   Music2,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getProfile, getProfileAssets, getCreatorStats, getCreatorCategoryBreakdown } from "@/lib/profile";
+import {
+  getProfile,
+  getProfileAssets,
+  getCreatorStats,
+  getCreatorCategoryBreakdown,
+  getCreatorDailyAnalytics,
+  type DailyMetricSeries,
+} from "@/lib/profile";
+import { AnalyticsSparkline } from "@/components/AnalyticsSparkline";
 import { resolveAssetUrlsMany, isStorageKey } from "@/lib/asset-urls";
 import { storage } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
@@ -53,11 +61,12 @@ export default async function ProfilePage({
   const marketplaceOn = isMarketplaceEnabled();
   const activeTab = marketplaceOn && searchParams.tab === "forsale" ? "forsale" : "all";
 
-  const [viewer, profile, stats, categories, rawAssets] = await Promise.all([
+  const [viewer, profile, stats, categories, analytics, rawAssets] = await Promise.all([
     getCurrentUser(),
     getProfile(wallet),
     getCreatorStats(wallet),
     getCreatorCategoryBreakdown(wallet),
+    getCreatorDailyAnalytics(wallet),
     getProfileAssets(wallet),
   ]);
   const assets = await resolveAssetUrlsMany(rawAssets);
@@ -485,6 +494,27 @@ export default async function ProfilePage({
             </div>
           </div>
 
+          {isOwner && (
+            <div className="rounded-[22px] border border-line bg-panel p-6 shadow-soft">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-heading text-base font-bold text-text">Creator Analytics</h2>
+                <span className="text-[11px] text-faint">Last 30 days</span>
+              </div>
+              <div className="flex flex-col gap-5">
+                <AnalyticsRow label="Views" color="var(--accent)" series={analytics.views} formatValue={formatCompactNumber} />
+                <AnalyticsRow label="Downloads" color="var(--accent-3)" series={analytics.downloads} formatValue={formatCompactNumber} />
+                {marketplaceOn && (
+                  <AnalyticsRow
+                    label="Earnings"
+                    color="var(--accent-2)"
+                    series={analytics.earnings}
+                    formatValue={(v) => `${formatCompactNumber(v)} $MIX`}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           {categories.length > 0 && (
             <div className="rounded-[22px] border border-line bg-panel p-6 shadow-soft">
               <h2 className="mb-4 font-heading text-base font-bold text-text">Top Categories</h2>
@@ -519,6 +549,56 @@ function StatBox({ value, label, accent }: { value: number; label: string; accen
         {formatCompactNumber(value)}
       </p>
       <p className="text-[10.5px] text-dim">{label}</p>
+    </div>
+  );
+}
+
+// One Creator Analytics row — real daily history from
+// lib/profile.ts#getCreatorDailyAnalytics, never padded/extrapolated. A
+// metric with zero real events ever gets a plain honest line instead of a
+// chart; a metric with real data covering less than the full 30-day window
+// is captioned with exactly how many days are real and, if fewer than 30,
+// since when — never implies a full 30-day view when it isn't one.
+function AnalyticsRow({
+  label,
+  color,
+  series,
+  formatValue,
+}: {
+  label: string;
+  color: string;
+  series: DailyMetricSeries;
+  formatValue: (value: number) => string;
+}) {
+  if (series.points.length === 0) {
+    return (
+      <div>
+        <p className="mb-1 text-[13px] font-medium text-text">{label}</p>
+        <p className="text-[11px] text-faint">Not enough {label.toLowerCase()} data yet.</p>
+      </div>
+    );
+  }
+
+  const daysCovered = series.points.length;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline justify-between">
+        <p className="text-[13px] font-medium text-text">{label}</p>
+        <div className="flex items-center gap-1.5">
+          <span className="font-heading text-base font-bold text-text">{formatValue(series.total)}</span>
+          {series.changePercent != null && (
+            <span className={`text-[11px] font-semibold ${series.changePercent >= 0 ? "text-ok" : "text-warn"}`}>
+              {series.changePercent >= 0 ? "+" : ""}
+              {series.changePercent}%
+            </span>
+          )}
+        </div>
+      </div>
+      <AnalyticsSparkline points={series.points} color={color} formatValue={formatValue} />
+      <p className="mt-1 text-[10.5px] text-faint">
+        last {daysCovered} day{daysCovered === 1 ? "" : "s"}
+        {daysCovered < 30 ? ` · data since ${series.earliestDate}` : ""}
+      </p>
     </div>
   );
 }

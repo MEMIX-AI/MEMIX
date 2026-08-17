@@ -192,6 +192,7 @@ model Asset {
   reports               Report[]
   takedowns             TakedownLog[]
   downloadEvents        DownloadEvent[]
+  viewEvents            AssetViewEvent[]
   likes                 AssetLike[]
   viewers               AssetViewer[]
   verdictGenerationLogs VerdictGenerationLog[]
@@ -350,6 +351,10 @@ model MarketplacePurchase {
 
   @@index([buyerWallet])
   @@index([assetId])
+  // Covers the Creator Analytics Earnings chart (app/u/[wallet]/page.tsx via
+  // lib/profile.ts#getCreatorDailyAnalytics), which filters by exactly this
+  // pair (sellerWallet + a confirmedAt range) on every profile page load.
+  @@index([sellerWallet, confirmedAt])
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -447,6 +452,23 @@ model DownloadEvent {
   assetId   String
   createdAt DateTime @default(now())
   ipHash    String
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
+}
+
+// One row per genuinely-new (non-deduped) counted view — written alongside
+// the existing AssetViewer upsert in app/api/assets/[id]/view/route.ts's
+// transaction, never on its own. Unlike AssetViewer (one row per asset+IP,
+// overwritten forward — see its own comment), this is append-only, same
+// shape/purpose as DownloadEvent above: real per-day history for Creator
+// Analytics (app/u/[wallet]/page.tsx), computed live at read time, no
+// snapshot/cron involved.
+model AssetViewEvent {
+  id        String   @id @default(cuid())
+  assetId   String
+  createdAt DateTime @default(now())
 
   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 

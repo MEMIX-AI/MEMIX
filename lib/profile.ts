@@ -150,6 +150,17 @@ export async function isHandleAvailable(handle: string, excludeWallet: string): 
   return !existing || existing.walletAddress === excludeWallet.toLowerCase();
 }
 
+// Same check as app/api/profile/[wallet]/follow/route.ts's local copy —
+// centralized here since both callers of the handle-uniqueness path
+// (PATCH /api/profile and POST /api/creators/join) need it as a fallback
+// behind isHandleAvailable's pre-check, which only closes most of the
+// race: two submits for the same handle landing between that check and
+// the actual write would otherwise surface as an unhandled 500 instead of
+// a clean 409.
+export function isUniqueConstraintError(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && (err as { code?: string }).code === "P2002";
+}
+
 export interface AvatarSaveResult {
   ok: true;
   key: string;

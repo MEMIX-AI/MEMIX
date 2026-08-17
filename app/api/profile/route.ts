@@ -7,6 +7,7 @@ import {
   validateProfileUpdate,
   normalizeHandle,
   isHandleAvailable,
+  isUniqueConstraintError,
   saveAvatarUpload,
 } from "@/lib/profile";
 
@@ -72,7 +73,17 @@ export async function PATCH(req: NextRequest) {
     update.avatarUrl = saved.key;
   }
 
-  const updated = await updateProfile(user.walletAddress, update);
+  let updated;
+  try {
+    updated = await updateProfile(user.walletAddress, update);
+  } catch (err) {
+    // isHandleAvailable above closes most of the race window, not all of
+    // it — see the same comment in app/api/creators/join/route.ts.
+    if (isUniqueConstraintError(err)) {
+      return NextResponse.json({ error: "that username is already taken" }, { status: 409 });
+    }
+    throw err;
+  }
 
   // Resolved so a caller that just uploaded an avatar (see
   // components/EditProfileModal.tsx's dedicated avatar-only PATCH) can

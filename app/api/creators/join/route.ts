@@ -7,6 +7,7 @@ import {
   normalizeHandle,
   normalizeXHandle,
   isHandleAvailable,
+  isUniqueConstraintError,
   saveAvatarUpload,
 } from "@/lib/profile";
 
@@ -81,13 +82,24 @@ export async function POST(req: NextRequest) {
     avatarUrl = saved.key;
   }
 
-  await updateProfile(user.walletAddress, {
-    username,
-    handle,
-    xHandle: normalizeXHandle(xHandleRaw != null ? String(xHandleRaw) : null),
-    avatarUrl,
-    creatorOnboardedAt: new Date(),
-  });
+  try {
+    await updateProfile(user.walletAddress, {
+      username,
+      handle,
+      xHandle: normalizeXHandle(xHandleRaw != null ? String(xHandleRaw) : null),
+      avatarUrl,
+      creatorOnboardedAt: new Date(),
+    });
+  } catch (err) {
+    // isHandleAvailable above closes most of the window, not all of it —
+    // two submits for the same handle landing between that check and this
+    // write is rare but real; surface it the same clean way instead of a
+    // 500.
+    if (isUniqueConstraintError(err)) {
+      return NextResponse.json({ error: "that username is already taken" }, { status: 409 });
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true, walletAddress: user.walletAddress });
 }

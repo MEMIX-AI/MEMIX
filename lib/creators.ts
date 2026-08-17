@@ -18,6 +18,7 @@ export interface CreatorSummary {
   sales: number;
   earnedMix: number;
   followers: number;
+  joinedAt: Date;
 }
 
 async function resolveAvatar(raw: string | null): Promise<string | null> {
@@ -55,7 +56,7 @@ export async function getCreatorSummaries(): Promise<CreatorSummary[]> {
 
   const users = await prisma.user.findMany({
     where: { walletAddress: { in: wallets } },
-    select: { walletAddress: true, username: true, avatarUrl: true },
+    select: { walletAddress: true, username: true, avatarUrl: true, createdAt: true },
   });
   const userByWallet = new Map(users.map((u) => [u.walletAddress, u]));
   const salesByWallet = new Map(sales.map((s) => [s.sellerWallet, s]));
@@ -74,6 +75,7 @@ export async function getCreatorSummaries(): Promise<CreatorSummary[]> {
         sales: saleAgg?._count._all ?? 0,
         earnedMix: saleAgg?._sum.sellerAmountMix ?? 0,
         followers: followersByWallet.get(wallet) ?? 0,
+        joinedAt: user?.createdAt ?? new Date(0),
       };
     }),
   );
@@ -98,4 +100,35 @@ export function rankTop(creators: CreatorSummary[], limit: number): CreatorSumma
   return [...creators]
     .sort((a, b) => b.earnedMix - a.earnedMix || b.sales - a.sales)
     .slice(0, limit);
+}
+
+// Newest creators by real User.createdAt (join date) — used for the
+// Creator Hub's "New Creators" rail. Not "first upload date": a wallet
+// counts as a creator from the moment it has a public work at all, and
+// its account join date is the honest signal for "new to memix," not a
+// fabricated activity score.
+export function rankNewest(creators: CreatorSummary[], limit: number): CreatorSummary[] {
+  return [...creators].sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime()).slice(0, limit);
+}
+
+export interface CreatorHubStats {
+  creatorCount: number;
+  totalWorks: number;
+  totalSales: number;
+  totalEarnedMix: number;
+}
+
+// Every field is a straight sum/count over the same real CreatorSummary
+// rows the rest of this page renders — no separate query, no numbers that
+// could ever disagree with what's shown below them.
+export function getHubStats(creators: CreatorSummary[]): CreatorHubStats {
+  return creators.reduce(
+    (acc, c) => ({
+      creatorCount: acc.creatorCount + 1,
+      totalWorks: acc.totalWorks + c.works,
+      totalSales: acc.totalSales + c.sales,
+      totalEarnedMix: acc.totalEarnedMix + c.earnedMix,
+    }),
+    { creatorCount: 0, totalWorks: 0, totalSales: 0, totalEarnedMix: 0 },
+  );
 }

@@ -197,6 +197,17 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-hover);
   }
 
+  /* Horizontal scroll-snap rails (Creator Hub's Trending Creators) — hide
+     the scrollbar chrome since snap + drag/swipe is the primary
+     interaction, not a visible scrollbar track. */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Spectrum-gradient 1px border ring, invisible until hover — the
      "border glow warna pas hover" glassmorphism card treatment from the
      mockup. Needs `relative` on the card and this class on a `::after`

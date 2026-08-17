@@ -9,6 +9,7 @@ import { AvatarCropper } from "@/components/AvatarCropper";
 
 export interface EditableProfile {
   username: string | null;
+  handle: string | null;
   avatarUrl: string | null;
   xHandle: string | null;
   discordHandle: string | null;
@@ -65,6 +66,7 @@ export function EditProfileModal({
     profile.avatarUrl && /^https?:\/\//.test(profile.avatarUrl) ? profile.avatarUrl : "",
   );
   const [username, setUsername] = useState(profile.username ?? "");
+  const [handle, setHandle] = useState(profile.handle ?? "");
   const [xHandle, setXHandle] = useState(profile.xHandle ?? "");
   const [discordHandle, setDiscordHandle] = useState(profile.discordHandle ?? "");
   const [websiteUrl, setWebsiteUrl] = useState(profile.websiteUrl ?? "");
@@ -145,6 +147,7 @@ export function EditProfileModal({
     try {
       const formData = new FormData();
       formData.append("username", username.trim());
+      formData.append("handle", handle.trim());
       formData.append("xHandle", xHandle.trim());
       formData.append("discordHandle", discordHandle.trim());
       formData.append("websiteUrl", websiteUrl.trim());
@@ -280,6 +283,22 @@ export function EditProfileModal({
             maxLength={40}
             className="w-full rounded-xl border border-line bg-bg px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent/50"
           />
+        </div>
+
+        <div className="mb-3.5">
+          <label className="mb-1.5 block font-heading text-[13px] font-semibold text-text">
+            Username <span className="font-sans font-normal text-dim">(optional, unique)</span>
+          </label>
+          <div className="flex items-center overflow-hidden rounded-xl border border-line bg-bg focus-within:border-accent/50">
+            <span className="pl-3.5 pr-1 text-sm text-dim">@</span>
+            <input
+              value={handle}
+              onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())}
+              placeholder="yourhandle"
+              maxLength={24}
+              className="min-w-0 flex-1 bg-transparent py-2.5 pr-3.5 text-sm text-text outline-none"
+            />
+          </div>
         </div>
 
         <div className="mb-3.5">

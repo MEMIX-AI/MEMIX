@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { storage } from "@/lib/storage";
 import { isStorageKey } from "@/lib/asset-urls";
-import { validateUpload } from "@/lib/upload-rules";
-import { generateThumbnail } from "@/lib/thumbnail";
-import { updateProfile, validateProfileUpdate } from "@/lib/profile";
-
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB, per spec
-const AVATAR_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+import {
+  updateProfile,
+  validateProfileUpdate,
+  normalizeHandle,
+  isHandleAvailable,
+  saveAvatarUpload,
+} from "@/lib/profile";
 
 // Self-service only — there is no "edit someone else's profile" path
 // anywhere in this app. The wallet being updated is always the current
@@ -28,6 +29,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const usernameRaw = formData.get("username");
+  const handleRaw = formData.get("handle");
   const xHandleRaw = formData.get("xHandle");
   const discordHandleRaw = formData.get("discordHandle");
   const websiteUrlRaw = formData.get("websiteUrl");
@@ -36,6 +38,10 @@ export async function PATCH(req: NextRequest) {
 
   const update = {
     username: usernameRaw != null ? String(usernameRaw).trim() : undefined,
+    // Normalized (lowercased) up front so validateProfileUpdate's format
+    // check and the uniqueness check below both see the same value that
+    // will actually be persisted.
+    handle: handleRaw != null ? normalizeHandle(String(handleRaw)) ?? "" : undefined,
     xHandle: xHandleRaw != null ? String(xHandleRaw) : undefined,
     discordHandle: discordHandleRaw != null ? String(discordHandleRaw).trim() : undefined,
     websiteUrl: websiteUrlRaw != null ? String(websiteUrlRaw).trim() : undefined,
@@ -48,43 +54,21 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
+  if (update.handle) {
+    const available = await isHandleAvailable(update.handle, user.walletAddress);
+    if (!available) {
+      return NextResponse.json({ error: "that username is already taken" }, { status: 409 });
+    }
+  }
+
   // An uploaded file always wins over a pasted URL when both are present
   // — same "custom thumbnail wins" precedence as app/api/upload/route.ts.
   const avatarFile = formData.get("avatar");
   if (avatarFile instanceof File && avatarFile.size > 0) {
-    if (!AVATAR_MIME_TYPES.includes(avatarFile.type)) {
-      return NextResponse.json(
-        { error: `unsupported avatar type: ${avatarFile.type || "unknown"} (use png/jpeg/webp/gif)` },
-        { status: 400 },
-      );
+    const saved = await saveAvatarUpload(avatarFile);
+    if (!saved.ok) {
+      return NextResponse.json({ error: saved.error }, { status: 400 });
     }
-    if (avatarFile.size > MAX_AVATAR_SIZE) {
-      return NextResponse.json(
-        { error: `avatar is ${(avatarFile.size / 1024 / 1024).toFixed(1)}MB, over the 2MB limit` },
-        { status: 400 },
-      );
-    }
-    // Reuses the same IMAGE validation the asset-upload path uses, just
-    // with this route's own (smaller) size cap already checked above.
-    const looseValidation = validateUpload("IMAGE", avatarFile.type, avatarFile.size);
-    if (!looseValidation.ok) {
-      return NextResponse.json({ error: looseValidation.error }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await avatarFile.arrayBuffer());
-    const thumbBuffer = await generateThumbnail("IMAGE", buffer).catch(() => null);
-    if (!thumbBuffer) {
-      return NextResponse.json(
-        { error: "that image looks corrupted — try a different file or re-export it" },
-        { status: 400 },
-      );
-    }
-    const saved = await storage.save({
-      buffer: thumbBuffer,
-      originalName: "avatar.webp",
-      mimeType: "image/webp",
-      folder: "avatars",
-    });
     update.avatarUrl = saved.key;
   }
 

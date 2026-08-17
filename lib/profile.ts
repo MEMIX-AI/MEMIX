@@ -1,3 +1,6 @@
+import { storage } from "./storage";
+import { validateUpload } from "./upload-rules";
+import { generateThumbnail } from "./thumbnail";
 import { prisma } from "./prisma";
 import { publicAssetWhere } from "./asset-visibility";
 
@@ -5,6 +8,9 @@ const MAX_USERNAME_LENGTH = 40;
 const MAX_X_HANDLE_LENGTH = 30;
 const MAX_DISCORD_HANDLE_LENGTH = 40;
 const MAX_BIO_LENGTH = 280;
+const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB, per spec
+const AVATAR_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export async function getProfile(walletAddress: string) {
   return prisma.user.findUnique({
@@ -56,11 +62,16 @@ export async function getProfileStats(walletAddress: string): Promise<ProfileSta
 
 export interface ProfileUpdateInput {
   username?: string | null;
+  handle?: string | null;
   avatarUrl?: string | null;
   xHandle?: string | null;
   discordHandle?: string | null;
   websiteUrl?: string | null;
   bio?: string | null;
+  // Only ever set by app/api/creators/join/route.ts — PATCH /api/profile
+  // never reads a "creatorOnboardedAt" form field, so a client can't set
+  // this through the general profile-edit endpoint.
+  creatorOnboardedAt?: Date;
 }
 
 export type ProfileUpdateResult =
@@ -74,6 +85,12 @@ export type ProfileUpdateResult =
 export function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateResult {
   if (input.username != null && input.username.length > MAX_USERNAME_LENGTH) {
     return { ok: false, error: `display name is too long (max ${MAX_USERNAME_LENGTH} characters)` };
+  }
+  if (input.handle != null && input.handle !== "" && !HANDLE_RE.test(input.handle)) {
+    return {
+      ok: false,
+      error: "username must be 3-24 characters, lowercase letters/numbers/underscore only",
+    };
   }
   if (input.xHandle != null && input.xHandle.length > MAX_X_HANDLE_LENGTH) {
     return { ok: false, error: `X handle is too long (max ${MAX_X_HANDLE_LENGTH} characters)` };
@@ -113,16 +130,78 @@ export function normalizeXHandle(raw: string | null | undefined): string | null 
   return trimmed || null;
 }
 
+// Handles are stored lowercase so uniqueness is case-insensitive by
+// construction (no citext/lower() index needed) — "Josh" and "josh" are
+// the same handle. Empty string normalizes to null (clearing it), same
+// convention as every other nullable profile field here.
+export function normalizeHandle(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim().toLowerCase();
+  return trimmed || null;
+}
+
+// Excludes the wallet's own current row so a creator re-saving their
+// unchanged handle (or any other field) never trips over "taken by
+// themselves". Case-insensitive by construction since handles are always
+// stored lowercase (normalizeHandle above) — every caller must normalize
+// before calling this, this function doesn't normalize its input itself.
+export async function isHandleAvailable(handle: string, excludeWallet: string): Promise<boolean> {
+  const existing = await prisma.user.findUnique({ where: { handle } });
+  return !existing || existing.walletAddress === excludeWallet.toLowerCase();
+}
+
+export interface AvatarSaveResult {
+  ok: true;
+  key: string;
+}
+export interface AvatarSaveError {
+  ok: false;
+  error: string;
+}
+
+// Shared by app/api/profile/route.ts (editing an existing profile) and
+// app/api/creators/join/route.ts (initial creator onboarding) — same
+// validate-thumbnail-store pipeline, one definition instead of two
+// drifting copies. Returns a storage KEY, never a URL (see lib/storage.ts
+// — resolve to a signed URL only at render time, never persist one).
+export async function saveAvatarUpload(file: File): Promise<AvatarSaveResult | AvatarSaveError> {
+  if (!AVATAR_MIME_TYPES.includes(file.type)) {
+    return { ok: false, error: `unsupported avatar type: ${file.type || "unknown"} (use png/jpeg/webp/gif)` };
+  }
+  if (file.size > MAX_AVATAR_SIZE) {
+    return { ok: false, error: `avatar is ${(file.size / 1024 / 1024).toFixed(1)}MB, over the 2MB limit` };
+  }
+  const looseValidation = validateUpload("IMAGE", file.type, file.size);
+  if (!looseValidation.ok) {
+    return { ok: false, error: looseValidation.error };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const thumbBuffer = await generateThumbnail("IMAGE", buffer).catch(() => null);
+  if (!thumbBuffer) {
+    return { ok: false, error: "that image looks corrupted — try a different file or re-export it" };
+  }
+  const saved = await storage.save({
+    buffer: thumbBuffer,
+    originalName: "avatar.webp",
+    mimeType: "image/webp",
+    folder: "avatars",
+  });
+  return { ok: true, key: saved.key };
+}
+
 export async function updateProfile(walletAddress: string, input: ProfileUpdateInput) {
   return prisma.user.update({
     where: { walletAddress: walletAddress.toLowerCase() },
     data: {
       ...(input.username !== undefined && { username: input.username?.trim() || null }),
+      ...(input.handle !== undefined && { handle: normalizeHandle(input.handle) }),
       ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl || null }),
       ...(input.xHandle !== undefined && { xHandle: normalizeXHandle(input.xHandle) }),
       ...(input.discordHandle !== undefined && { discordHandle: input.discordHandle?.trim() || null }),
       ...(input.websiteUrl !== undefined && { websiteUrl: input.websiteUrl?.trim() || null }),
       ...(input.bio !== undefined && { bio: input.bio?.trim() || null }),
+      ...(input.creatorOnboardedAt !== undefined && { creatorOnboardedAt: input.creatorOnboardedAt }),
     },
   });
 }

@@ -13,6 +13,7 @@ import { storage } from "./storage";
 export interface CreatorSummary {
   walletAddress: string;
   username: string | null;
+  handle: string | null;
   avatarUrl: string | null;
   works: number;
   sales: number;
@@ -56,7 +57,7 @@ export async function getCreatorSummaries(): Promise<CreatorSummary[]> {
 
   const users = await prisma.user.findMany({
     where: { walletAddress: { in: wallets } },
-    select: { walletAddress: true, username: true, avatarUrl: true, createdAt: true },
+    select: { walletAddress: true, username: true, handle: true, avatarUrl: true, createdAt: true },
   });
   const userByWallet = new Map(users.map((u) => [u.walletAddress, u]));
   const salesByWallet = new Map(sales.map((s) => [s.sellerWallet, s]));
@@ -70,6 +71,7 @@ export async function getCreatorSummaries(): Promise<CreatorSummary[]> {
       return {
         walletAddress: wallet,
         username: user?.username ?? null,
+        handle: user?.handle ?? null,
         avatarUrl: await resolveAvatar(user?.avatarUrl ?? null),
         works: w._count._all,
         sales: saleAgg?._count._all ?? 0,

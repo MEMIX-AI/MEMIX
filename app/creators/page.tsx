@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowRight,
   Sparkles,
   Wand2,
   Coins,
@@ -29,6 +28,7 @@ import {
 import { CATEGORY_FILTERS } from "@/lib/search";
 import { shortenWallet, formatCompactNumber } from "@/lib/format";
 import { FollowButton } from "@/components/FollowButton";
+import { BecomeCreatorButton } from "@/components/BecomeCreatorButton";
 
 export const metadata = {
   title: "creators — memix",
@@ -51,6 +51,14 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 export default async function CreatorsPage() {
   const viewer = await getCurrentUser();
+  const viewerProfile = viewer
+    ? await prisma.user.findUnique({
+        where: { walletAddress: viewer.walletAddress },
+        select: { creatorOnboardedAt: true },
+      })
+    : null;
+  const viewerIsCreator = !!viewerProfile?.creatorOnboardedAt;
+  const viewerWallet = viewer?.walletAddress ?? null;
 
   const [creators, typeCounts] = await Promise.all([
     getCreatorSummaries(),
@@ -101,13 +109,7 @@ export default async function CreatorsPage() {
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/upload"
-              className="gradient-brand flex items-center gap-2 rounded-[13px] px-[26px] py-[14px] text-[15px] font-semibold text-white shadow-glow transition-transform duration-200 hover:-translate-y-0.5"
-            >
-              Become a Creator
-              <ArrowRight size={16} strokeWidth={1.75} />
-            </Link>
+            <BecomeCreatorButton variant="hero" isCreator={viewerIsCreator} walletAddress={viewerWallet} />
             <a
               href="#trending"
               className="glass flex items-center gap-2 rounded-[13px] border border-line px-[26px] py-[14px] text-[15px] font-semibold text-text transition-transform duration-200 hover:-translate-y-0.5 hover:border-accent/40"
@@ -176,7 +178,7 @@ export default async function CreatorsPage() {
             subtitle="Ranked by real sales, follows, and work — not hype."
           />
           {trending.length === 0 ? (
-            <EmptyCreatorState />
+            <EmptyCreatorState isCreator={viewerIsCreator} walletAddress={viewerWallet} />
           ) : (
             <div className="scrollbar-hide -mx-1 flex snap-x snap-mandatory gap-5 overflow-x-auto px-1 pb-2">
               {trending.map((creator) => (
@@ -208,7 +210,7 @@ export default async function CreatorsPage() {
             )}
           </div>
 
-          <SidebarCta />
+          <SidebarCta isCreator={viewerIsCreator} walletAddress={viewerWallet} />
         </section>
       </div>
 
@@ -240,7 +242,7 @@ export default async function CreatorsPage() {
         <section>
           <SectionHeading kicker="fresh" title="New Creators" />
           {newest.length === 0 ? (
-            <EmptyCreatorState compact />
+            <EmptyCreatorState compact isCreator={viewerIsCreator} walletAddress={viewerWallet} />
           ) : (
             <div className="glass flex flex-col divide-y divide-line rounded-[22px] border border-line shadow-soft">
               {newest.map((creator) => (
@@ -305,7 +307,7 @@ function WhyItem({ icon, title, body }: { icon: React.ReactNode; title: string; 
   );
 }
 
-function SidebarCta() {
+function SidebarCta({ isCreator, walletAddress }: { isCreator: boolean; walletAddress: string | null }) {
   return (
     <div className="gradient-brand relative overflow-hidden rounded-[22px] p-6 shadow-glow">
       <h3 className="mb-1.5 font-heading text-lg font-bold text-white">
@@ -314,13 +316,7 @@ function SidebarCta() {
       <p className="mb-5 text-[13px] leading-relaxed text-white/85">
         Join creators earning $MIX by sharing what they love.
       </p>
-      <Link
-        href="/upload"
-        className="flex w-fit items-center gap-2 rounded-[12px] bg-black/20 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-black/30"
-      >
-        Become a Creator
-        <ArrowRight size={15} strokeWidth={1.75} />
-      </Link>
+      <BecomeCreatorButton variant="sidebar" isCreator={isCreator} walletAddress={walletAddress} />
     </div>
   );
 }
@@ -393,6 +389,7 @@ function Avatar({ creator, size = 52 }: { creator: CreatorSummary; size?: number
 
 function CreatorCard({ creator }: { creator: CreatorSummary }) {
   const displayName = creator.username || shortenWallet(creator.walletAddress);
+  const secondary = creator.handle ? `@${creator.handle}` : creator.username ? shortenWallet(creator.walletAddress) : null;
   return (
     <Link
       href={`/u/${creator.walletAddress}`}
@@ -401,9 +398,7 @@ function CreatorCard({ creator }: { creator: CreatorSummary }) {
       <Avatar creator={creator} />
 
       <p className="mt-4 truncate font-heading text-base font-semibold text-text">{displayName}</p>
-      {creator.username && (
-        <p className="truncate text-xs text-dim">{shortenWallet(creator.walletAddress)}</p>
-      )}
+      {secondary && <p className="truncate text-xs text-dim">{secondary}</p>}
 
       <div className="mt-4 flex items-center gap-4 border-t border-line pt-3.5 text-sm">
         <Stat value={creator.works} label="works" />
@@ -436,7 +431,10 @@ function LeaderboardRow({ rank, creator }: { rank: number; creator: CreatorSumma
       <Avatar creator={creator} size={30} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-text">{displayName}</p>
-        <p className="truncate text-[11px] text-faint">{creator.sales} sales</p>
+        <p className="truncate text-[11px] text-faint">
+          {creator.handle ? `@${creator.handle} · ` : ""}
+          {creator.sales} sales
+        </p>
       </div>
       <span className="shrink-0 text-right text-[13px] font-semibold text-accent-2">
         {formatCompactNumber(creator.earnedMix)} $MIX
@@ -464,6 +462,7 @@ function NewCreatorRow({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-text">{displayName}</p>
           <p className="truncate text-[11px] text-faint">
+            {creator.handle ? `@${creator.handle} · ` : ""}
             {creator.works} work{creator.works === 1 ? "" : "s"}
           </p>
         </div>
@@ -479,7 +478,15 @@ function NewCreatorRow({
   );
 }
 
-function EmptyCreatorState({ compact = false }: { compact?: boolean }) {
+function EmptyCreatorState({
+  compact = false,
+  isCreator,
+  walletAddress,
+}: {
+  compact?: boolean;
+  isCreator: boolean;
+  walletAddress: string | null;
+}) {
   return (
     <div
       className={`glass flex flex-col items-center gap-4 rounded-[22px] border border-line text-center shadow-soft ${
@@ -493,13 +500,7 @@ function EmptyCreatorState({ compact = false }: { compact?: boolean }) {
           No one&apos;s listed an original yet — the shelf is empty and waiting.
         </p>
       </div>
-      <Link
-        href="/upload"
-        className="gradient-brand mt-1 flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
-      >
-        Become a Creator
-        <ArrowRight size={15} strokeWidth={1.75} />
-      </Link>
+      <BecomeCreatorButton variant="empty" isCreator={isCreator} walletAddress={walletAddress} />
     </div>
   );
 }

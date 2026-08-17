@@ -148,6 +148,7 @@ export default async function ProfilePage({
             <h1 className="truncate font-heading text-[26px] font-bold tracking-tight text-text">
               {displayName}
             </h1>
+            {profile?.handle && <p className="text-sm text-dim">@{profile.handle}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <CopyAddressButton address={wallet} />
               {profile?.xHandle && (
@@ -174,6 +175,7 @@ export default async function ProfilePage({
               <ProfileEditButton
                 profile={{
                   username: profile?.username ?? null,
+                  handle: profile?.handle ?? null,
                   avatarUrl,
                   xHandle: profile?.xHandle ?? null,
                   discordHandle: profile?.discordHandle ?? null,

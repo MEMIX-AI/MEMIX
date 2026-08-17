@@ -117,6 +117,20 @@ model User {
   websiteUrl    String?
   bio           String?
 
+  // The unique "@handle" collected by the Become-a-Creator form — distinct
+  // from `username` above (which is a free-text, non-unique display name,
+  // already labelled "Display name" in EditProfileModal.tsx). Nullable:
+  // most wallets never set one until they go through that flow.
+  handle String? @unique
+
+  // Set once, the moment the Become-a-Creator flow (app/api/creators/join)
+  // completes — null means this wallet has never registered as a creator.
+  // This is the actual "is this wallet a creator" flag; nothing else in
+  // this model or UserRole represents it (role is ADMIN-vs-not only, and
+  // lib/creators.ts's directory listing is a separate, upload-derived
+  // concept that intentionally stays untouched by this field).
+  creatorOnboardedAt DateTime?
+
   assets       Asset[]
   declarations UploadDeclaration[]
   apiKey       ApiKey?

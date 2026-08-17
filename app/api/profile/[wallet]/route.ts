@@ -17,7 +17,15 @@ export async function GET(
     // Not an error — most connected wallets have never touched their
     // profile row's nullable fields. Callers should treat 404 the same
     // as "profile with all fields null."
-    return NextResponse.json({ walletAddress: params.wallet.toLowerCase(), username: null, avatarUrl: null, xHandle: null, bio: null });
+    return NextResponse.json({
+      walletAddress: params.wallet.toLowerCase(),
+      username: null,
+      handle: null,
+      avatarUrl: null,
+      xHandle: null,
+      bio: null,
+      isCreator: false,
+    });
   }
 
   const avatarUrl = profile.avatarUrl && isStorageKey(profile.avatarUrl)
@@ -27,9 +35,11 @@ export async function GET(
   return NextResponse.json({
     walletAddress: profile.walletAddress,
     username: profile.username,
+    handle: profile.handle,
     avatarUrl,
     xHandle: profile.xHandle,
     bio: profile.bio,
     createdAt: profile.createdAt,
+    isCreator: !!profile.creatorOnboardedAt,
   });
 }

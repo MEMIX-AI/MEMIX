@@ -46,6 +46,24 @@ export async function getPurchasedAssets(walletAddress: string) {
     .map((p) => p.listing.asset);
 }
 
+// Real likes by this wallet — only likes made while signed in ever get a
+// walletAddress on the AssetLike row (see that model's schema comment and
+// app/api/assets/[id]/like/route.ts); a like made before this column
+// existed, or made anonymously, has no wallet on it and can't retroactively
+// appear here — same honest rule Creator Analytics already established for
+// Views. Filtered through publicAssetWhere (unlike getPurchasedAssets
+// above) — liking never grants special access, so a since-hidden asset
+// drops out of this list like it does everywhere else.
+export async function getLikedAssets(walletAddress: string) {
+  const wallet = walletAddress.toLowerCase();
+  const likes = await prisma.assetLike.findMany({
+    where: { walletAddress: wallet, asset: { ...publicAssetWhere } },
+    include: { asset: { include: { tags: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return likes.map((l) => l.asset);
+}
+
 export interface ProfileUpdateInput {
   username?: string | null;
   avatarUrl?: string | null;

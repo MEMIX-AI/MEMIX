@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   Video as VideoIcon,
   Music2,
+  Heart,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -21,6 +22,7 @@ import {
   getCreatorCategoryBreakdown,
   getCreatorDailyAnalytics,
   getPurchasedAssets,
+  getLikedAssets,
   type DailyMetricSeries,
 } from "@/lib/profile";
 import { AnalyticsSparkline } from "@/components/AnalyticsSparkline";
@@ -40,7 +42,7 @@ const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://memixmeme.xyz";
 
-type Tab = "all" | "forsale" | "owned";
+type Tab = "all" | "forsale" | "owned" | "liked";
 
 // Same relabeling already established by lib/search.ts's CATEGORY_FILTERS
 // (and reused on app/creators/page.tsx's "Explore by Category") — the
@@ -67,16 +69,20 @@ export default async function ProfilePage({
       ? "forsale"
       : marketplaceOn && searchParams.tab === "owned"
         ? "owned"
-        : "all";
+        : searchParams.tab === "liked"
+          ? "liked"
+          : "all";
 
-  const [viewer, profile, stats, categories, analytics, rawAssets] = await Promise.all([
+  const [viewer, profile, stats, categories, analytics, rawLikedAssets, rawAssets] = await Promise.all([
     getCurrentUser(),
     getProfile(wallet),
     getCreatorStats(wallet),
     getCreatorCategoryBreakdown(wallet),
     getCreatorDailyAnalytics(wallet),
+    getLikedAssets(wallet),
     getProfileAssets(wallet),
   ]);
+  const likedAssets = await resolveAssetUrlsMany(rawLikedAssets);
   const assets = await resolveAssetUrlsMany(rawAssets);
   const isOwner = viewer?.walletAddress === wallet;
 
@@ -305,37 +311,19 @@ export default async function ProfilePage({
             </div>
           )}
 
-          {/* Tabs — only meaningful once there's a marketplace concept to
-              split "for sale" out of; with it off, "All Assets" (the
-              Uploads grid below) is the only content anyway. */}
-          {marketplaceOn && (
-            <div className="mt-8 flex gap-6 border-b border-line text-sm font-semibold">
-              <Link
-                href={tabHref("all")}
-                className={`-mb-px border-b-2 px-1 pb-3 transition-colors ${
-                  activeTab === "all" ? "border-accent text-text" : "border-transparent text-dim hover:text-text"
-                }`}
-              >
-                All Assets
-              </Link>
-              <Link
-                href={tabHref("forsale")}
-                className={`-mb-px border-b-2 px-1 pb-3 transition-colors ${
-                  activeTab === "forsale" ? "border-accent text-text" : "border-transparent text-dim hover:text-text"
-                }`}
-              >
-                For Sale
-              </Link>
-              <Link
-                href={tabHref("owned")}
-                className={`-mb-px border-b-2 px-1 pb-3 transition-colors ${
-                  activeTab === "owned" ? "border-accent text-text" : "border-transparent text-dim hover:text-text"
-                }`}
-              >
-                Owned
-              </Link>
-            </div>
-          )}
+          {/* Tabs — "All Assets" and "Liked" are always available; "For
+              Sale"/"Owned" only exist as concepts once the marketplace flag
+              is on (nothing can be for-sale or owned otherwise). */}
+          <div className="mt-8 flex gap-6 overflow-x-auto border-b border-line text-sm font-semibold">
+            <TabLink tab="all" activeTab={activeTab} tabHref={tabHref}>All Assets</TabLink>
+            {marketplaceOn && (
+              <TabLink tab="forsale" activeTab={activeTab} tabHref={tabHref}>For Sale</TabLink>
+            )}
+            {marketplaceOn && (
+              <TabLink tab="owned" activeTab={activeTab} tabHref={tabHref}>Owned</TabLink>
+            )}
+            <TabLink tab="liked" activeTab={activeTab} tabHref={tabHref}>Liked</TabLink>
+          </div>
 
           {activeTab === "forsale" ? (
             <div className="mt-8">
@@ -378,6 +366,35 @@ export default async function ProfilePage({
                     <>
                       <p className="mt-1.5 text-sm text-dim">
                         Things you buy on memix show up here.
+                      </p>
+                      <Link
+                        href="/library"
+                        className="gradient-brand mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+                      >
+                        Browse the library
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "liked" ? (
+            <div className="mt-8">
+              {likedAssets.length > 0 ? (
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  {likedAssets.map((asset) => (
+                    <AssetCard key={asset.id} asset={asset} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-line bg-panel/50 px-6 py-11 text-center shadow-soft">
+                  <Heart size={22} strokeWidth={1.5} className="mx-auto mb-3 text-accent" />
+                  <p className="font-heading font-semibold text-text">Nothing liked yet.</p>
+                  {isOwner && (
+                    <>
+                      <p className="mt-1.5 text-sm text-dim">
+                        Only likes made while signed in show up here — anonymous likes
+                        made before this existed can&apos;t retroactively appear.
                       </p>
                       <Link
                         href="/library"
@@ -590,6 +607,30 @@ export default async function ProfilePage({
         </aside>
       </div>
     </main>
+  );
+}
+
+function TabLink({
+  tab,
+  activeTab,
+  tabHref,
+  children,
+}: {
+  tab: Tab;
+  activeTab: Tab;
+  tabHref: (tab: Tab) => string;
+  children: React.ReactNode;
+}) {
+  const active = activeTab === tab;
+  return (
+    <Link
+      href={tabHref(tab)}
+      className={`-mb-px shrink-0 border-b-2 px-1 pb-3 transition-colors ${
+        active ? "border-accent text-text" : "border-transparent text-dim hover:text-text"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 

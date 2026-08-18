@@ -496,7 +496,26 @@ model AssetLike {
 
   clientId String
 
+  // Set only when a signed-in wallet happened to be the one liking (see
+  // app/api/assets/[id]/like/route.ts) — purely additive metadata riding
+  // on the same row, never a second identity system. Anonymous likes (no
+  // wallet connected) keep clientId as their only identity, exactly as
+  // before; walletAddress stays null for those, forever. Powers the
+  // creator profile's public "Liked" tab (lib/profile.ts#getLikedAssets) —
+  // a like made before this column existed has no wallet on it and can
+  // never retroactively appear there, same honest rule as
+  // AssetViewEvent's "no history before tracking started."
+  walletAddress String?
+
   @@unique([assetId, clientId])
+  // Prevents the same signed-in wallet from double-liking the same asset
+  // across two different browsers (two different clientIds). Safe to add
+  // without touching existing rows: Postgres treats every NULL as
+  // distinct, so this constraint is a no-op for the ~100% of rows where
+  // walletAddress is null (anonymous likes) and only ever fires for two
+  // rows that share both a real assetId AND a real walletAddress.
+  @@unique([assetId, walletAddress])
+  @@index([walletAddress])
 }
 
 // One row per (asset, IP) ever — NOT one row per view. Tracks only the

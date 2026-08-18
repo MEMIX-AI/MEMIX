@@ -17,6 +17,10 @@ const LIKE_CREATE_WINDOW_MS = 60 * 60 * 1000;
 // unique(assetId, clientId) constraint, not just this route's own logic.
 // likeCount is updated in the same transaction as the AssetLike row so the
 // two can never drift apart, regardless of what else touches this table.
+// If a wallet happens to be signed in, its address rides along on the same
+// row (walletAddress) purely so the creator profile's "Liked" tab can show
+// it later (lib/profile.ts#getLikedAssets) — this never becomes a
+// requirement, an anonymous visitor likes exactly as before.
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } },
@@ -50,15 +54,33 @@ export async function POST(
     return NextResponse.json({ liked: false, likeCount: updated.likeCount });
   }
 
+  // A signed-in wallet that already liked this asset from a DIFFERENT
+  // browser (different clientId, same wallet) must not create a second
+  // row here — the real @@unique([assetId, walletAddress]) constraint
+  // would reject it anyway (see prisma/schema.prisma's AssetLike). This
+  // answers cleanly instead of surfacing that as a 500: from the wallet's
+  // point of view it already likes this, so just report that.
+  if (viewer) {
+    const existingForWallet = await prisma.assetLike.findUnique({
+      where: { assetId_walletAddress: { assetId: asset.id, walletAddress: viewer.walletAddress } },
+    });
+    if (existingForWallet) {
+      return NextResponse.json({ liked: true, likeCount: asset.likeCount });
+    }
+  }
+
   const ip = getClientIp(req.headers);
   const { ok } = await checkRateLimit(`like-create:${hashIp(ip)}`, LIKE_CREATE_LIMIT, LIKE_CREATE_WINDOW_MS);
   if (!ok) {
     return NextResponse.json({ error: "too many likes from this network, try again later" }, { status: 429 });
   }
 
+  // walletAddress is only ever set here when a session is real — an
+  // anonymous like (the default, still fully supported) leaves it null
+  // exactly as every existing row already has it.
   const [, updated] = await prisma.$transaction([
     prisma.assetLike.create({
-      data: { assetId: asset.id, clientId },
+      data: { assetId: asset.id, clientId, walletAddress: viewer?.walletAddress ?? null },
     }),
     prisma.asset.update({
       where: { id: asset.id },

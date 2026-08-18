@@ -26,6 +26,26 @@ export async function getProfileAssets(walletAddress: string) {
   });
 }
 
+// Real confirmed purchases by this wallet, newest first, deduped to one row
+// per asset (a repeat purchase of the same asset only shows once — the
+// point is "what do they own," not a transaction log). Deliberately does
+// NOT apply publicAssetWhere the way getProfileAssets does: once bought,
+// access persists even if the seller later unlists/takes the asset down
+// (same precedent as the download route's own "already purchased" check),
+// so an owned asset stays visible here regardless of its current listing
+// state.
+export async function getPurchasedAssets(walletAddress: string) {
+  const wallet = walletAddress.toLowerCase();
+  const purchases = await prisma.marketplacePurchase.findMany({
+    where: { buyerWallet: wallet, status: "CONFIRMED" },
+    include: { listing: { include: { asset: { include: { tags: true } } } } },
+    orderBy: { confirmedAt: "desc" },
+  });
+  return purchases
+    .filter((p, i, arr) => arr.findIndex((x) => x.assetId === p.assetId) === i)
+    .map((p) => p.listing.asset);
+}
+
 export interface ProfileUpdateInput {
   username?: string | null;
   avatarUrl?: string | null;

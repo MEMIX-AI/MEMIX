@@ -20,6 +20,7 @@ import {
   getCreatorStats,
   getCreatorCategoryBreakdown,
   getCreatorDailyAnalytics,
+  getPurchasedAssets,
   type DailyMetricSeries,
 } from "@/lib/profile";
 import { AnalyticsSparkline } from "@/components/AnalyticsSparkline";
@@ -38,6 +39,8 @@ import { CreatorOriginalsGrid, type CreatorOriginalItem } from "@/components/Cre
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://memixmeme.xyz";
+
+type Tab = "all" | "forsale" | "owned";
 
 // Same relabeling already established by lib/search.ts's CATEGORY_FILTERS
 // (and reused on app/creators/page.tsx's "Explore by Category") — the
@@ -59,7 +62,12 @@ export default async function ProfilePage({
   if (!WALLET_RE.test(params.wallet)) notFound();
   const wallet = params.wallet.toLowerCase();
   const marketplaceOn = isMarketplaceEnabled();
-  const activeTab = marketplaceOn && searchParams.tab === "forsale" ? "forsale" : "all";
+  const activeTab: Tab =
+    marketplaceOn && searchParams.tab === "forsale"
+      ? "forsale"
+      : marketplaceOn && searchParams.tab === "owned"
+        ? "owned"
+        : "all";
 
   const [viewer, profile, stats, categories, analytics, rawAssets] = await Promise.all([
     getCurrentUser(),
@@ -90,6 +98,7 @@ export default async function ProfilePage({
   let originals: CreatorOriginalItem[] = [];
   let recentlySold: { assetId: string; title: string; thumbnailUrl: string | null; priceMix: number; soldCount: number; confirmedAt: Date }[] = [];
   let listedAssetIds = new Set<string>();
+  let ownedAssets: Awaited<ReturnType<typeof getPurchasedAssets>> = [];
 
   if (marketplaceOn) {
     const listings = await prisma.marketplaceListing.findMany({
@@ -144,6 +153,10 @@ export default async function ProfilePage({
       soldCount: soldByAsset.get(p.assetId) ?? 0,
       confirmedAt: p.confirmedAt!,
     }));
+
+    // "Owned" tab — everything this wallet has bought, as buyer (separate
+    // from recentlySold above, which is this wallet's sales as seller).
+    ownedAssets = await resolveAssetUrlsMany(await getPurchasedAssets(wallet));
   }
 
   const freeAssets = assets.filter((a) => !listedAssetIds.has(a.id));
@@ -157,8 +170,8 @@ export default async function ProfilePage({
   const initial = (profile?.username || wallet.slice(2)).charAt(0).toUpperCase();
   const profileUrl = `${SITE_URL}/u/${wallet}`;
 
-  function tabHref(tab: "all" | "forsale") {
-    return tab === "all" ? `/u/${wallet}` : `/u/${wallet}?tab=forsale`;
+  function tabHref(tab: Tab) {
+    return tab === "all" ? `/u/${wallet}` : `/u/${wallet}?tab=${tab}`;
   }
 
   return (
@@ -313,6 +326,14 @@ export default async function ProfilePage({
               >
                 For Sale
               </Link>
+              <Link
+                href={tabHref("owned")}
+                className={`-mb-px border-b-2 px-1 pb-3 transition-colors ${
+                  activeTab === "owned" ? "border-accent text-text" : "border-transparent text-dim hover:text-text"
+                }`}
+              >
+                Owned
+              </Link>
             </div>
           )}
 
@@ -335,6 +356,34 @@ export default async function ProfilePage({
                       >
                         <UploadCloud size={15} strokeWidth={1.75} />
                         Manage listings
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "owned" ? (
+            <div className="mt-8">
+              {ownedAssets.length > 0 ? (
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  {ownedAssets.map((asset) => (
+                    <AssetCard key={asset.id} asset={asset} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-line bg-panel/50 px-6 py-11 text-center shadow-soft">
+                  <ShoppingBag size={22} strokeWidth={1.5} className="mx-auto mb-3 text-accent" />
+                  <p className="font-heading font-semibold text-text">Nothing owned yet.</p>
+                  {isOwner && (
+                    <>
+                      <p className="mt-1.5 text-sm text-dim">
+                        Things you buy on memix show up here.
+                      </p>
+                      <Link
+                        href="/library"
+                        className="gradient-brand mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
+                      >
+                        Browse the library
                       </Link>
                     </>
                   )}

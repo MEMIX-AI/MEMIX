@@ -572,15 +572,10 @@ export default async function ProfilePage({
               <span className="text-[11px] text-faint">Last 30 days</span>
             </div>
             <div className="flex flex-col gap-5">
-              <AnalyticsRow label="Views" color="var(--accent)" series={analytics.views} formatValue={formatCompactNumber} />
-              <AnalyticsRow label="Downloads" color="var(--accent-3)" series={analytics.downloads} formatValue={formatCompactNumber} />
+              <AnalyticsRow label="Views" color="var(--accent)" series={analytics.views} />
+              <AnalyticsRow label="Downloads" color="var(--accent-3)" series={analytics.downloads} />
               {marketplaceOn && (
-                <AnalyticsRow
-                  label="Earnings"
-                  color="var(--accent-2)"
-                  series={analytics.earnings}
-                  formatValue={(v) => `${formatCompactNumber(v)} $MIX`}
-                />
+                <AnalyticsRow label="Earnings" color="var(--accent-2)" series={analytics.earnings} unit="mix" />
               )}
             </div>
           </div>
@@ -657,12 +652,12 @@ function AnalyticsRow({
   label,
   color,
   series,
-  formatValue,
+  unit = "count",
 }: {
   label: string;
   color: string;
   series: DailyMetricSeries;
-  formatValue: (value: number) => string;
+  unit?: "count" | "mix";
 }) {
   if (series.points.length === 0) {
     return (
@@ -672,6 +667,13 @@ function AnalyticsRow({
       </div>
     );
   }
+
+  // Server-side only — never passed as a prop into AnalyticsSparkline (a
+  // Client Component). React/Next can't serialize a function across that
+  // boundary; AnalyticsSparkline takes the same `unit` and formats
+  // client-side instead. See that component's own comment for the exact
+  // failure this avoids.
+  const formatValue = (value: number) => (unit === "mix" ? `${formatCompactNumber(value)} $MIX` : formatCompactNumber(value));
 
   const daysCovered = series.points.length;
   return (
@@ -688,7 +690,7 @@ function AnalyticsRow({
           )}
         </div>
       </div>
-      <AnalyticsSparkline points={series.points} color={color} formatValue={formatValue} />
+      <AnalyticsSparkline points={series.points} color={color} unit={unit} />
       <p className="mt-1 text-[10.5px] text-faint">
         last {daysCovered} day{daysCovered === 1 ? "" : "s"}
         {daysCovered < 30 ? ` · data since ${series.earliestDate}` : ""}

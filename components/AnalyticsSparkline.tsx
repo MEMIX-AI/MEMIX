@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PointerEvent } from "react";
+import { formatCompactNumber } from "@/lib/format";
 
 // A single-series trend line for one Creator Analytics metric (Views/
 // Downloads/Earnings) — always exactly one real series, so no legend (see
@@ -12,20 +13,32 @@ import type { PointerEvent } from "react";
 // for an HTML line chart, not an upgrade; the one gap against the full
 // spec is keyboard-focus parity, skipped here since the headline total
 // next to this chart already carries the un-gated number.
+//
+// `unit` (not a formatter function) on purpose: this is a Client
+// Component, and the Server Component that renders it (AnalyticsRow in
+// app/u/[wallet]/page.tsx) can't pass a plain function as a prop across
+// that boundary — React/Next throws "Functions cannot be passed directly
+// to Client Components" at render time, not just a type error, and it
+// only ever fires once a metric actually has real points to draw (an
+// empty-state metric returns before reaching this component), which is
+// exactly why this shipped without being caught until a wallet with real
+// analytics history hit it.
 export function AnalyticsSparkline({
   points,
   color,
-  formatValue,
+  unit = "count",
   width = 240,
   height = 48,
 }: {
   points: { date: string; value: number }[];
   /** A CSS color value, e.g. "var(--accent)" — one metric, one hue. */
   color: string;
-  formatValue?: (value: number) => string;
+  unit?: "count" | "mix";
   width?: number;
   height?: number;
 }) {
+  const formatValue = (value: number) =>
+    unit === "mix" ? `${formatCompactNumber(value)} $MIX` : formatCompactNumber(value);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   if (points.length === 0) return null;
 
@@ -71,7 +84,7 @@ export function AnalyticsSparkline({
           className="pointer-events-none absolute z-10 -translate-x-1/2 whitespace-nowrap rounded-lg border border-line bg-panel-solid px-2 py-1 text-[11px] shadow-soft"
           style={{ left: hoveredCoord[0], top: -4, transform: `translate(-50%, -100%)` }}
         >
-          <p className="font-semibold text-text">{formatValue ? formatValue(hovered.value) : hovered.value}</p>
+          <p className="font-semibold text-text">{formatValue(hovered.value)}</p>
           <p className="text-faint">{hovered.date}</p>
         </div>
       )}

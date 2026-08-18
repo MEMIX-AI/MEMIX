@@ -206,6 +206,7 @@ model Asset {
   reports               Report[]
   takedowns             TakedownLog[]
   downloadEvents        DownloadEvent[]
+  viewEvents            AssetViewEvent[]
   likes                 AssetLike[]
   viewers               AssetViewer[]
   verdictGenerationLogs VerdictGenerationLog[]
@@ -364,6 +365,10 @@ model MarketplacePurchase {
 
   @@index([buyerWallet])
   @@index([assetId])
+  // Covers the Creator Analytics Earnings chart (app/u/[wallet]/page.tsx via
+  // lib/profile.ts#getCreatorDailyAnalytics), which filters by exactly this
+  // pair (sellerWallet + a confirmedAt range) on every profile page load.
+  @@index([sellerWallet, confirmedAt])
 }
 
 // Paper trail proving the uploader agreed to the rights declaration + ToS
@@ -467,6 +472,23 @@ model DownloadEvent {
   @@index([assetId, createdAt])
 }
 
+// One row per genuinely-new (non-deduped) counted view — written alongside
+// the existing AssetViewer upsert in app/api/assets/[id]/view/route.ts's
+// transaction, never on its own. Unlike AssetViewer (one row per asset+IP,
+// overwritten forward — see its own comment), this is append-only, same
+// shape/purpose as DownloadEvent above: real per-day history for Creator
+// Analytics (app/u/[wallet]/page.tsx), computed live at read time, no
+// snapshot/cron involved.
+model AssetViewEvent {
+  id        String   @id @default(cuid())
+  assetId   String
+  createdAt DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
+}
+
 // One row per (asset, browser) — no wallet/login required to like. Identity
 // is a random id the browser generates once and keeps in localStorage (see
 // components/LikeButton.tsx), sent as `clientId` on every like/unlike call.
@@ -488,7 +510,26 @@ model AssetLike {
 
   clientId String
 
+  // Set only when a signed-in wallet happened to be the one liking (see
+  // app/api/assets/[id]/like/route.ts) — purely additive metadata riding
+  // on the same row, never a second identity system. Anonymous likes (no
+  // wallet connected) keep clientId as their only identity, exactly as
+  // before; walletAddress stays null for those, forever. Powers the
+  // creator profile's public "Liked" tab (lib/profile.ts#getLikedAssets) —
+  // a like made before this column existed has no wallet on it and can
+  // never retroactively appear there, same honest rule as
+  // AssetViewEvent's "no history before tracking started."
+  walletAddress String?
+
   @@unique([assetId, clientId])
+  // Prevents the same signed-in wallet from double-liking the same asset
+  // across two different browsers (two different clientIds). Safe to add
+  // without touching existing rows: Postgres treats every NULL as
+  // distinct, so this constraint is a no-op for the ~100% of rows where
+  // walletAddress is null (anonymous likes) and only ever fires for two
+  // rows that share both a real assetId AND a real walletAddress.
+  @@unique([assetId, walletAddress])
+  @@index([walletAddress])
 }
 
 // One row per (asset, IP) ever — NOT one row per view. Tracks only the

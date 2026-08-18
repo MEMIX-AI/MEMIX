@@ -32,32 +32,42 @@ export async function getProfileAssets(walletAddress: string) {
   });
 }
 
-export interface ProfileStats {
-  uploadCount: number;
-  totalDownloads: number;
-  totalLikes: number;
+// Real confirmed purchases by this wallet, newest first, deduped to one row
+// per asset (a repeat purchase of the same asset only shows once — the
+// point is "what do they own," not a transaction log). Deliberately does
+// NOT apply publicAssetWhere the way getProfileAssets does: once bought,
+// access persists even if the seller later unlists/takes the asset down
+// (same precedent as the download route's own "already purchased" check),
+// so an owned asset stays visible here regardless of its current listing
+// state.
+export async function getPurchasedAssets(walletAddress: string) {
+  const wallet = walletAddress.toLowerCase();
+  const purchases = await prisma.marketplacePurchase.findMany({
+    where: { buyerWallet: wallet, status: "CONFIRMED" },
+    include: { listing: { include: { asset: { include: { tags: true } } } } },
+    orderBy: { confirmedAt: "desc" },
+  });
+  return purchases
+    .filter((p, i, arr) => arr.findIndex((x) => x.assetId === p.assetId) === i)
+    .map((p) => p.listing.asset);
 }
 
-// A single aggregate query, not a COUNT() plus a fetch-everything-and-sum
-// — this scales with catalogue size the same way lib/assets.ts's other
-// aggregate reads do (see app/admin/page.tsx's downloadCount aggregate
-// for the same pattern).
-export async function getProfileStats(walletAddress: string): Promise<ProfileStats> {
-  const [uploadCount, agg] = await Promise.all([
-    prisma.asset.count({
-      where: { uploaderWallet: walletAddress.toLowerCase(), ...publicAssetWhere },
-    }),
-    prisma.asset.aggregate({
-      where: { uploaderWallet: walletAddress.toLowerCase(), ...publicAssetWhere },
-      _sum: { downloadCount: true, likeCount: true },
-    }),
-  ]);
-
-  return {
-    uploadCount,
-    totalDownloads: agg._sum.downloadCount ?? 0,
-    totalLikes: agg._sum.likeCount ?? 0,
-  };
+// Real likes by this wallet — only likes made while signed in ever get a
+// walletAddress on the AssetLike row (see that model's schema comment and
+// app/api/assets/[id]/like/route.ts); a like made before this column
+// existed, or made anonymously, has no wallet on it and can't retroactively
+// appear here — same honest rule Creator Analytics already established for
+// Views. Filtered through publicAssetWhere (unlike getPurchasedAssets
+// above) — liking never grants special access, so a since-hidden asset
+// drops out of this list like it does everywhere else.
+export async function getLikedAssets(walletAddress: string) {
+  const wallet = walletAddress.toLowerCase();
+  const likes = await prisma.assetLike.findMany({
+    where: { walletAddress: wallet, asset: { ...publicAssetWhere } },
+    include: { asset: { include: { tags: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return likes.map((l) => l.asset);
 }
 
 export interface ProfileUpdateInput {
@@ -218,11 +228,17 @@ export async function updateProfile(walletAddress: string, input: ProfileUpdateI
 }
 
 // Single-wallet version of lib/creators.ts's aggregate — same real
-// sources (works from Asset, sales/earnings from CONFIRMED
-// MarketplacePurchase, followers from Follow), just scoped to the one
-// profile being rendered instead of the whole directory.
+// sources (works/downloads/views/likes from Asset, sales/earnings from
+// CONFIRMED MarketplacePurchase, followers from Follow), just scoped to
+// the one profile being rendered instead of the whole directory. This is
+// the one stats source for /u/[wallet]'s 6-tile header bar — it used to
+// be split across this function and the now-deleted getProfileStats()
+// (unused, its two numbers are the downloads/likes sums below).
 export interface CreatorStats {
   works: number;
+  downloads: number;
+  views: number;
+  likes: number;
   followers: number;
   sales: number;
   earnedMix: number;
@@ -230,8 +246,12 @@ export interface CreatorStats {
 
 export async function getCreatorStats(walletAddress: string): Promise<CreatorStats> {
   const wallet = walletAddress.toLowerCase();
-  const [works, followers, salesAgg] = await Promise.all([
-    prisma.asset.count({ where: { uploaderWallet: wallet, ...publicAssetWhere } }),
+  const [assetAgg, followers, salesAgg] = await Promise.all([
+    prisma.asset.aggregate({
+      where: { uploaderWallet: wallet, ...publicAssetWhere },
+      _count: { _all: true },
+      _sum: { downloadCount: true, viewCount: true, likeCount: true },
+    }),
     prisma.follow.count({ where: { followingWallet: wallet } }),
     prisma.marketplacePurchase.aggregate({
       where: { sellerWallet: wallet, status: "CONFIRMED" },
@@ -240,9 +260,160 @@ export async function getCreatorStats(walletAddress: string): Promise<CreatorSta
     }),
   ]);
   return {
-    works,
+    works: assetAgg._count._all,
+    downloads: assetAgg._sum.downloadCount ?? 0,
+    views: assetAgg._sum.viewCount ?? 0,
+    likes: assetAgg._sum.likeCount ?? 0,
     followers,
     sales: salesAgg._count._all,
     earnedMix: salesAgg._sum.sellerAmountMix ?? 0,
+  };
+}
+
+// Real per-type breakdown of a creator's own public works, as percentages
+// of their total — the sidebar's "Top Categories" card. Only IMAGE/VIDEO/
+// SOUND exist as real Asset types (see prisma/schema.prisma's AssetType);
+// no fabricated GIF/Other slice the way a "meme culture" mock might show
+// one — same reasoning already applied to /creators's category tiles.
+// Omits any type with zero of this creator's works instead of padding a
+// 0% row, and returns [] entirely for a creator with no public works yet
+// (the sidebar hides the card rather than rendering an empty chart).
+export interface CategoryBreakdownEntry {
+  type: "IMAGE" | "VIDEO" | "SOUND";
+  count: number;
+  percent: number;
+}
+
+export async function getCreatorCategoryBreakdown(walletAddress: string): Promise<CategoryBreakdownEntry[]> {
+  const wallet = walletAddress.toLowerCase();
+  const byType = await prisma.asset.groupBy({
+    by: ["type"],
+    where: { uploaderWallet: wallet, ...publicAssetWhere },
+    _count: { _all: true },
+  });
+  const total = byType.reduce((sum, t) => sum + t._count._all, 0);
+  if (total === 0) return [];
+
+  return byType
+    .map((t) => ({ type: t.type, count: t._count._all, percent: Math.round((t._count._all / total) * 100) }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Creator Analytics (app/u/[wallet]/page.tsx sidebar) — real daily Views/
+// Downloads/Earnings history, computed live from event tables at read time
+// (no snapshot/cron job). Downloads (DownloadEvent) and Earnings
+// (MarketplacePurchase) already had real per-event history before this
+// existed; Views needed a new append-only table (AssetViewEvent, written
+// alongside the existing dedupe upsert in app/api/assets/[id]/view/
+// route.ts) since AssetViewer only ever keeps the latest view per (asset,
+// IP) and can't answer "how many on day N".
+const ANALYTICS_WINDOW_DAYS = 30;
+// A 2-3 day comparison isn't a "trend" — require at least this many real
+// days of history (so each half of the split has >= 7) before showing a
+// percentage at all.
+const MIN_DAYS_FOR_TREND = 14;
+
+export interface DailyPoint {
+  date: string; // YYYY-MM-DD, UTC
+  value: number;
+}
+
+export interface DailyMetricSeries {
+  points: DailyPoint[];
+  total: number;
+  changePercent: number | null;
+  earliestDate: string | null;
+}
+
+export interface CreatorAnalytics {
+  views: DailyMetricSeries;
+  downloads: DailyMetricSeries;
+  earnings: DailyMetricSeries;
+}
+
+function toUtcDateString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+// Plots only from the earliest REAL row found through today — never padded
+// backward before that (a day with no rows before tracking existed is
+// "unknown", not "zero"). Once there's at least one real row, every day
+// after it genuinely was being logged, so a quiet day in that range is a
+// real, honest zero, not a gap — see prisma/schema.prisma's AssetViewEvent
+// doc comment for why this distinction matters.
+function bucketDaily(rows: { day: string; value: number }[]): DailyMetricSeries {
+  if (rows.length === 0) {
+    return { points: [], total: 0, changePercent: null, earliestDate: null };
+  }
+
+  const sums = new Map<string, number>();
+  for (const r of rows) sums.set(r.day, (sums.get(r.day) ?? 0) + r.value);
+
+  const earliestDate = rows.reduce((min, r) => (r.day < min ? r.day : min), rows[0].day);
+  const today = toUtcDateString(new Date());
+
+  const points: DailyPoint[] = [];
+  for (
+    let cursor = new Date(`${earliestDate}T00:00:00.000Z`);
+    cursor <= new Date(`${today}T00:00:00.000Z`);
+    cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)
+  ) {
+    const day = toUtcDateString(cursor);
+    points.push({ date: day, value: sums.get(day) ?? 0 });
+  }
+
+  const total = points.reduce((sum, p) => sum + p.value, 0);
+
+  let changePercent: number | null = null;
+  if (points.length >= MIN_DAYS_FOR_TREND) {
+    const mid = Math.floor(points.length / 2);
+    const earlierSum = points.slice(0, mid).reduce((s, p) => s + p.value, 0);
+    const laterSum = points.slice(mid).reduce((s, p) => s + p.value, 0);
+    if (earlierSum > 0) {
+      changePercent = Math.round(((laterSum - earlierSum) / earlierSum) * 100);
+    }
+  }
+
+  return { points, total, changePercent, earliestDate };
+}
+
+export async function getCreatorDailyAnalytics(
+  walletAddress: string,
+  days: number = ANALYTICS_WINDOW_DAYS,
+): Promise<CreatorAnalytics> {
+  const wallet = walletAddress.toLowerCase();
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const assets = await prisma.asset.findMany({
+    where: { uploaderWallet: wallet, ...publicAssetWhere },
+    select: { id: true },
+  });
+  const assetIds = assets.map((a) => a.id);
+
+  const [viewRows, downloadRows, purchaseRows] = await Promise.all([
+    assetIds.length > 0
+      ? prisma.assetViewEvent.findMany({
+          where: { assetId: { in: assetIds }, createdAt: { gte: cutoff } },
+          select: { createdAt: true },
+        })
+      : [],
+    assetIds.length > 0
+      ? prisma.downloadEvent.findMany({
+          where: { assetId: { in: assetIds }, createdAt: { gte: cutoff } },
+          select: { createdAt: true },
+        })
+      : [],
+    prisma.marketplacePurchase.findMany({
+      where: { sellerWallet: wallet, status: "CONFIRMED", confirmedAt: { gte: cutoff } },
+      select: { confirmedAt: true, sellerAmountMix: true },
+    }),
+  ]);
+
+  return {
+    views: bucketDaily(viewRows.map((r) => ({ day: toUtcDateString(r.createdAt), value: 1 }))),
+    downloads: bucketDaily(downloadRows.map((r) => ({ day: toUtcDateString(r.createdAt), value: 1 }))),
+    earnings: bucketDaily(
+      purchaseRows.map((r) => ({ day: toUtcDateString(r.confirmedAt!), value: r.sellerAmountMix })),
+    ),
   };
 }

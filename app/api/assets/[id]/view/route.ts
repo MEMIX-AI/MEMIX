@@ -45,6 +45,13 @@ export async function POST(
       data: { viewCount: { increment: 1 } },
       select: { viewCount: true },
     }),
+    // Real per-day history for Creator Analytics (lib/profile.ts#
+    // getCreatorDailyAnalytics) — AssetViewer above can't serve this, it
+    // overwrites viewedAt forward per (asset, IP) pair. Written only here,
+    // atomically with the other two, so a row exists iff a view was
+    // genuinely counted (never on a deduped request that returned early
+    // above).
+    prisma.assetViewEvent.create({ data: { assetId: asset.id } }),
   ]);
 
   return NextResponse.json({ counted: true, viewCount: updatedAsset.viewCount });

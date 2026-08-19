@@ -2,6 +2,32 @@
 
 AI agent librarian untuk meme library berbasis web. Baca file ini di setiap sesi/fase dan patuhi tanpa terkecuali — instruksi di sini override default behavior.
 
+## STATUS TERKINI (update: 2026-08-20)
+
+**SUDAH LIVE di production (memixmeme.xyz)** — merged ke `master` di commit
+`0c8af8b`, fast-forward dari `preview/all-features`. `DATABASE_URL` di
+Vercel di-share antara scope Production dan Preview (satu DB), jadi skema
+Prisma yang sudah teruji di preview otomatis sudah sinkron di production —
+tidak perlu `prisma db push` terpisah untuk deploy ini.
+
+- Creator Hub redesign (`/creators`)
+- Become-a-Creator registration flow (terpisah dari upload)
+- Profil creator redesign (`/u/[wallet]`) + Creator Analytics (grafik
+  Views/Downloads/Earnings harian, data asli bukan mock)
+- Tab "Owned" dan "Liked" di profil creator
+
+**TODO berikutnya** (belum dikerjakan, urutan bukan prioritas):
+
+1. **Bug**: profil creator error kalau dibuka dari HP (di PC/desktop aman).
+   Perlu diagnosa — dugaan awal cache atau bug responsive/mobile, belum
+   dikonfirmasi.
+2. Rapikan My Upload + Profile — lebur halaman `my-uploads` ke profil
+   creator (`/u/[wallet]`), jangan dua halaman terpisah.
+3. Beberapa halaman perlu di-edit lagi — detail menyusul, belum dirinci.
+4. Perjelas fungsi & isi halaman Library (`/library`).
+5. Tingkatkan fungsionalitas wallet admin — bikin lebih lengkap dari yang
+   sekarang di `/admin`.
+
 ## KONSEP INTI
 
 - Library meme GRATIS untuk manusia: gambar, video, sound. Semua bisa search & download tanpa login, tanpa wallet, tanpa bayar.

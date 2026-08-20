@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { Asset } from "@prisma/client";
-import { Trash2, AlertCircle, UploadCloud, Tag as TagIcon, X } from "lucide-react";
+import { Trash2, AlertCircle, UploadCloud, Tag as TagIcon, X, Play, Eye, ImageOff } from "lucide-react";
 import { assetTypeLabel } from "@/lib/format";
 
 const STATUS_STYLE: Record<Asset["status"], string> = {
@@ -20,7 +21,7 @@ const VISIBILITY_LABEL: Record<Asset["visibility"], string> = {
   PRIVATE: "private",
 };
 
-type OwnAsset = Pick<Asset, "id" | "title" | "type" | "status" | "visibility" | "isOriginal"> & {
+export type OwnAsset = Pick<Asset, "id" | "title" | "type" | "status" | "visibility" | "isOriginal" | "thumbnailUrl"> & {
   marketplaceListing?: { priceMix: number; active: boolean } | null;
 };
 
@@ -124,20 +125,41 @@ export function MyUploadCard({
   // render for an asset that would just get rejected.
   const canList = marketplaceEnabled && asset.isOriginal && asset.status === "ACTIVE" && asset.visibility === "PUBLIC";
 
+  const ActionIcon = asset.type === "IMAGE" ? Eye : Play;
+  const thumbnail = (
+    <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-[16px] border border-line bg-bg">
+      <span className={`absolute right-2 top-2 z-10 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLE[asset.status]}`}>
+        {asset.status.replace("_", " ").toLowerCase()}
+      </span>
+      {asset.thumbnailUrl ? (
+        <Image
+          src={asset.thumbnailUrl}
+          alt={asset.title}
+          fill
+          sizes="(max-width: 640px) 50vw, 25vw"
+          loading="lazy"
+          className="object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-dim/50">
+          <ImageOff size={26} strokeWidth={1.5} />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="rounded-2xl border border-line bg-panel p-4 shadow-soft transition-shadow duration-250 hover:shadow-soft-lg">
-      <div className="mb-2.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-dim">
-        <span className="flex items-center gap-1.5">
-          {assetTypeLabel(asset.type)}
-          {asset.visibility !== "PUBLIC" && (
-            <span className="rounded-full border border-line bg-bg px-2 py-0.5 normal-case text-dim">
-              {VISIBILITY_LABEL[asset.visibility]}
-            </span>
-          )}
-        </span>
-        <span className={`rounded-full border px-2 py-0.5 ${STATUS_STYLE[asset.status]}`}>
-          {asset.status.replace("_", " ").toLowerCase()}
-        </span>
+      {linkable ? <Link href={`/asset/${asset.id}`}>{thumbnail}</Link> : thumbnail}
+
+      <div className="mb-2.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-dim">
+        <ActionIcon size={11} strokeWidth={2} />
+        {assetTypeLabel(asset.type)}
+        {asset.visibility !== "PUBLIC" && (
+          <span className="rounded-full border border-line bg-bg px-2 py-0.5 normal-case text-dim">
+            {VISIBILITY_LABEL[asset.visibility]}
+          </span>
+        )}
       </div>
 
       {linkable ? (

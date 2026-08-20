@@ -10,7 +10,7 @@ import { ViewCountDisplay } from "@/components/ViewCountDisplay";
 import { DownloadCount } from "@/components/DownloadCount";
 import { DownloadLink } from "@/components/DownloadLink";
 
-type AssetWithTags = Asset & { tags: Tag[] };
+export type AssetWithTags = Asset & { tags: Tag[] };
 
 export function AssetCard({
   asset,

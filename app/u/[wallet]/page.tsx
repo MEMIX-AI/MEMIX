@@ -13,11 +13,13 @@ import {
   Video as VideoIcon,
   Music2,
   Heart,
+  Ban,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getProfile,
   getProfileAssets,
+  getOwnAssets,
   getCreatorStats,
   getCreatorCategoryBreakdown,
   getCreatorDailyAnalytics,
@@ -31,12 +33,13 @@ import { storage } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
 import { isMarketplaceEnabled } from "@/lib/marketplace";
 import { shortenWallet, formatJoinDate, formatCompactNumber } from "@/lib/format";
-import { AssetCard } from "@/components/AssetCard";
+import { AssetCard, type AssetWithTags } from "@/components/AssetCard";
 import { CopyAddressButton } from "@/components/CopyAddressButton";
 import { ProfileEditButton } from "@/components/ProfileEditButton";
 import { FollowButton } from "@/components/FollowButton";
 import { ProfileShareMenu } from "@/components/ProfileShareMenu";
 import { CreatorOriginalsGrid, type CreatorOriginalItem } from "@/components/CreatorOriginalsGrid";
+import { MyUploadCard, type OwnAsset } from "@/components/MyUploadCard";
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 const TRENDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -73,18 +76,28 @@ export default async function ProfilePage({
           ? "liked"
           : "all";
 
-  const [viewer, profile, stats, categories, analytics, rawLikedAssets, rawAssets] = await Promise.all([
-    getCurrentUser(),
+  const viewer = await getCurrentUser();
+  const isOwner = viewer?.walletAddress === wallet;
+
+  // Owner sees every upload regardless of status/visibility (manageable
+  // via MyUploadCard); anyone else only ever sees the public-facing set
+  // (see lib/asset-visibility.ts#publicAssetWhere) — same split as the
+  // old /my-uploads vs. /u/[wallet] pages, now on one page/one tab. Kept
+  // as two separate resolveAssetUrlsMany calls (rather than one call fed
+  // by a ternary'd query) so each branch's concrete type — OwnAsset[] vs.
+  // AssetWithTags[] — stays intact instead of collapsing into a mismatched
+  // union at the generic's inference site.
+  const [profile, stats, categories, analytics, rawLikedAssets] = await Promise.all([
     getProfile(wallet),
     getCreatorStats(wallet),
     getCreatorCategoryBreakdown(wallet),
     getCreatorDailyAnalytics(wallet),
     getLikedAssets(wallet),
-    getProfileAssets(wallet),
   ]);
   const likedAssets = await resolveAssetUrlsMany(rawLikedAssets);
-  const assets = await resolveAssetUrlsMany(rawAssets);
-  const isOwner = viewer?.walletAddress === wallet;
+  const assets = isOwner
+    ? await resolveAssetUrlsMany(await getOwnAssets(wallet, marketplaceOn))
+    : await resolveAssetUrlsMany(await getProfileAssets(wallet));
 
   // No point asking "do you follow yourself" — only queried when a
   // different, signed-in wallet is viewing.
@@ -187,6 +200,14 @@ export default async function ProfilePage({
         <ChevronRight size={13} strokeWidth={2} />
         <span className="truncate text-text">{displayName}</span>
       </nav>
+
+      {isOwner && viewer?.status === "BANNED" && (
+        <p className="mb-4 flex items-center gap-2.5 rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-dim shadow-soft">
+          <Ban size={16} strokeWidth={1.75} className="shrink-0 text-warn" />
+          this account is banned. uploads are disabled and existing assets
+          stay hidden from the public library.
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0">
@@ -341,7 +362,7 @@ export default async function ProfilePage({
                         List one of your original uploads and start selling it on memix.
                       </p>
                       <Link
-                        href="/my-uploads"
+                        href={tabHref("all")}
                         className="gradient-brand mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-250 hover:shadow-glow"
                       >
                         <UploadCloud size={15} strokeWidth={1.75} />
@@ -498,9 +519,15 @@ export default async function ProfilePage({
                       </Link>
                     )}
                   </div>
+                ) : isOwner ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {(freeAssets as OwnAsset[]).map((asset) => (
+                      <MyUploadCard key={asset.id} asset={asset} marketplaceEnabled={marketplaceOn} />
+                    ))}
+                  </div>
                 ) : (
                   <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                    {freeAssets.map((asset) => (
+                    {(freeAssets as AssetWithTags[]).map((asset) => (
                       <AssetCard key={asset.id} asset={asset} />
                     ))}
                   </div>
@@ -526,7 +553,7 @@ export default async function ProfilePage({
                 Turn your original meme into a product on memix.
               </p>
               <Link
-                href="/my-uploads"
+                href={tabHref("all")}
                 className="gradient-brand relative mt-5 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:shadow-glow"
               >
                 Upload &amp; Sell

@@ -32,6 +32,19 @@ export async function getProfileAssets(walletAddress: string) {
   });
 }
 
+// Every upload this wallet has ever made, no status/visibility filter —
+// the owner-only counterpart to getProfileAssets above. Used exclusively
+// on the owner's own view of their profile (never for a visitor), where
+// drafts/unlisted/private/taken-down assets need to stay manageable
+// (publish/delete/list) instead of silently disappearing.
+export async function getOwnAssets(walletAddress: string, marketplaceEnabled: boolean) {
+  return prisma.asset.findMany({
+    where: { uploaderWallet: walletAddress.toLowerCase() },
+    include: { marketplaceListing: marketplaceEnabled },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 // Real confirmed purchases by this wallet, newest first, deduped to one row
 // per asset (a repeat purchase of the same asset only shows once — the
 // point is "what do they own," not a transaction log). Deliberately does

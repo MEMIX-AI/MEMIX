@@ -208,14 +208,6 @@ export function WalletButton({ autoShow }: { autoShow?: boolean }) {
                   my profile
                 </Link>
                 <Link
-                  href="/my-uploads"
-                  className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <User size={14} className="text-dim" />
-                  my uploads
-                </Link>
-                <Link
                   href="/my-uploads/api-key"
                   className="flex items-center gap-2 px-4 py-2.5 text-text transition-colors hover:bg-bg"
                   onClick={() => setMenuOpen(false)}

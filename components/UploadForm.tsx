@@ -200,11 +200,11 @@ export function UploadForm({
         return;
       }
 
-      // A draft is invisible everywhere except /my-uploads (see
+      // A draft is invisible everywhere except the owner's own profile (see
       // prisma/schema.prisma's AssetStatus.DRAFT comment) — its own detail
       // page would 404, so send the creator somewhere that actually shows
       // it instead.
-      router.push(action === "draft" ? "/my-uploads" : `/asset/${data.id}`);
+      router.push(action === "draft" ? `/u/${creatorWallet}` : `/asset/${data.id}`);
     } catch {
       setSubmitError("upload failed, try again.");
       setSubmittingAction(null);

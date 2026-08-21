@@ -5,13 +5,17 @@ import { AssetGridSkeleton } from "@/components/AssetCardSkeleton";
 export default function LibraryLoading() {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-      <div className="mb-5 h-8 w-32 animate-pulse rounded bg-panel-solid" />
+      <div className="mb-2 h-8 w-32 animate-pulse rounded bg-panel-solid" />
+      <div className="mb-6 h-4 w-72 animate-pulse rounded bg-panel-solid" />
       <div className="mb-6 h-[52px] w-full max-w-lg animate-pulse rounded-[20px] bg-panel-solid" />
-      <div className="mb-5 flex flex-wrap gap-[9px]">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-9 w-20 animate-pulse rounded-full bg-panel-solid" />
-        ))}
-      </div>
+      {/* Type / Verdict / Sort rows */}
+      {[5, 7, 2].map((count, row) => (
+        <div key={row} className="mb-5 flex flex-wrap gap-[9px]">
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className="h-9 w-20 animate-pulse rounded-full bg-panel-solid" />
+          ))}
+        </div>
+      ))}
       <AssetGridSkeleton count={12} />
     </main>
   );
